@@ -34,6 +34,7 @@ from src.multi_agent_diversifier import (
     multi_agent_diversify_slate,
     compute_slate_quality_metrics,
 )
+from src.mission_agent import analyze_mission_query
 
 
 st.set_page_config(
@@ -1901,6 +1902,39 @@ def render_architecture_page():
 
 
 # =============================================================================
+# Mission Agent
+# =============================================================================
+
+def render_mission_agent():
+    st.markdown("## Mission Agent")
+    st.write("Analyze whether a shopping query represents a broader mission or a single product.")
+
+    query = st.text_input(
+        "Mission query",
+        value="world cup watch party",
+        key="mission_agent_query",
+    )
+
+    if st.button("Analyze Mission", key="analyze_mission"):
+        analysis = analyze_mission_query(query)
+
+        metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+        metric_col1.metric("Is Mission", str(analysis.is_mission))
+        metric_col2.metric("Mission Type", analysis.mission_type)
+        metric_col3.metric("Mission Name", analysis.mission_name)
+        metric_col4.metric("Confidence", round(analysis.confidence, 4))
+
+        st.markdown("### Reasoning")
+        st.write(analysis.reasoning)
+
+        if not analysis.is_mission:
+            st.info("This appears to be a single-product query rather than a mission-based shopping request.")
+
+        st.markdown("### Sub-Intents")
+        st.dataframe(pd.DataFrame(analysis.sub_intents), use_container_width=True)
+
+
+# =============================================================================
 # Main app
 # =============================================================================
 
@@ -1941,12 +1975,13 @@ with st.sidebar:
 
 render_header()
 
-tab_search, tab_router, tab_learning, tab_architecture = st.tabs(
+tab_search, tab_router, tab_learning, tab_architecture, tab_mission = st.tabs(
     [
         "Live Search Console",
         "Router Dashboard",
         "Learning Dashboard",
         "Architecture",
+        "Mission Agent",
     ]
 )
 
@@ -1961,3 +1996,6 @@ with tab_learning:
 
 with tab_architecture:
     render_architecture_page()
+
+with tab_mission:
+    render_mission_agent()
