@@ -1,5 +1,6 @@
 import os
 import json
+import pickle
 
 import streamlit as st
 import pandas as pd
@@ -42,6 +43,11 @@ st.set_page_config(
 )
 
 ensure_storage_exists()
+
+
+ROUTER_MODEL_PATH = "models/learned_repair_router.pkl"
+ROUTER_FEATURES_PATH = "models/learned_repair_router_features.json"
+ROUTER_METADATA_PATH = "models/learned_repair_router_metadata.json"
 
 
 # =============================================================================
@@ -135,6 +141,15 @@ st.markdown(
             border-radius: 16px;
             padding: 16px 18px;
             color: #92400e;
+            margin-bottom: 12px;
+        }
+
+        .info-card-purple {
+            background: #f5f3ff;
+            border: 1px solid #ddd6fe;
+            border-radius: 16px;
+            padding: 16px 18px;
+            color: #4c1d95;
             margin-bottom: 12px;
         }
 
@@ -247,11 +262,38 @@ def load_json_if_exists(path):
     return {}
 
 
+@st.cache_resource(show_spinner=False)
+def load_router_model():
+    if not os.path.exists(ROUTER_MODEL_PATH):
+        return None
+
+    with open(ROUTER_MODEL_PATH, "rb") as f:
+        return pickle.load(f)
+
+
+@st.cache_data(show_spinner=False)
+def load_router_feature_payload():
+    return load_json_if_exists(ROUTER_FEATURES_PATH)
+
+
+@st.cache_data(show_spinner=False)
+def load_router_metadata():
+    return load_json_if_exists(ROUTER_METADATA_PATH)
+
+
 def safe_float(value, default=0.0):
     try:
         return float(value)
     except Exception:
         return default
+
+
+def safe_bool_value(value):
+    return str(value).lower() in ["true", "1", "yes"]
+
+
+def safe_numeric_series(series):
+    return pd.to_numeric(series, errors="coerce").fillna(0.0)
 
 
 def compact_cols(df, cols):
@@ -367,6 +409,397 @@ def show_contract_metrics(contract):
     if "dynamic_filters" in contract:
         with st.expander("View Dynamic LLM Contract Filters", expanded=False):
             st.json(contract.get("dynamic_filters", {}))
+
+
+# =============================================================================
+# Router dry-run helpers
+# =============================================================================
+
+def compute_label_quality_score(df, top_k=5):
+    if df is None or len(df) == 0 or "esci_label" not in df.columns:
+        return 0.5
+
+    label_scores = {
+        "E": 1.0,
+        "S": 0.75,
+        "C": 0.55,
+        "I": 0.0,
+        "exact": 1.0,
+        "substitute": 0.75,
+        "complement": 0.55,
+        "irrelevant": 0.0,
+    }
+
+    labels = df.head(top_k)["esci_label"].astype(str).tolist()
+    scores = [label_scores.get(label, label_scores.get(label.upper(), 0.5)) for label in labels]
+
+    if not scores:
+        return 0.5
+
+    return float(sum(scores) / len(scores))
+
+
+def compute_top_score_metrics(df, score_column):
+    if df is None or len(df) == 0:
+        return {
+            "top1_score": 0.0,
+            "top5_mean_score": 0.0,
+        }
+
+    selected_score_col = None
+
+    for candidate_col in [score_column, "baseline_score", "semantic_score", "retrieval_score"]:
+        if candidate_col in df.columns:
+            selected_score_col = candidate_col
+            break
+
+    if selected_score_col is None:
+        return {
+            "top1_score": 0.0,
+            "top5_mean_score": 0.0,
+        }
+
+    scores = pd.to_numeric(df[selected_score_col], errors="coerce").fillna(0.0)
+    top5 = scores.head(5)
+
+    return {
+        "top1_score": float(scores.iloc[0]) if len(scores) > 0 else 0.0,
+        "top5_mean_score": float(top5.mean()) if len(top5) > 0 else 0.0,
+    }
+
+
+def infer_router_priority(critic_risk_score):
+    if critic_risk_score >= 0.75:
+        return "critical"
+    if critic_risk_score >= 0.55:
+        return "high"
+    if critic_risk_score >= 0.30:
+        return "medium"
+    return "low"
+
+
+def infer_governance_route(critic_priority, query_text, low_coverage):
+    query_tokens = str(query_text).split()
+
+    mission_keywords = [
+        "party",
+        "trip",
+        "vacation",
+        "camping",
+        "wedding",
+        "birthday",
+        "world cup",
+        "watch party",
+        "setup",
+        "kit",
+        "bundle",
+    ]
+
+    query_lower = str(query_text).lower()
+
+    if any(keyword in query_lower for keyword in mission_keywords):
+        return "mission_candidate_route"
+
+    if low_coverage:
+        return "critic_needed_route"
+
+    if critic_priority in ["critical", "high"]:
+        return "critic_needed_route"
+
+    if len(query_tokens) <= 2:
+        return "full_cortex_route"
+
+    return "full_cortex_route"
+
+
+def build_live_router_feature_row(
+    query,
+    baseline_results,
+    ranking_input_results,
+    contract_enforced_results,
+    contract,
+    enforcement_report,
+    selected_policy,
+    score_column,
+):
+    top_score_metrics = compute_top_score_metrics(baseline_results, score_column)
+
+    if ranking_input_results is not None and len(ranking_input_results) > 0:
+        if "contract_match_score" in ranking_input_results.columns:
+            contract_alignment_score = float(
+                pd.to_numeric(
+                    ranking_input_results.head(5)["contract_match_score"],
+                    errors="coerce",
+                ).fillna(0.0).mean()
+            )
+        else:
+            contract_alignment_score = 0.5
+    else:
+        contract_alignment_score = 0.0
+
+    if contract_enforced_results is not None and len(contract_enforced_results) > 0:
+        if "is_blocked_by_contract" in contract_enforced_results.columns:
+            blocked_rows = int(contract_enforced_results["is_blocked_by_contract"].fillna(False).astype(bool).sum())
+        else:
+            blocked_rows = int(enforcement_report.get("blocked_rows", 0)) if enforcement_report else 0
+    else:
+        blocked_rows = 0
+
+    positive_contract_rows = (
+        int(enforcement_report.get("positive_contract_rows", 0))
+        if enforcement_report
+        else int(len(ranking_input_results))
+    )
+
+    low_coverage = bool(enforcement_report.get("low_coverage", False)) if enforcement_report else False
+
+    candidate_count = max(len(baseline_results), 1)
+    exclusion_violation_rate = min(1.0, blocked_rows / candidate_count)
+
+    label_quality_score = compute_label_quality_score(contract_enforced_results, top_k=5)
+
+    baseline_confidence = min(
+        1.0,
+        max(
+            0.0,
+            0.55 * top_score_metrics["top1_score"]
+            + 0.45 * top_score_metrics["top5_mean_score"],
+        ),
+    )
+
+    final_gate_score = min(
+        1.0,
+        max(
+            0.0,
+            0.40 * baseline_confidence
+            + 0.35 * contract_alignment_score
+            + 0.25 * label_quality_score
+            - 0.15 * exclusion_violation_rate,
+        ),
+    )
+
+    critic_risk_score = min(
+        1.0,
+        max(
+            0.0,
+            1.0
+            - (
+                0.35 * baseline_confidence
+                + 0.35 * contract_alignment_score
+                + 0.30 * label_quality_score
+            )
+            + 0.20 * exclusion_violation_rate
+            + (0.15 if low_coverage else 0.0),
+        ),
+    )
+
+    critic_priority = infer_router_priority(critic_risk_score)
+    governance_route = infer_governance_route(critic_priority, query, low_coverage)
+
+    if final_gate_score >= 0.80 and contract_alignment_score >= 0.75:
+        gate_decision = "light_rerank"
+    else:
+        gate_decision = "full_cortex"
+
+    selected_rl_action = selected_policy if selected_policy is not None else "unknown"
+
+    enforcement_status = (
+        str(enforcement_report.get("enforcement_status", "unknown"))
+        if enforcement_report
+        else "unknown"
+    )
+
+    row = {
+        "critic_risk_score": critic_risk_score,
+        "gate_baseline_confidence_score": baseline_confidence,
+        "gate_contract_alignment_score": contract_alignment_score,
+        "gate_final_gate_score": final_gate_score,
+        "gate_top1_score": top_score_metrics["top1_score"],
+        "gate_top5_mean_score": top_score_metrics["top5_mean_score"],
+        "gate_label_quality_score": label_quality_score,
+        "gate_exclusion_violation_rate": exclusion_violation_rate,
+        "query_token_count": len(str(query).split()),
+        "positive_contract_rows": positive_contract_rows,
+        "blocked_rows": blocked_rows,
+        "low_coverage": int(low_coverage),
+        "needs_online_critic": int(critic_priority in ["critical", "high"]),
+        "baseline_loss_rescued": 0,
+        "over_rerank_prevented": 0,
+        "critic_priority": critic_priority,
+        "governance_route": governance_route,
+        "gate_decision": gate_decision,
+        "selected_rl_action": str(selected_rl_action),
+        "enforcement_status": enforcement_status,
+    }
+
+    return pd.DataFrame([row])
+
+
+def build_router_feature_frame_from_artifact(df, feature_payload):
+    out = df.copy()
+
+    expected_features = feature_payload.get("feature_columns", [])
+
+    base_numeric = (
+        feature_payload.get("base_feature_columns", [])
+        + feature_payload.get("optional_numeric_feature_columns", [])
+    )
+
+    bool_cols = feature_payload.get("optional_bool_feature_columns", [])
+    categorical_cols = feature_payload.get("optional_categorical_columns", [])
+
+    for col in base_numeric:
+        if col not in out.columns:
+            out[col] = 0.0
+        out[col] = safe_numeric_series(out[col])
+
+    for col in bool_cols:
+        if col not in out.columns:
+            out[col] = 0
+        out[col] = out[col].astype(str).str.lower().isin(["true", "1", "yes"]).astype(int)
+
+    existing_categorical_cols = [
+        col for col in categorical_cols
+        if col in out.columns
+    ]
+
+    if existing_categorical_cols:
+        cat_df = pd.get_dummies(
+            out[existing_categorical_cols].fillna("unknown").astype(str),
+            prefix=existing_categorical_cols,
+            dummy_na=False,
+        )
+
+        out = pd.concat([out, cat_df], axis=1)
+
+    for feature in expected_features:
+        if feature not in out.columns:
+            out[feature] = 0.0
+        out[feature] = safe_numeric_series(out[feature])
+
+    return out, expected_features
+
+
+def run_live_router_dry_run(
+    query,
+    baseline_results,
+    ranking_input_results,
+    contract_enforced_results,
+    contract,
+    enforcement_report,
+    selected_policy,
+    score_column,
+):
+    model = load_router_model()
+    feature_payload = load_router_feature_payload()
+    metadata = load_router_metadata()
+
+    if model is None or not feature_payload:
+        return {
+            "available": False,
+            "error": "Saved router model or feature schema not found.",
+        }
+
+    live_feature_row = build_live_router_feature_row(
+        query=query,
+        baseline_results=baseline_results,
+        ranking_input_results=ranking_input_results,
+        contract_enforced_results=contract_enforced_results,
+        contract=contract,
+        enforcement_report=enforcement_report,
+        selected_policy=selected_policy,
+        score_column=score_column,
+    )
+
+    feature_df, feature_cols = build_router_feature_frame_from_artifact(
+        live_feature_row,
+        feature_payload,
+    )
+
+    predicted_policy = model.predict(feature_df[feature_cols])[0]
+    probabilities = model.predict_proba(feature_df[feature_cols])[0]
+    classes = list(model.classes_)
+
+    probability_map = {
+        str(class_name): float(probabilities[index])
+        for index, class_name in enumerate(classes)
+    }
+
+    confidence = max(probability_map.values()) if probability_map else 0.0
+
+    return {
+        "available": True,
+        "predicted_policy": str(predicted_policy),
+        "confidence": float(confidence),
+        "probability_map": probability_map,
+        "feature_row": live_feature_row.to_dict(orient="records")[0],
+        "metadata": metadata,
+    }
+
+
+def render_router_dry_run_panel(router_result):
+    st.markdown("### Router-Integrated CORTEX Dry Run")
+
+    if not router_result.get("available", False):
+        st.warning(router_result.get("error", "Router dry-run unavailable."))
+        return
+
+    predicted_policy = router_result.get("predicted_policy", "unknown")
+    confidence = router_result.get("confidence", 0.0)
+    probability_map = router_result.get("probability_map", {})
+    feature_row = router_result.get("feature_row", {})
+
+    st.markdown(
+        """
+        <div class="info-card-purple">
+            Dry-run mode: the saved learned repair router is being used as an advisory layer.
+            It predicts which policy should be trusted for this query, but the live slate is still
+            produced by the current CORTEX pipeline.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    c1, c2, c3, c4 = st.columns(4)
+
+    c1.metric("Router Choice", predicted_policy)
+    c2.metric("Router Confidence", f"{confidence * 100:.1f}%")
+    c3.metric("Governance Route", feature_row.get("governance_route", "unknown"))
+    c4.metric("Critic Priority", feature_row.get("critic_priority", "unknown"))
+
+    prob_df = pd.DataFrame(
+        {
+            "Policy": list(probability_map.keys()),
+            "Probability": list(probability_map.values()),
+        }
+    )
+
+    if len(prob_df) > 0:
+        fig = px.bar(
+            prob_df,
+            x="Policy",
+            y="Probability",
+            text="Probability",
+            color="Policy",
+            title="Router Policy Probability",
+            color_discrete_sequence=["#94a3b8", "#10b981", "#3b82f6"],
+        )
+
+        fig.update_traces(texttemplate="%{text:.3f}", textposition="outside")
+        fig.update_layout(
+            template="plotly_white",
+            height=340,
+            showlegend=False,
+            margin=dict(l=20, r=20, t=60, b=40),
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    with st.expander("Router Feature Row Used for Dry Run", expanded=False):
+        st.json(feature_row)
+
+    with st.expander("Saved Router Metadata", expanded=False):
+        st.json(router_result.get("metadata", {}))
 
 
 # =============================================================================
@@ -596,7 +1029,7 @@ def render_search_console(products):
         unsafe_allow_html=True,
     )
 
-    top_controls = st.columns([2.2, 1, 1, 1.4, 1])
+    top_controls = st.columns([2.2, 1, 1, 1.55, 1])
 
     with top_controls[0]:
         query = st.text_input(
@@ -624,6 +1057,7 @@ def render_search_console(products):
             "Policy mode",
             [
                 "Slate Q-Learning + Multi-Agent Diversification",
+                "Router-Integrated CORTEX Dry Run",
                 "Slate Q-Learning",
                 "Bandit auto-select",
                 "Manual",
@@ -644,13 +1078,33 @@ def render_search_console(products):
             <div class="info-card-blue">
                 Type a search query above to start. Recommended setting:
                 <b>Semantic + LLM Agent + Slate Q-Learning + Multi-Agent Diversification</b>.
+                Use <b>Router-Integrated CORTEX Dry Run</b> to see what the saved router would choose.
             </div>
             """,
             unsafe_allow_html=True,
         )
         return
 
+    router_dry_run_enabled = policy_mode == "Router-Integrated CORTEX Dry Run"
+
+    effective_policy_mode = (
+        "Slate Q-Learning + Multi-Agent Diversification"
+        if router_dry_run_enabled
+        else policy_mode
+    )
+
     st.markdown(f"### Query: `{query}`")
+
+    if router_dry_run_enabled:
+        st.markdown(
+            """
+            <div class="info-card-purple">
+                Router dry-run is enabled. The app will still run the current best CORTEX pipeline,
+                then ask the saved learned router which strategy it would recommend for this query state.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     with st.spinner("Running CORTEX pipeline..."):
         if retrieval_mode == "TF-IDF":
@@ -676,10 +1130,10 @@ def render_search_console(products):
 
         feedback_log = load_feedback_log()
 
-        if policy_mode == "Bandit auto-select":
+        if effective_policy_mode == "Bandit auto-select":
             selected_policy = select_policy_epsilon_greedy(feedback_log, epsilon=0.2)
 
-        elif policy_mode in [
+        elif effective_policy_mode in [
             "Slate Q-Learning",
             "Slate Q-Learning + Multi-Agent Diversification",
         ]:
@@ -707,10 +1161,10 @@ def render_search_console(products):
         else:
             ranking_input_results = baseline_results
 
-        if policy_mode == "Bandit auto-select":
+        if effective_policy_mode == "Bandit auto-select":
             policy_results = apply_policy_rank(ranking_input_results, selected_policy)
 
-        elif policy_mode in [
+        elif effective_policy_mode in [
             "Slate Q-Learning",
             "Slate Q-Learning + Multi-Agent Diversification",
         ]:
@@ -743,7 +1197,7 @@ def render_search_console(products):
         )
 
         if len(baseline_results) > 0:
-            if policy_mode == "Slate Q-Learning + Multi-Agent Diversification":
+            if effective_policy_mode == "Slate Q-Learning + Multi-Agent Diversification":
                 diversified_results, agent_trace = multi_agent_diversify_slate(
                     ranked_df=contract_enforced_results,
                     top_k=10,
@@ -772,6 +1226,20 @@ def render_search_console(products):
     c3.metric("Retrieved Candidates", len(baseline_results))
     c4.metric("Filtered Candidates", len(ranking_input_results))
     c5.metric("Slate Reward@5", round(slate_reward, 4))
+
+    if router_dry_run_enabled:
+        router_result = run_live_router_dry_run(
+            query=query,
+            baseline_results=baseline_results,
+            ranking_input_results=ranking_input_results,
+            contract_enforced_results=contract_enforced_results,
+            contract=contract,
+            enforcement_report=enforcement_report,
+            selected_policy=selected_policy,
+            score_column=score_column,
+        )
+
+        render_router_dry_run_panel(router_result)
 
     st.markdown("### Agentic Search Contract")
     show_contract_metrics(contract)
@@ -867,7 +1335,7 @@ def render_search_console(products):
                 use_container_width=True,
             )
 
-    if policy_mode in [
+    if effective_policy_mode in [
         "Slate Q-Learning",
         "Slate Q-Learning + Multi-Agent Diversification",
     ]:
@@ -888,7 +1356,7 @@ def render_search_console(products):
         if st.button("Save feedback and update learning", use_container_width=True):
             log_feedback(query, selected_policy, feedback_results)
 
-            if policy_mode in [
+            if effective_policy_mode in [
                 "Slate Q-Learning",
                 "Slate Q-Learning + Multi-Agent Diversification",
             ]:
@@ -1036,7 +1504,7 @@ def render_router_dashboard():
     by_policy_df = load_csv_if_exists("outputs/router_integrated_scalable_eval_by_policy.csv")
     by_route_df = load_csv_if_exists("outputs/router_integrated_scalable_eval_by_route.csv")
     high_impact_df = load_csv_if_exists("outputs/router_integrated_scalable_eval_high_impact.csv")
-    metadata = load_json_if_exists("models/learned_repair_router_metadata.json")
+    metadata = load_router_metadata()
 
     if len(summary_df) == 0:
         st.warning(
@@ -1255,6 +1723,7 @@ def render_architecture_page():
             ["MVP 14.1", "Saved Router Model", "Persists model, feature schema, and metadata."],
             ["MVP 14.2", "Inference Smoke Test", "Loads saved model and scores rows."],
             ["MVP 14.3", "Router-Integrated Scalable Evaluator", "Formal dry-run strategy comparison."],
+            ["MVP 14.4", "Streamlit Router Dry-Run Toggle", "Adds advisory router prediction in the live app."],
         ],
         columns=["MVP", "Component", "Purpose"],
     )
@@ -1265,7 +1734,7 @@ def render_architecture_page():
 
     roadmap = pd.DataFrame(
         [
-            ["MVP 14.4", "Streamlit Router Dry-Run Toggle", "Add router policy option to the live demo UI."],
+            ["MVP 14.5", "Router Decision Logging", "Save live router dry-run outputs for review."],
             ["MVP 15", "Mission-Based Shopping Agent", "Decompose intent like 'World Cup watch party' into item bundles."],
             ["MVP 16", "Behavior-Aware CORTEX", "Use clicks, purchases, ATC, and reward feedback."],
             ["MVP 17", "Multimodal CORTEX", "Use image/text/product metadata for richer ranking decisions."],
@@ -1291,6 +1760,9 @@ with st.sidebar:
         <div class="small-muted">
             Recommended live setting:
             <br><b>Semantic + LLM Agent + Slate Q-Learning + Multi-Agent Diversification</b>
+            <br><br>
+            New dry-run option:
+            <br><b>Router-Integrated CORTEX Dry Run</b>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1299,8 +1771,8 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### Project State")
-    st.write("MVP 14.3 completed")
-    st.write("Router dry-run evaluator ready")
+    st.write("MVP 14.4 in progress")
+    st.write("Router dry-run toggle added")
     st.write("Saved router model ready")
 
     st.divider()
