@@ -1,22 +1,44 @@
-# CORTEX Engine — Agentic RL Search Ranking System
+# 🧠 CORTEX Engine — Agentic RL Search Ranking System
 
-**CORTEX Engine** is an experimental search ranking and recommendation research prototype that explores how **Agentic AI**, **Reinforcement Learning**, **contract-aware ranking**, and **learned routing** can improve search result quality beyond a single static reranker.
+<div align="center">
 
-The project started as a **PolicyRank-RL** prototype and evolved into a modular agentic ranking system with **semantic retrieval**, **LLM-based search contracts**, **candidate filtering**, **slate-level reinforcement learning**, **critic verification**, **repair simulation**, and a **learned repair router**.
+### **An Agentic AI + Reinforcement Learning Research Prototype for Adaptive Search Ranking**
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue)
-![Streamlit](https://img.shields.io/badge/UI-Streamlit-red)
-![RL](https://img.shields.io/badge/RL-Slate_Q--Learning-purple)
-![Agentic AI](https://img.shields.io/badge/Agentic_AI-CORTEX-green)
-![Status](https://img.shields.io/badge/Status-Research_Prototype-orange)
+**CORTEX Engine** explores how **Agentic AI**, **Reinforcement Learning**, **contract-aware ranking**, and **learned routing** can improve search result quality beyond a single static reranker.
+
+<br>
+
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![RL](https://img.shields.io/badge/RL-Slate_Q--Learning-7C3AED?style=for-the-badge)
+![Agentic AI](https://img.shields.io/badge/Agentic_AI-CORTEX-10B981?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Research_Prototype-F97316?style=for-the-badge)
+
+</div>
 
 ---
 
-## What is CORTEX?
+## 🟦 What is CORTEX?
 
-**CORTEX Engine** is a research prototype that asks a simple question:
+**CORTEX Engine** is a research prototype that asks a simple but powerful question:
 
 > Instead of applying the same reranker to every query, can a search system learn when to trust baseline retrieval, when to apply gated reranking, and when to use full agentic reranking?
+
+The project started as a **PolicyRank-RL** prototype and evolved into a modular agentic ranking system with:
+
+| Capability | Description |
+|---|---|
+| 🔎 **Semantic Retrieval** | Retrieves products using meaning-aware matching |
+| 🧾 **LLM Search Contracts** | Converts raw queries into structured intent contracts |
+| 🎯 **Contract-Aware Filtering** | Filters candidates based on intent alignment |
+| 🧠 **Slate Reinforcement Learning** | Learns ranking actions at the slate level |
+| 🕵️ **Critic Verification** | Detects ranking failure modes and risk signals |
+| 🛠️ **Repair Simulation** | Simulates repair strategies using logged outcomes |
+| 🚦 **Learned Repair Router** | Chooses baseline, gated CORTEX, or full CORTEX |
+
+---
+
+## 🟩 Core Idea
 
 Most traditional search systems follow a fixed ranking flow:
 
@@ -30,42 +52,50 @@ CORTEX follows a more adaptive agentic flow:
 query → retrieve → reason → filter → rank → critique → route → repair
 ```
 
-The system does **not** force full reranking on every query. Instead, it learns to choose among:
+Instead of forcing full reranking on every query, CORTEX learns to choose among:
 
-- **Baseline retrieval**
-- **Gated CORTEX**
-- **Full CORTEX**
+| Policy | Meaning |
+|---|---|
+| ⚪ **Baseline Retrieval** | Trust the original retrieval order |
+| 🟢 **Gated CORTEX** | Apply controlled reranking with guardrails |
+| 🟣 **Full CORTEX** | Apply full agentic reranking and optimization |
 
 This helps reduce **over-reranking**, preserve strong baseline results when appropriate, and improve slate-level search quality.
 
 ---
 
-## Key Experimental Result
+## 🟨 Key Experimental Result
 
 The strongest offline evaluation so far used **1000 queries**.
 
 | Strategy | Average Reward@5 |
 |---|---:|
-| Baseline | 0.7528 |
-| Gated CORTEX | 0.8704 |
-| Full CORTEX | 0.8669 |
-| **Router-Integrated CORTEX** | **0.9101** |
-| Oracle Upper Bound | 0.9162 |
+| ⚪ Baseline | 0.7528 |
+| 🔵 Gated CORTEX | 0.8704 |
+| 🟣 Full CORTEX | 0.8669 |
+| 🟢 **Router-Integrated CORTEX** | **0.9101** |
+| 🟠 Oracle Upper Bound | 0.9162 |
 
-The learned router achieved:
+### Router Performance
 
-- **+0.1573 lift vs baseline**
-- **+0.0397 lift vs gated CORTEX**
-- **+0.0433 lift vs full CORTEX**
-- **0.0060 regret vs oracle**
-- **90.0% prediction match rate**
-- **92.4% near-oracle rate**
+| Metric | Value |
+|---|---:|
+| **Lift vs Baseline** | **+0.1573** |
+| **Lift vs Gated CORTEX** | **+0.0397** |
+| **Lift vs Full CORTEX** | **+0.0433** |
+| **Regret vs Oracle** | **0.0060** |
+| **Prediction Match Rate** | **90.0%** |
+| **Near-Oracle Rate** | **92.4%** |
 
-This suggests that the router is successfully learning when to trust **baseline**, **gated CORTEX**, or **full CORTEX**.
+<div align="center">
+
+### ✅ The learned router successfully approximates the oracle policy while improving over baseline, gated CORTEX, and full CORTEX.
+
+</div>
 
 ---
 
-## High-Level Architecture
+## 🟪 High-Level Architecture
 
 ```text
 User Query
@@ -93,24 +123,24 @@ Router-Integrated CORTEX Policy
 
 ---
 
-## Core Components
+## 🧩 Core Components
 
 | Component | Purpose |
 |---|---|
-| **Retrieval Agent** | Retrieves product candidates using TF-IDF or semantic search |
-| **Search Contract Agent** | Converts raw queries into structured intent contracts |
-| **Contract-Aware Filter** | Scores and filters candidates against query intent |
-| **Slate Q-Learning Agent** | Learns ranking actions based on query and slate state |
-| **Multi-Agent Diversifier** | Improves diversity, substitutes, complements, and slate coverage |
-| **Final Slate Enforcer** | Applies final contract guardrails before output |
-| **Critic / Verifier Agent** | Detects ranking failure modes and risk signals |
-| **Repair Simulator** | Simulates repair actions using logged outcomes |
-| **Learned Repair Router** | Chooses between baseline, gated CORTEX, and full CORTEX |
-| **Router-Integrated Evaluator** | Compares router policy against baseline, gated, full, and oracle policies |
+| 🔎 **Retrieval Agent** | Retrieves product candidates using TF-IDF or semantic search |
+| 🧾 **Search Contract Agent** | Converts raw queries into structured intent contracts |
+| 🎯 **Contract-Aware Filter** | Scores and filters candidates against query intent |
+| 🧠 **Slate Q-Learning Agent** | Learns ranking actions based on query and slate state |
+| 🌈 **Multi-Agent Diversifier** | Improves diversity, substitutes, complements, and slate coverage |
+| 🛡️ **Final Slate Enforcer** | Applies final contract guardrails before output |
+| 🕵️ **Critic / Verifier Agent** | Detects ranking failure modes and risk signals |
+| 🛠️ **Repair Simulator** | Simulates repair actions using logged outcomes |
+| 🚦 **Learned Repair Router** | Chooses between baseline, gated CORTEX, and full CORTEX |
+| 📊 **Router-Integrated Evaluator** | Compares router policy against baseline, gated, full, and oracle policies |
 
 ---
 
-## Retrieval Layer
+## 🔎 Retrieval Layer
 
 The project supports two retrieval modes:
 
@@ -128,22 +158,24 @@ src/semantic_retrieval.py
 
 ---
 
-## Search Contract Agent
+## 🧾 Search Contract Agent
 
 The contract agent converts a raw query into a structured search contract.
 
 The contract can include:
 
-- **Product type**
-- **Required terms**
-- **Preferred terms**
-- **Blocked terms**
-- **Brand preference**
-- **Quality preference**
-- **Price sensitivity**
-- **Ranking weights**
-- **Dynamic filters**
-- **Explanation**
+| Contract Field | Purpose |
+|---|---|
+| **Product type** | Infers what kind of item the user wants |
+| **Required terms** | Terms that must be respected |
+| **Preferred terms** | Terms that should be prioritized |
+| **Blocked terms** | Terms/items to avoid |
+| **Brand preference** | Captures brand intent |
+| **Quality preference** | Captures preference for quality/rating |
+| **Price sensitivity** | Captures budget or value intent |
+| **Ranking weights** | Controls downstream scoring |
+| **Dynamic filters** | Adds query-specific filtering |
+| **Explanation** | Explains contract reasoning |
 
 Two contract modes are supported:
 
@@ -161,7 +193,7 @@ src/llm_contract_agent.py
 
 ---
 
-## Contract-Aware Candidate Filtering
+## 🎯 Contract-Aware Candidate Filtering
 
 After retrieval, CORTEX applies a contract-aware filter to check whether products align with the generated search contract.
 
@@ -182,19 +214,21 @@ src/contract_filters.py
 
 ---
 
-## Final Slate Enforcement
+## 🛡️ Final Slate Enforcement
 
 Even after reranking, the final slate can still violate user intent. The final slate enforcer applies additional guardrails before showing the result list.
 
 It tracks:
 
-- **Positive contract rows**
-- **Blocked rows**
-- **Low coverage**
-- **Brand preference**
-- **Final contract score**
-- **Enforcement status**
-- **Enforcement explanation**
+| Signal | Meaning |
+|---|---|
+| **Positive contract rows** | Candidates that satisfy the contract |
+| **Blocked rows** | Candidates removed or penalized |
+| **Low coverage** | Whether the slate lacks enough valid candidates |
+| **Brand preference** | Whether brand intent is respected |
+| **Final contract score** | Final alignment score |
+| **Enforcement status** | Whether enforcement passed |
+| **Enforcement explanation** | Human-readable guardrail reason |
 
 Relevant module:
 
@@ -204,7 +238,7 @@ src/final_slate_enforcer.py
 
 ---
 
-## Slate Q-Learning
+## 🧠 Slate Q-Learning
 
 CORTEX includes a slate-level reinforcement learning loop. Instead of only ranking individual items, it learns which slate-level action is useful under different contract states.
 
@@ -216,11 +250,13 @@ The Q-learning state can depend on:
 
 The action can change ranking weights across:
 
-- **Relevance**
-- **Rating**
-- **Price**
-- **Diversity**
-- **Contract priority**
+| Ranking Signal | Purpose |
+|---|---|
+| **Relevance** | Prioritize query-product match |
+| **Rating** | Prefer higher-rated items |
+| **Price** | Adjust for affordability/value |
+| **Diversity** | Avoid redundant slates |
+| **Contract priority** | Respect intent constraints |
 
 Relevant modules:
 
@@ -232,7 +268,7 @@ src/slate_reward.py
 
 ---
 
-## Multi-Agent Diversification
+## 🌈 Multi-Agent Diversification
 
 CORTEX includes a multi-agent slate diversification layer that selects positions using multiple agent-like objectives.
 
@@ -253,11 +289,19 @@ src/multi_agent_diversifier.py
 
 ---
 
-## Baseline Preservation Gate
+## 🚧 Baseline Preservation Gate
 
 One key lesson from the experiments is that full reranking is not always better. Sometimes the baseline is already strong.
 
-The baseline preservation gate is designed to prevent **over-reranking**. It allows CORTEX to preserve the baseline, lightly rerank, or fully rerank depending on query and slate conditions.
+The baseline preservation gate is designed to prevent **over-reranking**.
+
+It allows CORTEX to choose:
+
+| Gate Decision | Meaning |
+|---|---|
+| **Preserve baseline** | Baseline appears strong enough |
+| **Light rerank** | Apply minimal controlled adjustment |
+| **Full CORTEX** | Allow full agentic reranking |
 
 Relevant module:
 
@@ -267,20 +311,22 @@ src/baseline_preservation_gate.py
 
 ---
 
-## Critic / Verifier Agent
+## 🕵️ Critic / Verifier Agent
 
 The critic agent identifies possible failure modes in the ranking process.
 
 It can flag issues such as:
 
-- **Baseline stronger than CORTEX**
-- **Full CORTEX over-reranking**
-- **Low contract alignment**
-- **Retrieval uncertainty**
-- **Possible label noise**
-- **Over-diversification**
-- **Contract over-filtering**
-- **Mission query requiring decomposition**
+| Failure Mode | Meaning |
+|---|---|
+| **Baseline stronger than CORTEX** | Reranking may have harmed quality |
+| **Full CORTEX over-reranking** | The system became too aggressive |
+| **Low contract alignment** | Results may not match intent |
+| **Retrieval uncertainty** | Candidate pool may be weak |
+| **Possible label noise** | Evaluation labels may be unstable |
+| **Over-diversification** | Diversity may have hurt relevance |
+| **Contract over-filtering** | Too many valid candidates were filtered |
+| **Mission query requiring decomposition** | Query may need bundle/mission reasoning |
 
 Relevant modules:
 
@@ -291,7 +337,7 @@ src/critic_guided_repair_simulator.py
 
 ---
 
-## Learned Repair Router
+## 🚦 Learned Repair Router
 
 The learned repair router is one of the most important pieces of the project.
 
@@ -305,16 +351,15 @@ full_cortex
 
 using features such as:
 
-- **Critic risk score**
-- **Critic priority**
-- **Governance route**
-- **Gate confidence**
-- **Contract alignment**
-- **Top-k retrieval confidence**
-- **Label quality**
-- **Exclusion violation rate**
-- **Blocked rows**
-- **Positive contract rows**
+| Feature Family | Examples |
+|---|---|
+| **Critic signals** | critic risk score, critic priority |
+| **Governance signals** | governance route, route cost proxy |
+| **Gate signals** | gate confidence, final gate score |
+| **Contract signals** | contract alignment, blocked rows |
+| **Retrieval signals** | top-1 score, top-5 mean score |
+| **Label signals** | label quality, possible label noise |
+| **Safety signals** | exclusion violation rate, low coverage |
 
 Relevant modules:
 
@@ -327,27 +372,27 @@ src/repair_router_inference.py
 
 ---
 
-## MVP Progress
+## 📌 MVP Progress
 
 | MVP | Component | Status |
 |---|---|---|
-| MVP 12.x | Experiment logging | Complete |
-| MVP 13.3 | Baseline preservation gate | Complete |
-| MVP 13.5 | Agent governance controller | Complete |
-| MVP 13.6 | Critic / verifier agent | Complete |
-| MVP 13.7 | Critic-guided repair simulator | Complete |
-| MVP 13.8 | Learned repair router | Complete |
-| MVP 13.9 | Out-of-sample validation | Complete |
-| MVP 14.1 | Saved router model | Complete |
-| MVP 14.2 | Router inference smoke test | Complete |
-| MVP 14.3 | Router-integrated scalable evaluator | Complete |
-| MVP 14.4 | Streamlit router dry-run toggle | Complete |
-| MVP 14.5 | Router decision logging | Complete |
-| MVP 14.6 | Router dry-run analyzer | Complete |
+| MVP 12.x | Experiment logging | ✅ Complete |
+| MVP 13.3 | Baseline preservation gate | ✅ Complete |
+| MVP 13.5 | Agent governance controller | ✅ Complete |
+| MVP 13.6 | Critic / verifier agent | ✅ Complete |
+| MVP 13.7 | Critic-guided repair simulator | ✅ Complete |
+| MVP 13.8 | Learned repair router | ✅ Complete |
+| MVP 13.9 | Out-of-sample validation | ✅ Complete |
+| MVP 14.1 | Saved router model | ✅ Complete |
+| MVP 14.2 | Router inference smoke test | ✅ Complete |
+| MVP 14.3 | Router-integrated scalable evaluator | ✅ Complete |
+| MVP 14.4 | Streamlit router dry-run toggle | ✅ Complete |
+| MVP 14.5 | Router decision logging | ✅ Complete |
+| MVP 14.6 | Router dry-run analyzer | ✅ Complete |
 
 ---
 
-## Streamlit App
+## 🖥️ Streamlit App
 
 The project includes a Streamlit app for interactive experimentation.
 
@@ -386,41 +431,19 @@ or:
 
 ---
 
-## Main Commands
+## ⚙️ Main Commands
 
-Run the Streamlit app:
-
-```powershell
-.venv\Scripts\streamlit.exe run app.py
-```
-
-Run the scalable evaluator:
-
-```powershell
-.venv\Scripts\python.exe -m src.scalable_evaluator --sample-size 1000
-```
-
-Run the router-integrated scalable evaluator:
-
-```powershell
-.venv\Scripts\python.exe -m src.router_integrated_scalable_evaluator
-```
-
-Run the router dry-run analyzer:
-
-```powershell
-.venv\Scripts\python.exe -m src.router_dry_run_analyzer
-```
-
-Check Git status:
-
-```powershell
-git status
-```
+| Task | Command |
+|---|---|
+| Run Streamlit app | `.venv\Scripts\streamlit.exe run app.py` |
+| Run scalable evaluator | `.venv\Scripts\python.exe -m src.scalable_evaluator --sample-size 1000` |
+| Run router-integrated evaluator | `.venv\Scripts\python.exe -m src.router_integrated_scalable_evaluator` |
+| Run router dry-run analyzer | `.venv\Scripts\python.exe -m src.router_dry_run_analyzer` |
+| Check Git status | `git status` |
 
 ---
 
-## Important Output Files
+## 📁 Important Output Files
 
 ### Scalable Evaluation
 
@@ -461,7 +484,7 @@ models/learned_repair_router_metadata.json
 
 ---
 
-## Repository Structure
+## 🗂️ Repository Structure
 
 ```text
 policyrank-rl/
@@ -501,7 +524,7 @@ src/router_dry_run_analyzer.py
 
 ---
 
-## Setup
+## 🧰 Setup
 
 Clone the repo:
 
@@ -529,7 +552,7 @@ Do **not** commit `.env`.
 
 ---
 
-## Current Limitations
+## ⚠️ Current Limitations
 
 This is a research prototype, not a production ranking system.
 
@@ -544,19 +567,21 @@ Current limitations:
 
 ---
 
-## Roadmap
+## 🛣️ Roadmap
 
 Next planned stages:
 
-- **MVP 15:** Mission-Based Shopping Agent
-- **MVP 16:** Behavior-Aware CORTEX
-- **MVP 17:** Multimodal CORTEX
-- **MVP 18:** Online Learning Loop
-- **Refactor:** Modularize Streamlit and router utilities
+| Stage | Capability |
+|---|---|
+| **MVP 15** | Mission-Based Shopping Agent |
+| **MVP 16** | Behavior-Aware CORTEX |
+| **MVP 17** | Multimodal CORTEX |
+| **MVP 18** | Online Learning Loop |
+| **Refactor** | Modularize Streamlit and router utilities |
 
 ---
 
-## Disclaimer
+## 📌 Disclaimer
 
 This repository is an independent research and prototype project for experimentation and demonstration of agentic ranking concepts.
 
