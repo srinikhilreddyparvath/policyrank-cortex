@@ -1,0 +1,4510 @@
+{
+  "general_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.24217532846715328,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "general_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.10680656934306569,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "general_medium_quality_medium_price_low_conf": {
+    "relevance_heavy": 0.26839571167883214,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "electronics_medium_quality_high_price_low_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "general_high_quality_medium_price_low_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet supplies_medium_quality_low_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "headphones_medium_quality_high_price_low_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "headphones_medium_quality_high_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet supplies_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "soccer equipment_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Footwear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "apparel_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Laptop Accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "skincare_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bathroom ventilation_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "soccer footwear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "audio accessories_medium_quality_high_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchen appliances_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Footwear_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "audio accessories_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet supplies_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "furniture_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bathroom ventilation_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "luggage accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "home fragrance_medium_quality_low_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "home decor_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "gaming consoles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "audio equipment_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "speakers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baby care_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "shaker bottles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Fitness Equipment_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Home Care_medium_quality_low_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "costumes and character merchandise_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "facial skincare_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "craft supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "electronics_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "stationery_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Chargers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "accessories_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "audio accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "solar chargers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "clothing_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "unknown_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "building materials_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Kitchenware_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "dog toys_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Air Compressors_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "clothing care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "food storage_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cleaning tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fishing equipment_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "mobile battery_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "beach furniture_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "candy and pet treats_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Aquarium Supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cleaning appliances_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "headphones_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Christmas Decorations_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "children's outerwear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "lighting_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchen storage carts_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys_and_games_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "books_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sleep aids_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "camping equipment_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "furniture_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "crafting tools_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "clothing accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "heating appliances_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "apparel and accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "printing supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Audio/Video Receivers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "grooming products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Drill Bits_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "books_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "personal care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "phone cases_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "phone cases_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "mobile accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "warehousing supplies_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "beauty and personal care_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "oral care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bags_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "media_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "solar power products_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Hair Care Tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "footwear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "laptops_high_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pool covers_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "nail care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Books_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "massagers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "clothing_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "hair accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "blankets_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "women's clothing_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "gifts for women_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "furniture_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bathtubs_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "home decor and accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "airbrush kits_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "costumes_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kettle_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "security cameras_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "electronics_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bread_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "swimwear_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Car Accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "USB Hubs and Adapters_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Welding Equipment_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "lawn care equipment_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "photo printers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "hair care_medium_quality_high_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bathroom decor_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Electronics_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "tableware_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Automotive Accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "stickers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "brewing equipment and supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "lingerie_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "automotive parts_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "coin counting machines_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "skincare_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "audio equipment_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cables_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "unknown_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "diaper bags_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "books and media_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "outdoor lighting_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bottle_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cosmetics_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Spa Equipment_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "beverages_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "food_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baby blankets_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bulbs_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "food & beverages_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "mouthwash_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bottles_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "outdoor recreation_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "drinkware_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Trash Cans_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Books_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "children's activity books_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sleep aids_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "plant stands_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Electronics_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "plants and decor_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smartphones_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys_and_apparel_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "electrical switches_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys and collectibles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Cables & Adapters_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "canopies_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "home_appliances_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "dietary supplements_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "clutch bags_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "home accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "socks_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "batteries and chargers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "party supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "home decor_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "mounts and cases_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchen accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "automotive parts_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "moving supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "swimwear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "costume accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Outdoor Play Equipment_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "security alarms_medium_quality_low_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "door hardware_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Christmas Decorations_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchen utensils_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "crafting tools and accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "watches_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sunglasses_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Beauty & Personal Care_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "collectibles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Gaming Accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baby safety products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fireplaces_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "coin accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "seasoning and rubs_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "stickers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "glasses_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "supplements_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "music_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "office supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cameras_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "buckets_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "measuring instruments_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Cables & Adapters_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "plush toys and pet beds_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "snack foods_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smartwatches_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "greeting cards and gifts_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "furniture and storage_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baby furniture_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sauces_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "jewelry_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "batteries and energy storage_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Beverages_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Games_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "garage door openers_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "wigs_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "PC\u30b2\u30fc\u30e0_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "vacuums_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "skin care_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "snacks_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Ammunition_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "books_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "camping gear and accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fitness accessories_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cosmetics_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "screen protectors_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "underwear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Home Improvement_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "watches_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Graphics Cards_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "education_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "apparel_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "audio recording devices_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "filters_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "footwear_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smart home devices_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "skin care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "necklaces_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fashion accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "children's books_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "beauty and fashion_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Home Decor_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Car Seats_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "wearable technology_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bicycles and accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "posters_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Backpacks_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "beading supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "face masks_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "gardening tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "oral care_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "wedding decor_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "unknown_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "shirts_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "screen protectors_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "tools and accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "inflatable products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Bibles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Cookware_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Apparel_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "footwear_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "adhesives_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "dinnerware_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bottle accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "vacuum cleaners_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "activewear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "mask_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet food_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "tablet accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Heating Appliances_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "drinkware_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "male sex toys_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Kitchen & Dining_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fishing accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Dairy Products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "productivity tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "trading cards_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "storage solutions_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "dresses_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "craft supplies_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "facial care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "memorial gifts_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "video games_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "children's literature_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Hair Care Appliances_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Wall Plates_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "face masks_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "projector screens_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "3D Printers_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "health & personal care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "hair care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "stamps_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Games & Hobbies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "planters_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "camera lenses_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "phone accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "music sheets and piano accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Coffee Makers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "stationery_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "purses_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys and games_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "ID Badge Holders_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Storage Devices_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "automotive accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "streaming devices_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet supplements_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "table linens_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "office furniture_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "skincare_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Nutrition Supplements_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cables and batteries_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "art supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "adult toys_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "masks_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "vacuum accessories_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Home Organization_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "furniture_medium_quality_high_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "DVD_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "anime merchandise_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "gift cards_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cameras and accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "gift wrapping supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "plush toys_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "outdoor decorations_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "camera accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "entertainment_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "se\u00f1ales y se\u00f1alizaci\u00f3n_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "luggage_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchen tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "trading cards_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "razors_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "action figures and collectibles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fabric and accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Electronics_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "creamers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pregnancy care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fans_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "headphones_high_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "backpacks_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "clothing_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "beverages_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "holsters_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "makeup_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Health & Wellness_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baby products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "clothing_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Gardening Supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bedding_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "transportation_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Printers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "eco-friendly products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "hair care_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Nail Care_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "birthday gifts_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Hair Styling Tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "health and wellness_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Hair Styling Tools_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baby oral care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "luggage_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "tape_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchen appliances_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "audio equipment_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bathroom accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchen knives_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "medical supplies_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "body jewelry_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchen supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fabric_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "coffee pods_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "deck-related products_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fitness equipment and apparel_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "networking_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "adhesive remover_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "orthotics_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baby products_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cat litter_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "window treatments_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "tents_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "games_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "socks_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pest control products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "adult toys_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "knives_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "women's suits_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "tablets_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baby accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "window frames_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "luggage and carriers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cleaning products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "books and merchandise related to Warrior Cats_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "mobile accessories_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "home goods_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "safety glasses_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cleaning appliances_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "\u30b9\u30de\u30db\u30db\u30eb\u30c0\u30fc_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Cosmetic Containers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cosmetic bags_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "portable speakers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "storage organizers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Bluetooth Speakers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "medical supplies_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Eyewear Accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Security Cameras_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Office Furniture_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cleaning supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baskets_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "jackets_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "body art_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "\u30a2\u30a6\u30c8\u30c9\u30a2\u30a6\u30a7\u30a2_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bedding accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "batteries and lighting equipment_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "food and beverages_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "ammunition_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "tools_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Dresses_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "gaming accessories and consoles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fragrance_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "hair care_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "watches_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "health_and_beauty_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "water bottles_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smartphones_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "children's sleepwear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "party decorations_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "water sports equipment_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "battery chargers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bath towels_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "truck accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "hair care_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "apparel|books|media_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "screen doors_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "laptops_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "food & beverages_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "storage bags_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Pet Food_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet health supplements_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "headphones_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cleaning devices_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Televisions_high_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baking tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "shoelaces_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "books and merchandise related to justice_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Mental Health Resources_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "supplements_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "freezers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "books_and_apparel_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchenware_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sports decorations_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bathroom textiles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "self-help_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "batteries and accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys & hobbies_medium_quality_low_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "condiments_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "school supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "wallets_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "dog feeding accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "shapewear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "gel products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet grooming tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "laundry storage_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "airsoft guns_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "shaving supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "jewelry accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "e-books and e-readers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "e-readers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "games_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "computer components and accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "candy_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "furniture covers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchen gadgets_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fitness videos_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "shoe repair products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys and play food_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "vacuum cleaners and accessories_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "recycling tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sunglasses_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "e-readers_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "motorcycle accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "hair styling tools_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "gift cards_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "candles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Games & Activities_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "computers_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "chainsaws and accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "networking equipment_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Cables and Adapters_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Baking Supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sports equipment_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cleaning supplies_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Tarot and Cat-related Products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "botanical products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "musical instruments_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baking mixes_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Power Tools_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "garden furniture_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "aquatic pet food_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "accessibility aids_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "connectors_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cosmetics_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Virtual Reality Headsets_medium_quality_high_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Beauty & Personal Care_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "children's educational books_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "faucets_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "movies and costumes_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Chargers and Jump Starters_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "herbal supplements_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "merchandise_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Athletic Shoes_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "beauty products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "safety tape_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smart home devices_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smartphones_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "art prints_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Bicycle Accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fragrance_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Books_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "apparel and collectibles_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "liquid transfer tools_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cushions_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "exercise equipment_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet safety accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys and collectibles_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "kitchenware_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "health supplements and toys_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "hats_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Fishing Equipment_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "stationery_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smartphones_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "hair extensions_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "laptops_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "networking devices_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "abdominal support products_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Fertility Testing_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "home decor_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Cables & Connectors_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Office Supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sports equipment_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys and games_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Generators_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Teeth Whitening Products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smart displays and streaming devices_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "lingerie_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Travel Accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bathroom fixtures_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "baby clothing_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "photo paper_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smartphones and wearables_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "wine storage_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "nutritional supplements_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "LED Lighting_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "outdoor gear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Feminine Hygiene_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "makeup_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Libros de negocios_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Smart Home Devices_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "coffee makers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "ink cartridges_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "barware_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fencing_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sports apparel_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Pet Supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "beauty_tools_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "audio accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "watches_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "truck tires_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Trash Bags_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Jewelry_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "lencer\u00eda_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "watch accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "servers_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "adult products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "storage furniture_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "medical supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "e-books_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "music_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "outdoor shade products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Footwear_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fans_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "laptops_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "chicken coops_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "dolls_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "soap_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "eyewear_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "home decor_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "ornaments_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "costumes and decorations_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "turntables_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "photography equipment_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "computers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sheep castration tools_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "footwear_medium_quality_high_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "External Hard Drives_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "golf equipment_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toothbrushes_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "facial care devices_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Art Supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "aromatherapy devices_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "costumes_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "animal health_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "\u30b9\u30dd\u30fc\u30c4\u7528\u54c1_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "cables and adapters_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "remote controls_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sunscreen_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "puzzles_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Camera Accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "automotive accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Cushions_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "nursing products_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "model kits and art supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "skin care_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "beach chairs_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Car Seats_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "candles and candle making supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pet carriers_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "craft supplies_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "video games_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "dresses_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "toys and media_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "health and wellness_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pants_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "window coverings_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "tea bags_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "music_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bottled water_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sports accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "HVAC Supplies_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "reading glasses_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Electrical Accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Home Appliances_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "snacks_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "griddle accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "outerwear_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "musical instruments_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "running shoes_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "shooting accessories_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "snacks_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "picture frames_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "gifts and stationery_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "fruit_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "bottle_medium_quality_low_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "pool maintenance_high_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "educational materials_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "sports bras_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "smoking cessation products_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "Monitors_high_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "vitamins and supplements_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "electronics and gifts_medium_quality_medium_price_medium_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  },
+  "car accessories_medium_quality_medium_price_high_conf": {
+    "relevance_heavy": 0.0,
+    "semantic_heavy": 0.0,
+    "quality_heavy": 0.0,
+    "exploration_heavy": 0.0,
+    "balanced": 0.0
+  }
+}
