@@ -657,3 +657,134 @@ Logistic Regression:
 ### Conclusion
 
 MVP 14.1 converts the Learned Repair Router from an offline validation artifact into a reusable model component. The router remains dry-run only for now, but it can now be loaded by future evaluator or app integrations to choose among baseline, gated CORTEX, and full CORTEX policies per query.
+
+
+
+
+## MVP 14.3 completed: Router-Integrated Scalable Evaluator Dry Run
+
+Implemented a router-integrated scalable evaluator that loads the persisted Learned Repair Router and produces a formal strategy comparison across Baseline, Gated CORTEX, Full CORTEX, Router-Integrated CORTEX, and Oracle logged-policy upper bound.
+
+### Input
+
+- Model: models/learned_repair_router.pkl
+- Feature schema: models/learned_repair_router_features.json
+- Metadata: models/learned_repair_router_metadata.json
+- Evaluation input: outputs/critic_guided_repair_simulation.csv
+- Rows evaluated: 1000
+
+### Output files
+
+- outputs/router_integrated_scalable_eval.csv
+- outputs/router_integrated_scalable_eval_summary.csv
+- outputs/router_integrated_scalable_eval_by_policy.csv
+- outputs/router_integrated_scalable_eval_by_route.csv
+- outputs/router_integrated_scalable_eval_by_split.csv
+- outputs/router_integrated_scalable_eval_high_impact.csv
+
+### Overall results
+
+- Baseline average Reward@5: 0.752832
+- Gated CORTEX average Reward@5: 0.870426
+- Full CORTEX average Reward@5: 0.866860
+- Router-Integrated CORTEX average Reward@5: 0.910128
+- Oracle logged-policy upper bound: 0.916152
+
+### Overall lift vs baseline
+
+- Gated CORTEX lift: +0.117594
+- Full CORTEX lift: +0.114029
+- Router-Integrated CORTEX lift: +0.157296
+- Oracle lift: +0.163320
+
+### Router deltas
+
+- Router delta vs Gated CORTEX: +0.039702
+- Router delta vs Full CORTEX: +0.043268
+- Router regret vs Oracle: 0.006024
+- Prediction match rate: 90.0%
+- Near-oracle rate: 92.4%
+
+### Router policy selection
+
+- Predicted baseline: 215
+- Predicted gated CORTEX: 453
+- Predicted full CORTEX: 332
+
+Oracle distribution:
+
+- Oracle baseline: 168
+- Oracle gated CORTEX: 458
+- Oracle full CORTEX: 374
+
+### By predicted policy
+
+When router selected gated CORTEX:
+
+- Query count: 453
+- Router reward: 0.915804
+- Router lift vs baseline: +0.192302
+- Prediction match rate: 96.03%
+- Near-oracle rate: 98.23%
+
+When router selected full CORTEX:
+
+- Query count: 332
+- Router reward: 0.913054
+- Router lift vs baseline: +0.211396
+- Router delta vs gated: +0.065769
+- Prediction match rate: 93.07%
+
+When router selected baseline:
+
+- Query count: 215
+- Router reward: 0.893650
+- Router delta vs gated: +0.083101
+- Router delta vs full CORTEX: +0.056196
+- Prediction match rate: 72.56%
+
+### By governance route
+
+critic_needed_route:
+
+- Query count: 596
+- Gated reward: 0.857314
+- Full CORTEX reward: 0.854295
+- Router reward: 0.897724
+- Oracle reward: 0.904552
+- Router delta vs gated: +0.040410
+- Router delta vs full CORTEX: +0.043429
+
+full_cortex_route:
+
+- Query count: 361
+- Gated reward: 0.889012
+- Full CORTEX reward: 0.885451
+- Router reward: 0.928173
+- Oracle reward: 0.932010
+- Router delta vs gated: +0.039161
+- Router delta vs full CORTEX: +0.042723
+
+mission_candidate_route:
+
+- Query count: 30
+- Gated reward: 0.886370
+- Full CORTEX reward: 0.874027
+- Router reward: 0.917903
+- Oracle reward: 0.934910
+- Router delta vs gated: +0.031533
+- Router delta vs full CORTEX: +0.043876
+
+light_rerank_route:
+
+- Query count: 13
+- Gated reward: 0.918641
+- Full CORTEX reward: 0.910152
+- Router reward: 0.959742
+- Oracle reward: 0.964290
+- Router delta vs gated: +0.041101
+- Router delta vs full CORTEX: +0.049590
+
+### Conclusion
+
+MVP 14.3 formalizes the saved Learned Repair Router as a dry-run scalable evaluation component. Router-Integrated CORTEX improves average Reward@5 over both Gated CORTEX and Full CORTEX and remains close to the oracle logged-policy upper bound. This establishes the first reusable router-integrated evaluation layer for CORTEX.
