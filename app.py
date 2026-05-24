@@ -1,6 +1,7 @@
 import os
 import json
 import pickle
+from datetime import datetime
 
 import streamlit as st
 import pandas as pd
@@ -48,6 +49,7 @@ ensure_storage_exists()
 ROUTER_MODEL_PATH = "models/learned_repair_router.pkl"
 ROUTER_FEATURES_PATH = "models/learned_repair_router_features.json"
 ROUTER_METADATA_PATH = "models/learned_repair_router_metadata.json"
+ROUTER_DRY_RUN_LOG_PATH = "storage/router_dry_run_log.csv"
 
 
 # =============================================================================
@@ -288,10 +290,6 @@ def safe_float(value, default=0.0):
         return default
 
 
-def safe_bool_value(value):
-    return str(value).lower() in ["true", "1", "yes"]
-
-
 def safe_numeric_series(series):
     return pd.to_numeric(series, errors="coerce").fillna(0.0)
 
@@ -301,6 +299,17 @@ def compact_cols(df, cols):
     if not existing:
         return df
     return df[existing]
+
+
+def get_top_product_title(df):
+    if df is None or len(df) == 0:
+        return ""
+
+    for col in ["product_title", "title"]:
+        if col in df.columns:
+            return str(df.iloc[0].get(col, ""))
+
+    return ""
 
 
 def render_header():
@@ -409,6 +418,71 @@ def show_contract_metrics(contract):
     if "dynamic_filters" in contract:
         with st.expander("View Dynamic LLM Contract Filters", expanded=False):
             st.json(contract.get("dynamic_filters", {}))
+
+
+# =============================================================================
+# Router dry-run logging
+# =============================================================================
+
+def load_router_dry_run_log():
+    return load_csv_if_exists(ROUTER_DRY_RUN_LOG_PATH)
+
+
+def append_router_dry_run_log(row):
+    os.makedirs(os.path.dirname(ROUTER_DRY_RUN_LOG_PATH), exist_ok=True)
+
+    log_row_df = pd.DataFrame([row])
+
+    if os.path.exists(ROUTER_DRY_RUN_LOG_PATH):
+        existing_df = pd.read_csv(ROUTER_DRY_RUN_LOG_PATH)
+        output_df = pd.concat([existing_df, log_row_df], ignore_index=True)
+    else:
+        output_df = log_row_df
+
+    output_df.to_csv(ROUTER_DRY_RUN_LOG_PATH, index=False)
+
+
+def build_router_log_row(
+    query,
+    retrieval_mode,
+    contract_mode,
+    policy_mode,
+    selected_policy,
+    router_result,
+    baseline_results,
+    feedback_results,
+    slate_reward,
+):
+    probability_map = router_result.get("probability_map", {})
+    feature_row = router_result.get("feature_row", {})
+
+    return {
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "query": query,
+        "retrieval_mode": retrieval_mode,
+        "contract_mode": contract_mode,
+        "policy_mode": policy_mode,
+        "selected_policy": selected_policy,
+        "router_predicted_policy": router_result.get("predicted_policy", ""),
+        "router_confidence": router_result.get("confidence", 0.0),
+        "router_prob_baseline": probability_map.get("baseline", 0.0),
+        "router_prob_gated_cortex": probability_map.get("gated_cortex", 0.0),
+        "router_prob_full_cortex": probability_map.get("full_cortex", 0.0),
+        "governance_route": feature_row.get("governance_route", ""),
+        "critic_priority": feature_row.get("critic_priority", ""),
+        "critic_risk_score": feature_row.get("critic_risk_score", 0.0),
+        "gate_final_gate_score": feature_row.get("gate_final_gate_score", 0.0),
+        "gate_contract_alignment_score": feature_row.get("gate_contract_alignment_score", 0.0),
+        "gate_baseline_confidence_score": feature_row.get("gate_baseline_confidence_score", 0.0),
+        "gate_label_quality_score": feature_row.get("gate_label_quality_score", 0.0),
+        "gate_exclusion_violation_rate": feature_row.get("gate_exclusion_violation_rate", 0.0),
+        "positive_contract_rows": feature_row.get("positive_contract_rows", 0),
+        "blocked_rows": feature_row.get("blocked_rows", 0),
+        "low_coverage": feature_row.get("low_coverage", 0),
+        "top_baseline_product": get_top_product_title(baseline_results),
+        "top_cortex_product": get_top_product_title(feedback_results),
+        "slate_reward_at_5": slate_reward,
+    }
 
 
 # =============================================================================
@@ -737,7 +811,17 @@ def run_live_router_dry_run(
     }
 
 
-def render_router_dry_run_panel(router_result):
+def render_router_dry_run_panel(
+    router_result,
+    query,
+    retrieval_mode,
+    contract_mode,
+    policy_mode,
+    selected_policy,
+    baseline_results,
+    feedback_results,
+    slate_reward,
+):
     st.markdown("### Router-Integrated CORTEX Dry Run")
 
     if not router_result.get("available", False):
@@ -794,6 +878,22 @@ def render_router_dry_run_panel(router_result):
         )
 
         st.plotly_chart(fig, use_container_width=True)
+
+    if st.button("Save router dry-run decision", use_container_width=True):
+        log_row = build_router_log_row(
+            query=query,
+            retrieval_mode=retrieval_mode,
+            contract_mode=contract_mode,
+            policy_mode=policy_mode,
+            selected_policy=selected_policy,
+            router_result=router_result,
+            baseline_results=baseline_results,
+            feedback_results=feedback_results,
+            slate_reward=slate_reward,
+        )
+
+        append_router_dry_run_log(log_row)
+        st.success(f"Router dry-run decision saved to {ROUTER_DRY_RUN_LOG_PATH}")
 
     with st.expander("Router Feature Row Used for Dry Run", expanded=False):
         st.json(feature_row)
@@ -1239,7 +1339,17 @@ def render_search_console(products):
             score_column=score_column,
         )
 
-        render_router_dry_run_panel(router_result)
+        render_router_dry_run_panel(
+            router_result=router_result,
+            query=query,
+            retrieval_mode=retrieval_mode,
+            contract_mode=contract_mode,
+            policy_mode=policy_mode,
+            selected_policy=selected_policy,
+            baseline_results=baseline_results,
+            feedback_results=feedback_results,
+            slate_reward=slate_reward,
+        )
 
     st.markdown("### Agentic Search Contract")
     show_contract_metrics(contract)
@@ -1504,6 +1614,7 @@ def render_router_dashboard():
     by_policy_df = load_csv_if_exists("outputs/router_integrated_scalable_eval_by_policy.csv")
     by_route_df = load_csv_if_exists("outputs/router_integrated_scalable_eval_by_route.csv")
     high_impact_df = load_csv_if_exists("outputs/router_integrated_scalable_eval_high_impact.csv")
+    router_dry_run_log = load_router_dry_run_log()
     metadata = load_router_metadata()
 
     if len(summary_df) == 0:
@@ -1552,6 +1663,48 @@ def render_router_dashboard():
     fig = router_3d_chart(by_policy_df)
     if fig is not None:
         st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("### Live Router Dry-Run Log")
+
+    if len(router_dry_run_log) > 0:
+        log_cols = [
+            "timestamp",
+            "query",
+            "router_predicted_policy",
+            "router_confidence",
+            "governance_route",
+            "critic_priority",
+            "critic_risk_score",
+            "top_baseline_product",
+            "top_cortex_product",
+            "slate_reward_at_5",
+        ]
+
+        st.dataframe(
+            compact_cols(router_dry_run_log.tail(50), log_cols),
+            use_container_width=True,
+        )
+
+        if "router_predicted_policy" in router_dry_run_log.columns:
+            policy_counts = (
+                router_dry_run_log["router_predicted_policy"]
+                .value_counts()
+                .reset_index()
+            )
+            policy_counts.columns = ["Router Policy", "Count"]
+
+            fig = px.pie(
+                policy_counts,
+                names="Router Policy",
+                values="Count",
+                title="Live Dry-Run Router Decisions",
+                color_discrete_sequence=px.colors.qualitative.Set2,
+            )
+
+            fig.update_layout(template="plotly_white")
+            st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No live router dry-run decisions saved yet.")
 
     st.markdown("### Router Summary")
     st.dataframe(summary_df, use_container_width=True)
@@ -1724,6 +1877,7 @@ def render_architecture_page():
             ["MVP 14.2", "Inference Smoke Test", "Loads saved model and scores rows."],
             ["MVP 14.3", "Router-Integrated Scalable Evaluator", "Formal dry-run strategy comparison."],
             ["MVP 14.4", "Streamlit Router Dry-Run Toggle", "Adds advisory router prediction in the live app."],
+            ["MVP 14.5", "Router Decision Logging", "Saves live router dry-run decisions for review."],
         ],
         columns=["MVP", "Component", "Purpose"],
     )
@@ -1734,7 +1888,7 @@ def render_architecture_page():
 
     roadmap = pd.DataFrame(
         [
-            ["MVP 14.5", "Router Decision Logging", "Save live router dry-run outputs for review."],
+            ["MVP 14.6", "Router Dry-Run Analyzer", "Analyze saved live router dry-run behavior."],
             ["MVP 15", "Mission-Based Shopping Agent", "Decompose intent like 'World Cup watch party' into item bundles."],
             ["MVP 16", "Behavior-Aware CORTEX", "Use clicks, purchases, ATC, and reward feedback."],
             ["MVP 17", "Multimodal CORTEX", "Use image/text/product metadata for richer ranking decisions."],
@@ -1761,7 +1915,7 @@ with st.sidebar:
             Recommended live setting:
             <br><b>Semantic + LLM Agent + Slate Q-Learning + Multi-Agent Diversification</b>
             <br><br>
-            New dry-run option:
+            Dry-run option:
             <br><b>Router-Integrated CORTEX Dry Run</b>
         </div>
         """,
@@ -1771,8 +1925,8 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### Project State")
-    st.write("MVP 14.4 in progress")
-    st.write("Router dry-run toggle added")
+    st.write("MVP 14.5 in progress")
+    st.write("Router dry-run logging added")
     st.write("Saved router model ready")
 
     st.divider()
