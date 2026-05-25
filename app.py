@@ -35,6 +35,8 @@ from src.multi_agent_diversifier import (
     compute_slate_quality_metrics,
 )
 from src.mission_agent import analyze_mission_query
+from src.mission_slate_builder import build_mission_slate
+from src.mission_slate_guardrails import build_guarded_mission_slate
 
 
 st.set_page_config(
@@ -1935,6 +1937,81 @@ def render_mission_agent():
 
 
 # =============================================================================
+# Mission Shopping
+# =============================================================================
+
+def render_mission_shopping():
+    st.markdown("## Mission Shopping")
+    st.write("Build a mission slate and apply relevance guardrails before reviewing candidates.")
+
+    query = st.text_input(
+        "Shopping mission query",
+        value="world cup watch party",
+        key="mission_shopping_query",
+    )
+    slate_size = st.slider(
+        "Slate size",
+        min_value=5,
+        max_value=20,
+        value=10,
+        key="mission_shopping_slate_size",
+    )
+
+    if st.button("Build Mission Slate", key="build_mission_slate"):
+        analysis = analyze_mission_query(query)
+        raw_slate_df, _ = build_mission_slate(query=query, slate_size=slate_size)
+        guarded_slate_df, guarded_summary_df, rejected_df = build_guarded_mission_slate(
+            query=query,
+            slate_size=slate_size,
+        )
+        guarded_summary = guarded_summary_df.iloc[0]
+
+        metric_col1, metric_col2, metric_col3 = st.columns(3)
+        metric_col1.metric("Mission Detected", "Yes" if analysis.is_mission else "No")
+        metric_col2.metric("Mission Type", analysis.mission_type)
+        metric_col3.metric("Mission Confidence", round(analysis.confidence, 4))
+
+        st.markdown("### Mission Reasoning")
+        st.write(analysis.reasoning)
+
+        if not analysis.is_mission:
+            st.info("This appears to be a single-product query, so a mission slate is not needed.")
+
+        st.markdown("### Sub-Intents")
+        st.dataframe(pd.DataFrame(analysis.sub_intents), use_container_width=True)
+
+        st.markdown("### Raw Mission Slate")
+        st.dataframe(raw_slate_df, use_container_width=True)
+
+        st.markdown("### Guarded Mission Slate")
+        st.dataframe(guarded_slate_df, use_container_width=True)
+
+        if not rejected_df.empty:
+            st.markdown("### Rejected Candidates")
+            st.dataframe(rejected_df, use_container_width=True)
+
+        missing_after_guardrails = json.loads(guarded_summary["missing_after_guardrails"])
+        summary_col1, summary_col2 = st.columns(2)
+        summary_col1.metric(
+            "Coverage Score",
+            round(float(guarded_summary["guarded_coverage_score"]), 4),
+        )
+        summary_col2.metric(
+            "Missing Needs After Guardrails",
+            int(guarded_summary["missing_after_guardrails_count"]),
+        )
+
+        st.markdown("### Missing Needs After Guardrails")
+        if missing_after_guardrails:
+            st.dataframe(
+                pd.DataFrame({"missing_need": missing_after_guardrails}),
+                use_container_width=True,
+            )
+        else:
+            st.info("No mission needs are missing after guardrails.")
+
+
+# =============================================================================
 # Main app
 # =============================================================================
 
@@ -1975,13 +2052,14 @@ with st.sidebar:
 
 render_header()
 
-tab_search, tab_router, tab_learning, tab_architecture, tab_mission = st.tabs(
+tab_search, tab_router, tab_learning, tab_architecture, tab_mission, tab_mission_shopping = st.tabs(
     [
         "Live Search Console",
         "Router Dashboard",
         "Learning Dashboard",
         "Architecture",
         "Mission Agent",
+        "Mission Shopping",
     ]
 )
 
@@ -1999,3 +2077,6 @@ with tab_architecture:
 
 with tab_mission:
     render_mission_agent()
+
+with tab_mission_shopping:
+    render_mission_shopping()
