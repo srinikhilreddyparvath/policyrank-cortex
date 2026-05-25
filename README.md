@@ -1,588 +1,128 @@
-# 🧠 CORTEX Engine — Agentic RL Search Ranking System
+# CORTEX / PolicyRank-RL
 
-<div align="center">
+**An agentic AI search-ranking prototype for governed, explainable product discovery.**
 
-### **An Agentic AI + Reinforcement Learning Research Prototype for Adaptive Search Ranking**
+CORTEX / PolicyRank-RL explores how an AI-assisted search system can make controlled ranking decisions instead of applying the same reranking strategy to every query. It combines semantic retrieval, intent contracts, reinforcement-learning-inspired slate ranking, mission-aware repair, governance decisions, offline evaluation, and a polished Streamlit demonstration experience.
 
-**CORTEX Engine** explores how **Agentic AI**, **Reinforcement Learning**, **contract-aware ranking**, and **learned routing** can improve search result quality beyond a single static reranker.
+CORTEX decides when to preserve baseline ranking, when to apply mission repair, when to use behavior-aware reranking, and when to block aggressive repair for narrow product queries.
 
-<br>
+This repository is designed as a research and product prototype: it demonstrates system architecture, decision traceability, offline analysis, and a stakeholder-friendly demo rather than claiming a deployed production ranking service.
 
-![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
-![RL](https://img.shields.io/badge/RL-Slate_Q--Learning-7C3AED?style=for-the-badge)
-![Agentic AI](https://img.shields.io/badge/Agentic_AI-CORTEX-10B981?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Research_Prototype-F97316?style=for-the-badge)
+## Why It Matters
 
-</div>
+Product search queries behave differently. A focused request such as `adidas soccer cleats` should not be expanded into an unrelated shopping mission, while `beach vacation packing list` may benefit from a useful multi-item slate. CORTEX treats that distinction as a governed routing decision, then exposes the reasoning in both simple and technical views.
 
----
+## Key Capabilities
 
-## 🟦 What is CORTEX?
-
-**CORTEX Engine** is a research prototype that asks a simple but powerful question:
-
-> Instead of applying the same reranker to every query, can a search system learn when to trust baseline retrieval, when to apply gated reranking, and when to use full agentic reranking?
-
-The project started as a **PolicyRank-RL** prototype and evolved into a modular agentic ranking system with:
-
-| Capability | Description |
+| Capability | What it provides |
 |---|---|
-| 🔎 **Semantic Retrieval** | Retrieves products using meaning-aware matching |
-| 🧾 **LLM Search Contracts** | Converts raw queries into structured intent contracts |
-| 🎯 **Contract-Aware Filtering** | Filters candidates based on intent alignment |
-| 🧠 **Slate Reinforcement Learning** | Learns ranking actions at the slate level |
-| 🕵️ **Critic Verification** | Detects ranking failure modes and risk signals |
-| 🛠️ **Repair Simulation** | Simulates repair strategies using logged outcomes |
-| 🚦 **Learned Repair Router** | Chooses baseline, gated CORTEX, or full CORTEX |
+| Semantic retrieval | Finds candidates based on query and product meaning. |
+| Search contract generation | Turns a query into structured ranking intent and constraints. |
+| Contract-aware filtering | Filters and scores candidates against intent requirements. |
+| Slate Q-learning | Selects ranking behavior at the result-slate level. |
+| Multi-agent diversification | Balances relevance, substitutes, complements, and coverage. |
+| Mission-aware shopping repair | Identifies and repairs missing needs in multi-intent shopping tasks. |
+| Strict compound-intent repair rules | Prevents weak or overly broad repairs for narrow queries. |
+| Behavior-aware CORTEX | Uses behavior confidence, mission stage, and policy rationale. |
+| Governance Agent | Chooses a controlled route based on opportunity and risk. |
+| End-to-end Governed CORTEX Runner | Executes a governed decision and emits reviewable output artifacts. |
+| Scalable governed evaluation | Runs the governed workflow across sampled ESCI queries. |
+| Cost vs value governance analyzer | Models infrastructure cost against scenario-based business value. |
+| Dark dual-mode Streamlit UX | Provides simple stakeholder explanations and technical diagnostics. |
 
----
-
-## 🟩 Core Idea
-
-Most traditional search systems follow a fixed ranking flow:
-
-```text
-query → retrieval → reranker → final ranked list
-```
-
-CORTEX follows a more adaptive agentic flow:
+## Architecture
 
 ```text
-query → retrieve → reason → filter → rank → critique → route → repair
+Query -> Retrieval -> Contract Agent -> Policy Ranking -> Mission/Repair Stack
+      -> Governance Agent -> Governed Runner -> Cost/Value Analysis -> Streamlit Demo
 ```
 
-Instead of forcing full reranking on every query, CORTEX learns to choose among:
+At a high level:
 
-| Policy | Meaning |
+| Stage | Purpose |
 |---|---|
-| ⚪ **Baseline Retrieval** | Trust the original retrieval order |
-| 🟢 **Gated CORTEX** | Apply controlled reranking with guardrails |
-| 🟣 **Full CORTEX** | Apply full agentic reranking and optimization |
+| Retrieval | Generate candidate products using semantic or TF-IDF retrieval. |
+| Contract Agent | Infer intent, constraints, and ranking priorities. |
+| Policy Ranking | Rank a slate with policy and contract signals. |
+| Mission/Repair Stack | Expand or repair broad missions only when justified. |
+| Governance Agent | Preserve, rerank, repair, or block intervention based on signals. |
+| Governed Runner | Execute the selected route and produce traceable outputs. |
+| Cost/Value Analysis | Estimate cost and scenario value at production-scale volumes. |
+| Streamlit Demo | Communicate the decision in Simple Mode or expose internals in Technical Mode. |
 
-This helps reduce **over-reranking**, preserve strong baseline results when appropriate, and improve slate-level search quality.
+## Run The Demo
 
----
+From PowerShell:
 
-## 🟨 Key Experimental Result
-
-The strongest offline evaluation so far used **1000 queries**.
-
-| Strategy | Average Reward@5 |
-|---|---:|
-| ⚪ Baseline | 0.7528 |
-| 🔵 Gated CORTEX | 0.8704 |
-| 🟣 Full CORTEX | 0.8669 |
-| 🟢 **Router-Integrated CORTEX** | **0.9101** |
-| 🟠 Oracle Upper Bound | 0.9162 |
-
-### Router Performance
-
-| Metric | Value |
-|---|---:|
-| **Lift vs Baseline** | **+0.1573** |
-| **Lift vs Gated CORTEX** | **+0.0397** |
-| **Lift vs Full CORTEX** | **+0.0433** |
-| **Regret vs Oracle** | **0.0060** |
-| **Prediction Match Rate** | **90.0%** |
-| **Near-Oracle Rate** | **92.4%** |
-
-<div align="center">
-
-### ✅ The learned router successfully approximates the oracle policy while improving over baseline, gated CORTEX, and full CORTEX.
-
-</div>
-
----
-
-## 🟪 High-Level Architecture
-
-```text
-User Query
-   ↓
-Semantic / TF-IDF Retrieval
-   ↓
-LLM Search Contract Agent
-   ↓
-Contract-Aware Candidate Filter
-   ↓
-Slate Q-Learning Policy
-   ↓
-Multi-Agent Diversification
-   ↓
-Final Slate Enforcement
-   ↓
-Critic / Verifier Agent
-   ↓
-Repair Simulation
-   ↓
-Learned Repair Router
-   ↓
-Router-Integrated CORTEX Policy
+```powershell
+cd C:\Users\tonic\GitHubProjects\policyrank-cortex-clean
+.\.venv\Scripts\streamlit.exe run app.py
 ```
 
----
+### Current Demo Path
 
-## 🧩 Core Components
+1. Open Streamlit.
+2. `Live Search Console` opens first.
+3. Type any query.
+4. Run in `Simple Mode` for a clear governed result explanation.
+5. Toggle `Technical Mode` for contracts, signals, policy outputs, and traceability.
+6. Open the `Cost vs Value` tab to review production-volume scenario economics.
 
-| Component | Purpose |
-|---|---|
-| 🔎 **Retrieval Agent** | Retrieves product candidates using TF-IDF or semantic search |
-| 🧾 **Search Contract Agent** | Converts raw queries into structured intent contracts |
-| 🎯 **Contract-Aware Filter** | Scores and filters candidates against query intent |
-| 🧠 **Slate Q-Learning Agent** | Learns ranking actions based on query and slate state |
-| 🌈 **Multi-Agent Diversifier** | Improves diversity, substitutes, complements, and slate coverage |
-| 🛡️ **Final Slate Enforcer** | Applies final contract guardrails before output |
-| 🕵️ **Critic / Verifier Agent** | Detects ranking failure modes and risk signals |
-| 🛠️ **Repair Simulator** | Simulates repair actions using logged outcomes |
-| 🚦 **Learned Repair Router** | Chooses between baseline, gated CORTEX, and full CORTEX |
-| 📊 **Router-Integrated Evaluator** | Compares router policy against baseline, gated, full, and oracle policies |
-
----
-
-## 🔎 Retrieval Layer
-
-The project supports two retrieval modes:
-
-- **TF-IDF retrieval**
-- **Semantic retrieval**
-
-Semantic retrieval is the preferred default because it captures query-product meaning beyond exact token overlap.
-
-Relevant modules:
+### Example Queries
 
 ```text
-src/retrieval.py
-src/semantic_retrieval.py
+beach vacation packing list
+new apartment kitchen setup
+adidas soccer cleats
+office desk setup
+baby shower decorations
 ```
 
----
+## Backend Evaluation Commands
 
-## 🧾 Search Contract Agent
+Run these from the repository root:
 
-The contract agent converts a raw query into a structured search contract.
-
-The contract can include:
-
-| Contract Field | Purpose |
-|---|---|
-| **Product type** | Infers what kind of item the user wants |
-| **Required terms** | Terms that must be respected |
-| **Preferred terms** | Terms that should be prioritized |
-| **Blocked terms** | Terms/items to avoid |
-| **Brand preference** | Captures brand intent |
-| **Quality preference** | Captures preference for quality/rating |
-| **Price sensitivity** | Captures budget or value intent |
-| **Ranking weights** | Controls downstream scoring |
-| **Dynamic filters** | Adds query-specific filtering |
-| **Explanation** | Explains contract reasoning |
-
-Two contract modes are supported:
-
-```text
-Rule-based contract
-LLM Agent contract
+```powershell
+python -m src.governed_cortex_runner --query "beach vacation packing list" --skip-refresh
+python -m src.scalable_governed_evaluator --sample-size 100 --query-mode esci
+python -m src.cost_value_governance_analyzer --daily-query-volume 1000000 --scenario base
 ```
 
-Relevant modules:
+The analyzers write CSV output artifacts under `outputs/`, which the Streamlit app reads for governed decisions, scalable evaluation summaries, and cost/value presentation.
 
-```text
-src/contracts.py
-src/llm_contract_agent.py
-```
+## MVP Status
 
----
-
-## 🎯 Contract-Aware Candidate Filtering
-
-After retrieval, CORTEX applies a contract-aware filter to check whether products align with the generated search contract.
-
-The filter can reason about:
-
-- **Required query terms**
-- **Preferred terms**
-- **Product type alignment**
-- **Brand preference**
-- **Blocked terms**
-- **Contract match score**
-
-Relevant module:
-
-```text
-src/contract_filters.py
-```
-
----
-
-## 🛡️ Final Slate Enforcement
-
-Even after reranking, the final slate can still violate user intent. The final slate enforcer applies additional guardrails before showing the result list.
-
-It tracks:
-
-| Signal | Meaning |
-|---|---|
-| **Positive contract rows** | Candidates that satisfy the contract |
-| **Blocked rows** | Candidates removed or penalized |
-| **Low coverage** | Whether the slate lacks enough valid candidates |
-| **Brand preference** | Whether brand intent is respected |
-| **Final contract score** | Final alignment score |
-| **Enforcement status** | Whether enforcement passed |
-| **Enforcement explanation** | Human-readable guardrail reason |
-
-Relevant module:
-
-```text
-src/final_slate_enforcer.py
-```
-
----
-
-## 🧠 Slate Q-Learning
-
-CORTEX includes a slate-level reinforcement learning loop. Instead of only ranking individual items, it learns which slate-level action is useful under different contract states.
-
-The Q-learning state can depend on:
-
-- **Contract quality**
-- **Retrieval confidence**
-- **Query/candidate condition**
-
-The action can change ranking weights across:
-
-| Ranking Signal | Purpose |
-|---|---|
-| **Relevance** | Prioritize query-product match |
-| **Rating** | Prefer higher-rated items |
-| **Price** | Adjust for affordability/value |
-| **Diversity** | Avoid redundant slates |
-| **Contract priority** | Respect intent constraints |
-
-Relevant modules:
-
-```text
-src/slate_q_learning.py
-src/policy_compiler.py
-src/slate_reward.py
-```
-
----
-
-## 🌈 Multi-Agent Diversification
-
-CORTEX includes a multi-agent slate diversification layer that selects positions using multiple agent-like objectives.
-
-The diversifier can reason across:
-
-- **Exact intent matches**
-- **Substitutes**
-- **Complements**
-- **Diversity**
-- **Redundancy**
-- **Position-level tradeoffs**
-
-Relevant module:
-
-```text
-src/multi_agent_diversifier.py
-```
-
----
-
-## 🚧 Baseline Preservation Gate
-
-One key lesson from the experiments is that full reranking is not always better. Sometimes the baseline is already strong.
-
-The baseline preservation gate is designed to prevent **over-reranking**.
-
-It allows CORTEX to choose:
-
-| Gate Decision | Meaning |
-|---|---|
-| **Preserve baseline** | Baseline appears strong enough |
-| **Light rerank** | Apply minimal controlled adjustment |
-| **Full CORTEX** | Allow full agentic reranking |
-
-Relevant module:
-
-```text
-src/baseline_preservation_gate.py
-```
-
----
-
-## 🕵️ Critic / Verifier Agent
-
-The critic agent identifies possible failure modes in the ranking process.
-
-It can flag issues such as:
-
-| Failure Mode | Meaning |
-|---|---|
-| **Baseline stronger than CORTEX** | Reranking may have harmed quality |
-| **Full CORTEX over-reranking** | The system became too aggressive |
-| **Low contract alignment** | Results may not match intent |
-| **Retrieval uncertainty** | Candidate pool may be weak |
-| **Possible label noise** | Evaluation labels may be unstable |
-| **Over-diversification** | Diversity may have hurt relevance |
-| **Contract over-filtering** | Too many valid candidates were filtered |
-| **Mission query requiring decomposition** | Query may need bundle/mission reasoning |
-
-Relevant modules:
-
-```text
-src/critic_verifier_agent.py
-src/critic_guided_repair_simulator.py
-```
-
----
-
-## 🚦 Learned Repair Router
-
-The learned repair router is one of the most important pieces of the project.
-
-It learns to choose among:
-
-```text
-baseline
-gated_cortex
-full_cortex
-```
-
-using features such as:
-
-| Feature Family | Examples |
-|---|---|
-| **Critic signals** | critic risk score, critic priority |
-| **Governance signals** | governance route, route cost proxy |
-| **Gate signals** | gate confidence, final gate score |
-| **Contract signals** | contract alignment, blocked rows |
-| **Retrieval signals** | top-1 score, top-5 mean score |
-| **Label signals** | label quality, possible label noise |
-| **Safety signals** | exclusion violation rate, low coverage |
-
-Relevant modules:
-
-```text
-src/learned_repair_router.py
-src/repair_router_oos_validator.py
-src/train_and_save_repair_router.py
-src/repair_router_inference.py
-```
-
----
-
-## 📌 MVP Progress
-
-| MVP | Component | Status |
+| Stage | Outcome | Status |
 |---|---|---|
-| MVP 12.x | Experiment logging | ✅ Complete |
-| MVP 13.3 | Baseline preservation gate | ✅ Complete |
-| MVP 13.5 | Agent governance controller | ✅ Complete |
-| MVP 13.6 | Critic / verifier agent | ✅ Complete |
-| MVP 13.7 | Critic-guided repair simulator | ✅ Complete |
-| MVP 13.8 | Learned repair router | ✅ Complete |
-| MVP 13.9 | Out-of-sample validation | ✅ Complete |
-| MVP 14.1 | Saved router model | ✅ Complete |
-| MVP 14.2 | Router inference smoke test | ✅ Complete |
-| MVP 14.3 | Router-integrated scalable evaluator | ✅ Complete |
-| MVP 14.4 | Streamlit router dry-run toggle | ✅ Complete |
-| MVP 14.5 | Router decision logging | ✅ Complete |
-| MVP 14.6 | Router dry-run analyzer | ✅ Complete |
+| MVP 13.x | Baseline gates, governance foundations, critic/repair simulation, learned router | Complete |
+| MVP 14.x | Saved router, scalable router evaluation, Streamlit dry run, logging and analysis | Complete |
+| MVP 15.x | Mission detection, slate construction, repair, quality guardrails, strict repair rules | Complete |
+| MVP 16.x | Behavior-aware CORTEX and interactive product-oriented UX | Complete |
+| MVP 17 | Governance Agent | Complete |
+| MVP 18 | End-to-end Governed CORTEX Runner | Complete |
+| MVP 19 | Scalable governed evaluation, dark dual-mode UI, cost/value analysis and dashboard | Complete |
+| MVP 20 | Final README and demo report polish | Complete |
 
----
+## Outputs Reviewers Can Inspect
 
-## 🖥️ Streamlit App
-
-The project includes a Streamlit app for interactive experimentation.
-
-The app supports:
-
-- **Live search queries**
-- **TF-IDF and semantic retrieval**
-- **Rule-based and LLM-generated contracts**
-- **Manual policy ranking**
-- **Bandit auto-selection**
-- **Slate Q-learning**
-- **Multi-agent diversification**
-- **Router dry-run mode**
-- **Router decision logging**
-- **Router dashboard**
-- **Learning dashboard**
-- **Architecture overview**
-
-Main file:
-
-```text
-app.py
-```
-
-Run the app with:
-
-```powershell
-.venv\Scripts\streamlit.exe run app.py
-```
-
-or:
-
-```powershell
-.venv\Scripts\python.exe -m streamlit run app.py
-```
-
----
-
-## ⚙️ Main Commands
-
-| Task | Command |
+| Output | Description |
 |---|---|
-| Run Streamlit app | `.venv\Scripts\streamlit.exe run app.py` |
-| Run scalable evaluator | `.venv\Scripts\python.exe -m src.scalable_evaluator --sample-size 1000` |
-| Run router-integrated evaluator | `.venv\Scripts\python.exe -m src.router_integrated_scalable_evaluator` |
-| Run router dry-run analyzer | `.venv\Scripts\python.exe -m src.router_dry_run_analyzer` |
-| Check Git status | `git status` |
+| Governed result summary and slate | Selected governance route and final ranked output. |
+| Governance decision trace | Decision signals and human-readable reasoning. |
+| Scalable governed evaluation | Aggregate behavior across a query sample. |
+| Cost/value summary | Chosen scenario economics and recommendation. |
+| Route-level cost/value data | Which governance routes drive modeled cost and value. |
+| Scenario comparison data | Conservative, base, and optimistic modeled outcomes. |
 
----
+## Scope And Limitations
 
-## 📁 Important Output Files
+> This is a research prototype using ESCI/sample data. Some arbitrary queries may have limited product coverage depending on the local candidate pool.
 
-### Scalable Evaluation
+> Cost/value outputs are scenario-based assumptions for business-case analysis, not measured production revenue.
 
-```text
-outputs/scalable_eval_mvp13_3_1_resilient_1000.csv
-outputs/scalable_eval_summary_mvp13_3_1_resilient_1000.csv
-outputs/scalable_eval_by_query_mvp13_3_1_resilient_1000.csv
-outputs/scalable_eval_lift_chart_mvp13_3_1_resilient_1000.png
-```
+Offline reward metrics and modeled cost/value scenarios support experimentation and system evaluation. They do not represent verified production click-through-rate, engagement, conversion, or revenue lift.
 
-### Router Evaluation
+## Documentation
 
-```text
-outputs/router_integrated_scalable_eval.csv
-outputs/router_integrated_scalable_eval_summary.csv
-outputs/router_integrated_scalable_eval_by_policy.csv
-outputs/router_integrated_scalable_eval_by_route.csv
-outputs/router_integrated_scalable_eval_high_impact.csv
-```
-
-### Router Dry-Run Logs
-
-```text
-storage/router_dry_run_log.csv
-outputs/router_dry_run_log_summary.csv
-outputs/router_dry_run_log_by_policy.csv
-outputs/router_dry_run_log_by_route.csv
-outputs/router_dry_run_log_policy_probability_audit.csv
-```
-
-### Saved Router Model
-
-```text
-models/learned_repair_router.pkl
-models/learned_repair_router_features.json
-models/learned_repair_router_metadata.json
-```
-
----
-
-## 🗂️ Repository Structure
-
-```text
-policyrank-rl/
-│
-├── app.py
-├── README.md
-├── PROJECT_STATUS.md
-├── requirements.txt
-│
-├── data/
-├── models/
-├── outputs/
-├── storage/
-└── src/
-```
-
-Key source files:
-
-```text
-src/semantic_retrieval.py
-src/llm_contract_agent.py
-src/contract_filters.py
-src/final_slate_enforcer.py
-src/slate_q_learning.py
-src/policy_compiler.py
-src/slate_reward.py
-src/multi_agent_diversifier.py
-src/baseline_preservation_gate.py
-src/agent_governance_controller.py
-src/critic_verifier_agent.py
-src/critic_guided_repair_simulator.py
-src/learned_repair_router.py
-src/router_integrated_scalable_evaluator.py
-src/repair_router_inference.py
-src/router_dry_run_analyzer.py
-```
-
----
-
-## 🧰 Setup
-
-Clone the repo:
-
-```powershell
-git clone https://github.com/srinikhilreddyparvath/policyrank-cortex.git
-cd policyrank-cortex
-git lfs pull
-```
-
-Create and activate a virtual environment:
-
-```powershell
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-Create a local environment file if needed:
-
-```powershell
-notepad .env
-```
-
-Do **not** commit `.env`.
-
----
-
-## ⚠️ Current Limitations
-
-This is a research prototype, not a production ranking system.
-
-Current limitations:
-
-- Uses **Amazon ESCI-style data**
-- Some reward signals are **simulated**
-- Router dry-run features are approximated from **session state**
-- No live online experimentation yet
-- Mission-based shopping is planned but not complete
-- Behavior and multimodal signals are planned but not complete
-
----
-
-## 🛣️ Roadmap
-
-Next planned stages:
-
-| Stage | Capability |
-|---|---|
-| **MVP 15** | Mission-Based Shopping Agent |
-| **MVP 16** | Behavior-Aware CORTEX |
-| **MVP 17** | Multimodal CORTEX |
-| **MVP 18** | Online Learning Loop |
-| **Refactor** | Modularize Streamlit and router utilities |
-
----
-
-## 📌 Disclaimer
-
-This repository is an independent research and prototype project for experimentation and demonstration of agentic ranking concepts.
-
-It is **not production-ready** and should not be treated as a production ranking system without additional validation, testing, monitoring, and governance.
+- [PROJECT_STATUS.md](PROJECT_STATUS.md) summarizes the current milestone and remaining optional enhancements.
+- [DEMO_REPORT.md](DEMO_REPORT.md) provides an executive overview and a concise demonstration script.

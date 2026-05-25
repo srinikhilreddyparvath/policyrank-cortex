@@ -3377,7 +3377,7 @@ with st.sidebar:
     st.markdown(
         """
         <div class="small-muted">
-            <b>Current MVP: 19.4</b>
+            <b>Current MVP: 20</b>
             <br><br>
             Simple Mode for demos, Technical Mode for internals.
         </div>
@@ -3388,11 +3388,11 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### Project State")
-    st.write("MVP 19.4 in progress")
+    st.write("MVP 20 complete")
     st.write("Governed CORTEX runner complete")
     st.write("Scalable evaluation complete")
-    st.write("Cost vs Value dashboard in progress")
-    st.write("MVP 20 final polish next")
+    st.write("Cost vs Value dashboard complete")
+    st.write("Final README + Demo Report polish complete")
 
     st.divider()
 
