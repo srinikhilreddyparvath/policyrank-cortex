@@ -34,9 +34,6 @@ from src.multi_agent_diversifier import (
     multi_agent_diversify_slate,
     compute_slate_quality_metrics,
 )
-from src.mission_agent import analyze_mission_query
-from src.mission_slate_builder import build_mission_slate
-from src.mission_slate_guardrails import build_guarded_mission_slate
 
 
 st.set_page_config(
@@ -56,14 +53,17 @@ ROUTER_DRY_RUN_LOG_PATH = "storage/router_dry_run_log.csv"
 
 
 # =============================================================================
-# Simple bright UI styling
+# Polished CORTEX UI styling
 # =============================================================================
 
 st.markdown(
     """
     <style>
         .stApp {
-            background: linear-gradient(180deg, #f7fbff 0%, #f8fafc 45%, #ffffff 100%);
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 26%),
+                radial-gradient(circle at top right, rgba(16, 185, 129, 0.10), transparent 28%),
+                linear-gradient(180deg, #f7fbff 0%, #f8fafc 45%, #ffffff 100%);
             color: #0f172a;
         }
 
@@ -73,27 +73,37 @@ st.markdown(
         }
 
         .main-title-card {
-            background: linear-gradient(135deg, #ffffff 0%, #eef6ff 55%, #f5f3ff 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #eef6ff 48%, #ecfdf5 100%);
             border: 1px solid #dbeafe;
-            border-radius: 22px;
-            padding: 28px 32px;
+            border-radius: 26px;
+            padding: 30px 34px;
             margin-bottom: 18px;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+        }
+
+        .main-eyebrow {
+            font-size: 0.82rem;
+            font-weight: 850;
+            color: #2563eb;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 8px;
         }
 
         .main-title {
-            font-size: 2.35rem;
-            font-weight: 850;
+            font-size: 2.55rem;
+            font-weight: 900;
             color: #0f172a;
-            letter-spacing: -0.04em;
-            margin-bottom: 6px;
+            letter-spacing: -0.055em;
+            line-height: 1.08;
+            margin-bottom: 8px;
         }
 
         .main-subtitle {
-            font-size: 1rem;
+            font-size: 1.02rem;
             color: #475569;
-            line-height: 1.6;
-            max-width: 1100px;
+            line-height: 1.65;
+            max-width: 1120px;
         }
 
         .badge-row {
@@ -105,57 +115,62 @@ st.markdown(
 
         .badge {
             font-size: 0.78rem;
-            font-weight: 700;
-            padding: 7px 11px;
+            font-weight: 800;
+            padding: 8px 12px;
             border-radius: 999px;
             color: #1e293b;
             background: #ffffff;
             border: 1px solid #cbd5e1;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
         }
 
         .soft-card {
             background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 18px;
+            border-radius: 20px;
             padding: 18px 20px;
             margin-bottom: 16px;
-            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.055);
         }
 
         .info-card-blue {
             background: #eff6ff;
             border: 1px solid #bfdbfe;
-            border-radius: 16px;
+            border-radius: 18px;
             padding: 16px 18px;
             color: #1e3a8a;
             margin-bottom: 12px;
+            line-height: 1.62;
         }
 
         .info-card-green {
             background: #ecfdf5;
             border: 1px solid #bbf7d0;
-            border-radius: 16px;
+            border-radius: 18px;
             padding: 16px 18px;
             color: #065f46;
             margin-bottom: 12px;
+            line-height: 1.62;
         }
 
         .info-card-yellow {
             background: #fffbeb;
             border: 1px solid #fde68a;
-            border-radius: 16px;
+            border-radius: 18px;
             padding: 16px 18px;
             color: #92400e;
             margin-bottom: 12px;
+            line-height: 1.62;
         }
 
         .info-card-purple {
             background: #f5f3ff;
             border: 1px solid #ddd6fe;
-            border-radius: 16px;
+            border-radius: 18px;
             padding: 16px 18px;
             color: #4c1d95;
             margin-bottom: 12px;
+            line-height: 1.62;
         }
 
         .agent-box {
@@ -164,13 +179,13 @@ st.markdown(
             border-radius: 16px;
             padding: 14px;
             text-align: center;
-            font-weight: 750;
+            font-weight: 800;
             color: #1e3a8a;
-            min-height: 70px;
+            min-height: 72px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.06);
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.06);
         }
 
         .agent-arrow {
@@ -191,30 +206,41 @@ st.markdown(
 
         div[data-testid="stMetricLabel"] {
             color: #64748b;
-            font-weight: 650;
+            font-weight: 700;
         }
 
         div[data-testid="stMetricValue"] {
             color: #0f172a;
-            font-weight: 850;
+            font-weight: 900;
         }
 
         .small-muted {
             color: #64748b;
             font-size: 0.92rem;
-            line-height: 1.55;
+            line-height: 1.6;
+        }
+
+        .section-kicker {
+            color: #2563eb;
+            font-size: 0.78rem;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 6px;
         }
 
         .stTabs [data-baseweb="tab-list"] {
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .stTabs [data-baseweb="tab"] {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 999px;
-            padding: 8px 18px;
+            padding: 9px 18px;
             color: #334155;
+            font-weight: 800;
         }
 
         .stTabs [aria-selected="true"] {
@@ -225,11 +251,16 @@ st.markdown(
 
         h1, h2, h3 {
             color: #0f172a;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.025em;
         }
 
         .block-container {
-            padding-top: 2.5rem;
+            padding-top: 2.3rem;
+        }
+
+        div[data-testid="stDataFrame"] {
+            border-radius: 16px;
+            overflow: hidden;
         }
     </style>
     """,
@@ -319,18 +350,19 @@ def render_header():
     st.markdown(
         """
         <div class="main-title-card">
-            <div class="main-title">PolicyRank-RL: CORTEX Engine</div>
+            <div class="main-eyebrow">PolicyRank-RL · CORTEX Engine</div>
+            <div class="main-title">Agentic search ranking with governed policy intelligence.</div>
             <div class="main-subtitle">
-                A clean research prototype for agentic search ranking: semantic retrieval,
-                LLM-generated search contracts, contract-aware filtering, slate Q-learning,
-                multi-agent diversification, critic verification, and learned repair routing.
+                A clean research prototype for semantic retrieval, LLM-generated search contracts,
+                contract-aware filtering, slate Q-learning, multi-agent diversification, critic verification,
+                learned repair routing, mission-aware shopping, and behavior-aware cold-start rescue.
             </div>
             <div class="badge-row">
                 <div class="badge">Semantic Retrieval</div>
                 <div class="badge">LLM Contracts</div>
-                <div class="badge">Contract Filtering</div>
                 <div class="badge">Slate Q-Learning</div>
-                <div class="badge">Critic Agent</div>
+                <div class="badge">Mission Repair</div>
+                <div class="badge">Behavior-Aware CORTEX</div>
                 <div class="badge">Learned Router</div>
             </div>
         </div>
@@ -375,6 +407,171 @@ def render_agent_flow():
         st.markdown('<div class="agent-arrow">→</div>', unsafe_allow_html=True)
     with row2[6]:
         st.markdown('<div class="agent-box">Repair Router</div>', unsafe_allow_html=True)
+
+
+# =============================================================================
+# Product Home / Renovated Dashboard Helpers
+# =============================================================================
+
+def render_capability_card(title, subtitle, accent="#2563eb"):
+    st.markdown(
+        f"""
+        <div class="soft-card" style="border-left: 7px solid {accent}; min-height: 145px;">
+            <div style="font-size: 1.02rem; font-weight: 850; color: #0f172a; margin-bottom: 8px;">
+                {title}
+            </div>
+            <div class="small-muted">
+                {subtitle}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_status_pill(label, value, accent="#2563eb"):
+    st.markdown(
+        f"""
+        <div class="soft-card" style="border-left: 7px solid {accent};">
+            <div style="font-size: 0.78rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em;">
+                {label}
+            </div>
+            <div style="font-size: 1.35rem; font-weight: 900; color: #0f172a; margin-top: 8px;">
+                {value}
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_product_home():
+    st.markdown("## CORTEX Product Home")
+
+    st.markdown(
+        """
+        <div class="info-card-blue">
+            <b>CORTEX</b> is an agentic ranking prototype for search. It does not only retrieve and rank products.
+            It reasons about user intent, contracts, slate quality, mission coverage, critic feedback,
+            repair decisions, behavior confidence, cold-start rescue, and routing policy.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Current System Snapshot")
+
+    s1, s2, s3, s4 = st.columns(4)
+
+    with s1:
+        render_status_pill("Current Stage", "MVP 16.2", "#2563eb")
+    with s2:
+        render_status_pill("Core Mode", "Agentic Ranking", "#7c3aed")
+    with s3:
+        render_status_pill("Latest Layer", "Behavior-Aware", "#059669")
+    with s4:
+        render_status_pill("Repo Flow", "Build → Test → Commit", "#d97706")
+
+    st.markdown("### What CORTEX Does")
+
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+        render_capability_card(
+            "Intent and Contract Intelligence",
+            "Turns a query into a search contract using rule-based or LLM-assisted logic, then filters candidates against the contract.",
+            "#2563eb",
+        )
+
+    with c2:
+        render_capability_card(
+            "Policy Ranking and Slate Governance",
+            "Uses policy ranking, slate enforcement, Q-learning actions, and diversification to produce a controlled final slate.",
+            "#7c3aed",
+        )
+
+    with c3:
+        render_capability_card(
+            "Behavior-Aware Mission Repair",
+            "Balances behavior evidence with mission-stage coverage, cold-start rescue, exploration, and explainable reason codes.",
+            "#059669",
+        )
+
+    st.markdown("### Agentic Flow")
+
+    render_agent_flow()
+
+    st.markdown("### MVP Progress Timeline")
+
+    milestones = pd.DataFrame(
+        [
+            ["MVP 13.x", "Governed CORTEX Foundation", "Baseline gate, critic, repair simulator, learned router."],
+            ["MVP 14.x", "Router Stack", "Saved router model, scalable evaluator, Streamlit dry-run, decision logging, analyzer."],
+            ["MVP 15.1", "Mission Agent", "Detects mission-like shopping queries."],
+            ["MVP 15.2", "Mission Slate Builder", "Builds multi-intent shopping slates."],
+            ["MVP 15.3", "Mission Relevance Guardrails", "Protects against weak or irrelevant mission results."],
+            ["MVP 15.4", "Streamlit Mission Integration", "Adds mission-shopping integration to the UI."],
+            ["MVP 15.5", "Mission Coverage Analyzer", "Measures sub-intent coverage and gaps."],
+            ["MVP 15.6", "Mission Critic Agent", "Diagnoses slate weakness and repair needs."],
+            ["MVP 15.7", "Mission Repair Loop", "Adds missing mission sub-intents when useful."],
+            ["MVP 15.8", "Repair Quality Guardrails", "Rejects weak repaired candidates."],
+            ["MVP 15.9", "Strict Compound Repair Rules", "Prevents over-repair for narrow queries and validates compound intent repairs."],
+            ["MVP 16", "Behavior-Aware CORTEX", "Adds behavior confidence, mission stage, exploration, cold-start rescue, and policy reasons."],
+            ["MVP 16.1", "Behavior-Aware Streamlit Page", "Makes the behavior-aware layer interactive."],
+            ["MVP 16.2", "UI Renovation", "Turns the app into a cleaner, demo-ready CORTEX product dashboard."],
+        ],
+        columns=["Stage", "Capability", "What It Adds"],
+    )
+
+    st.dataframe(milestones, use_container_width=True, hide_index=True)
+
+    st.markdown("### Demo Playbook")
+
+    d1, d2 = st.columns(2)
+
+    with d1:
+        st.markdown(
+            """
+            <div class="info-card-green">
+                <b>Best demo path:</b><br><br>
+                1. Start with this Product Home tab.<br>
+                2. Open the Behavior-Aware CORTEX page from the sidebar.<br>
+                3. Run <b>beach vacation packing list</b>.<br>
+                4. Show cold-start rescue and policy reason codes.<br>
+                5. Return to Live Search Console for the broader CORTEX pipeline.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with d2:
+        st.markdown(
+            """
+            <div class="info-card-purple">
+                <b>Best query examples:</b><br><br>
+                <b>new apartment kitchen setup</b> → compound setup mission<br>
+                <b>beach vacation packing list</b> → multi-category travel mission<br>
+                <b>adidas soccer cleats</b> → narrow branded product query<br>
+                <b>world cup watch party</b> → event-based shopping mission
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("### Why This Is Different")
+
+    st.markdown(
+        """
+        <div class="info-card-yellow">
+            A normal ranking model can become click-greedy: it may over-promote items with strong behavior evidence
+            and bury useful but underexposed items. CORTEX adds a policy layer that asks:
+            <b>Does this item help complete the user's mission?</b>
+            That is why the latest behavior-aware layer includes cold-start rescue, exploration flags,
+            and policy reason codes.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 # =============================================================================
@@ -1123,10 +1320,10 @@ def render_search_console(products):
 
     st.markdown(
         """
-        <div class="small-muted">
+        <div class="info-card-blue">
             Run a query through the working CORTEX pipeline: retrieval, contract generation,
             contract filtering, policy ranking, final slate enforcement, optional Q-learning,
-            and multi-agent diversification.
+            multi-agent diversification, and optional router dry-run.
         </div>
         """,
         unsafe_allow_html=True,
@@ -1178,7 +1375,7 @@ def render_search_console(products):
     if not query:
         st.markdown(
             """
-            <div class="info-card-blue">
+            <div class="info-card-green">
                 Type a search query above to start. Recommended setting:
                 <b>Semantic + LLM Agent + Slate Q-Learning + Multi-Agent Diversification</b>.
                 Use <b>Router-Integrated CORTEX Dry Run</b> to see what the saved router would choose.
@@ -1881,134 +2078,38 @@ def render_architecture_page():
             ["MVP 14.3", "Router-Integrated Scalable Evaluator", "Formal dry-run strategy comparison."],
             ["MVP 14.4", "Streamlit Router Dry-Run Toggle", "Adds advisory router prediction in the live app."],
             ["MVP 14.5", "Router Decision Logging", "Saves live router dry-run decisions for review."],
+            ["MVP 14.6", "Router Dry-Run Analyzer", "Analyzes saved live router decisions."],
+            ["MVP 15.1", "Mission Agent", "Detects compound shopping missions."],
+            ["MVP 15.2", "Mission Slate Builder", "Builds mission-aware multi-intent slates."],
+            ["MVP 15.3", "Mission Guardrails", "Prevents irrelevant mission expansions."],
+            ["MVP 15.5", "Mission Coverage Analyzer", "Measures missing sub-intents."],
+            ["MVP 15.6", "Mission Critic Agent", "Diagnoses mission slate weaknesses."],
+            ["MVP 15.7", "Mission Repair Loop", "Adds missing but useful mission items."],
+            ["MVP 15.8", "Repair Quality Guardrails", "Rejects low-quality repairs."],
+            ["MVP 15.9", "Strict Compound Repair Rules", "Prevents over-repair on narrow product queries."],
+            ["MVP 16", "Behavior-Aware CORTEX", "Adds behavior confidence, mission stage, cold-start rescue, and policy reasons."],
+            ["MVP 16.1", "Behavior-Aware Streamlit Page", "Makes MVP 16 interactive."],
+            ["MVP 16.2", "Streamlit UI Renovation", "Makes the dashboard product-ready and demo-friendly."],
         ],
         columns=["MVP", "Component", "Purpose"],
     )
 
-    st.dataframe(milestones, use_container_width=True)
+    st.dataframe(milestones, use_container_width=True, hide_index=True)
 
     st.markdown("### Roadmap")
 
     roadmap = pd.DataFrame(
         [
-            ["MVP 14.6", "Router Dry-Run Analyzer", "Analyze saved live router dry-run behavior."],
-            ["MVP 15", "Mission-Based Shopping Agent", "Decompose intent like 'World Cup watch party' into item bundles."],
-            ["MVP 16", "Behavior-Aware CORTEX", "Use clicks, purchases, ATC, and reward feedback."],
-            ["MVP 17", "Multimodal CORTEX", "Use image/text/product metadata for richer ranking decisions."],
-            ["MVP 18", "Online Learning Loop", "Update routing and ranking policies from new feedback."],
+            ["MVP 16.3", "Unified Mission + Behavior Dashboard", "Bring mission repair and behavior-aware outputs into one view."],
+            ["MVP 17", "Pseudo-CTR Scoring Layer", "Add CTR-like behavior scoring using ESCI proxy labels."],
+            ["MVP 17.1", "CTR vs CORTEX Evaluation Dashboard", "Compare pure behavior ranking against CORTEX policy ranking."],
+            ["MVP 18", "Embedding Retrieval / FAISS Optional Layer", "Add retrieval infrastructure only if needed after ranking layer is stable."],
+            ["MVP 19", "Bandit Feedback Loop", "Make exploration and exploitation more explicitly RL-like."],
         ],
         columns=["Stage", "Planned Capability", "Why It Matters"],
     )
 
-    st.dataframe(roadmap, use_container_width=True)
-
-
-# =============================================================================
-# Mission Agent
-# =============================================================================
-
-def render_mission_agent():
-    st.markdown("## Mission Agent")
-    st.write("Analyze whether a shopping query represents a broader mission or a single product.")
-
-    query = st.text_input(
-        "Mission query",
-        value="world cup watch party",
-        key="mission_agent_query",
-    )
-
-    if st.button("Analyze Mission", key="analyze_mission"):
-        analysis = analyze_mission_query(query)
-
-        metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
-        metric_col1.metric("Is Mission", str(analysis.is_mission))
-        metric_col2.metric("Mission Type", analysis.mission_type)
-        metric_col3.metric("Mission Name", analysis.mission_name)
-        metric_col4.metric("Confidence", round(analysis.confidence, 4))
-
-        st.markdown("### Reasoning")
-        st.write(analysis.reasoning)
-
-        if not analysis.is_mission:
-            st.info("This appears to be a single-product query rather than a mission-based shopping request.")
-
-        st.markdown("### Sub-Intents")
-        st.dataframe(pd.DataFrame(analysis.sub_intents), use_container_width=True)
-
-
-# =============================================================================
-# Mission Shopping
-# =============================================================================
-
-def render_mission_shopping():
-    st.markdown("## Mission Shopping")
-    st.write("Build a mission slate and apply relevance guardrails before reviewing candidates.")
-
-    query = st.text_input(
-        "Shopping mission query",
-        value="world cup watch party",
-        key="mission_shopping_query",
-    )
-    slate_size = st.slider(
-        "Slate size",
-        min_value=5,
-        max_value=20,
-        value=10,
-        key="mission_shopping_slate_size",
-    )
-
-    if st.button("Build Mission Slate", key="build_mission_slate"):
-        analysis = analyze_mission_query(query)
-        raw_slate_df, _ = build_mission_slate(query=query, slate_size=slate_size)
-        guarded_slate_df, guarded_summary_df, rejected_df = build_guarded_mission_slate(
-            query=query,
-            slate_size=slate_size,
-        )
-        guarded_summary = guarded_summary_df.iloc[0]
-
-        metric_col1, metric_col2, metric_col3 = st.columns(3)
-        metric_col1.metric("Mission Detected", "Yes" if analysis.is_mission else "No")
-        metric_col2.metric("Mission Type", analysis.mission_type)
-        metric_col3.metric("Mission Confidence", round(analysis.confidence, 4))
-
-        st.markdown("### Mission Reasoning")
-        st.write(analysis.reasoning)
-
-        if not analysis.is_mission:
-            st.info("This appears to be a single-product query, so a mission slate is not needed.")
-
-        st.markdown("### Sub-Intents")
-        st.dataframe(pd.DataFrame(analysis.sub_intents), use_container_width=True)
-
-        st.markdown("### Raw Mission Slate")
-        st.dataframe(raw_slate_df, use_container_width=True)
-
-        st.markdown("### Guarded Mission Slate")
-        st.dataframe(guarded_slate_df, use_container_width=True)
-
-        if not rejected_df.empty:
-            st.markdown("### Rejected Candidates")
-            st.dataframe(rejected_df, use_container_width=True)
-
-        missing_after_guardrails = json.loads(guarded_summary["missing_after_guardrails"])
-        summary_col1, summary_col2 = st.columns(2)
-        summary_col1.metric(
-            "Coverage Score",
-            round(float(guarded_summary["guarded_coverage_score"]), 4),
-        )
-        summary_col2.metric(
-            "Missing Needs After Guardrails",
-            int(guarded_summary["missing_after_guardrails_count"]),
-        )
-
-        st.markdown("### Missing Needs After Guardrails")
-        if missing_after_guardrails:
-            st.dataframe(
-                pd.DataFrame({"missing_need": missing_after_guardrails}),
-                use_container_width=True,
-            )
-        else:
-            st.info("No mission needs are missing after guardrails.")
+    st.dataframe(roadmap, use_container_width=True, hide_index=True)
 
 
 # =============================================================================
@@ -2026,7 +2127,10 @@ with st.sidebar:
             Recommended live setting:
             <br><b>Semantic + LLM Agent + Slate Q-Learning + Multi-Agent Diversification</b>
             <br><br>
-            Dry-run option:
+            Behavior demo:
+            <br><b>Open the Behavior-Aware CORTEX page from the sidebar.</b>
+            <br><br>
+            Router dry-run option:
             <br><b>Router-Integrated CORTEX Dry Run</b>
         </div>
         """,
@@ -2036,15 +2140,18 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### Project State")
-    st.write("MVP 14.5 in progress")
-    st.write("Router dry-run logging added")
-    st.write("Saved router model ready")
+    st.write("MVP 16.2 in progress")
+    st.write("Behavior-Aware CORTEX added")
+    st.write("Mission repair stack complete")
+    st.write("Router stack available")
+    st.write("UI renovation underway")
 
     st.divider()
 
     st.markdown("### Useful Commands")
     st.code(
         ".venv\\Scripts\\streamlit.exe run app.py\n"
+        ".venv\\Scripts\\python.exe -m src.behavior_aware_cortex --query \"beach vacation packing list\"\n"
         ".venv\\Scripts\\python.exe -m src.router_integrated_scalable_evaluator\n"
         "git status",
         language="powershell",
@@ -2052,16 +2159,18 @@ with st.sidebar:
 
 render_header()
 
-tab_search, tab_router, tab_learning, tab_architecture, tab_mission, tab_mission_shopping = st.tabs(
+tab_home, tab_search, tab_router, tab_learning, tab_architecture = st.tabs(
     [
+        "Product Home",
         "Live Search Console",
         "Router Dashboard",
         "Learning Dashboard",
         "Architecture",
-        "Mission Agent",
-        "Mission Shopping",
     ]
 )
+
+with tab_home:
+    render_product_home()
 
 with tab_search:
     render_search_console(products)
@@ -2074,9 +2183,3 @@ with tab_learning:
 
 with tab_architecture:
     render_architecture_page()
-
-with tab_mission:
-    render_mission_agent()
-
-with tab_mission_shopping:
-    render_mission_shopping()
