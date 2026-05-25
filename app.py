@@ -60,6 +60,9 @@ GOVERNANCE_DECISIONS_PATH = "outputs/cortex_governance_decisions.csv"
 GOVERNANCE_SUMMARY_PATH = "outputs/cortex_governance_summary.csv"
 SCALABLE_GOVERNED_EVAL_SUMMARY_PATH = "outputs/scalable_governed_eval_summary.csv"
 SCALABLE_GOVERNED_EVAL_PATH = "outputs/scalable_governed_eval.csv"
+COST_VALUE_SUMMARY_PATH = "outputs/cost_value_governance_summary.csv"
+COST_VALUE_BY_ROUTE_PATH = "outputs/cost_value_governance_by_route.csv"
+COST_VALUE_SCENARIOS_PATH = "outputs/cost_value_governance_scenarios.csv"
 
 ROUTE_LABELS = {
     "BASELINE_ONLY": "Preserve baseline",
@@ -612,6 +615,7 @@ st.markdown(
         .stApp div[data-testid="stCheckbox"] label p,
         .stApp div[data-testid="stSelectbox"] label,
         .stApp div[data-testid="stTextInput"] label,
+        .stApp div[data-testid="stNumberInput"] label,
         .stApp div[data-testid="stSlider"] label {
             color: #cbd5e1 !important;
         }
@@ -641,6 +645,19 @@ st.markdown(
         .stApp .stTextInput input::placeholder {
             color: #94a3b8 !important;
             opacity: 1;
+        }
+
+        .stApp div[data-testid="stNumberInput"] input {
+            color: #f8fafc !important;
+            caret-color: #38bdf8;
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
+        .stApp div[data-testid="stNumberInput"] button {
+            color: #f8fafc !important;
+            background-color: #13233b !important;
+            border-color: #334155 !important;
         }
 
         .stApp div[data-baseweb="select"],
@@ -1021,6 +1038,31 @@ def render_product_home():
 # Governed CORTEX demo helpers
 # =============================================================================
 
+def run_cost_value_analyzer(daily_query_volume, scenario):
+    cmd = [
+        sys.executable,
+        "-u",
+        "-m",
+        "src.cost_value_governance_analyzer",
+        "--daily-query-volume",
+        str(int(daily_query_volume)),
+        "--scenario",
+        str(scenario),
+    ]
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        return False, str(exc)
+
+    output = result.stdout or ""
+    if result.stderr:
+        output += f"\n\nSTDERR:\n{result.stderr}"
+
+    load_csv_if_exists.clear()
+    return result.returncode == 0, output
+
+
 def run_governed_cortex_demo(query, fast_mode):
     cmd = [
         sys.executable,
@@ -1341,6 +1383,223 @@ def render_cortex_demo():
             st.code(raw_output)
         elif not trace_df.empty and "governance_output_preview" in trace_df.columns:
             st.code(str(trace_df.iloc[-1].get("governance_output_preview", "")))
+
+
+# =============================================================================
+# Cost vs Value Dashboard
+# =============================================================================
+
+def render_cost_value_metric_card(label, value, help_text, accent="#22d3ee"):
+    st.markdown(
+        f"""
+        <div class="metric-card" style="border-top: 3px solid {escape(str(accent))};">
+            <div class="metric-card-label">{escape(str(label))}</div>
+            <div class="metric-card-value">{escape(str(value))}</div>
+            <div class="metric-card-help">{escape(str(help_text))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _cost_value_currency(value):
+    return f"${safe_float(value):,.2f}"
+
+
+def _style_cost_value_chart(fig):
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font={"color": "#e5edf8"},
+        legend_title_text="",
+        margin={"l": 18, "r": 18, "t": 56, "b": 18},
+    )
+    fig.update_xaxes(gridcolor="rgba(148,163,184,0.12)")
+    fig.update_yaxes(gridcolor="rgba(148,163,184,0.12)")
+    return fig
+
+
+def render_cost_value_dashboard():
+    st.markdown(
+        """
+        <div class="main-title-card">
+            <div class="main-eyebrow">MVP 19.4 | Production Economics</div>
+            <div class="main-title">Cost vs Value Governance Analyzer</div>
+            <div class="main-subtitle">
+                Estimate whether CORTEX&rsquo;s governed AI routing is worth the infrastructure
+                cost at production scale.
+            </div>
+        </div>
+        <div class="info-card-yellow">
+            <b>Caveat:</b> These are scenario assumptions, not measured production revenue.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("### Model the production volume")
+    control_1, control_2, control_3 = st.columns([1.2, 1, 1.15])
+    with control_1:
+        daily_query_volume = st.number_input(
+            "Daily query volume",
+            min_value=1000,
+            value=1000000,
+            step=100000,
+            key="cost_value_daily_query_volume",
+        )
+    with control_2:
+        scenario = st.selectbox(
+            "Scenario assumption",
+            ["conservative", "base", "optimistic"],
+            index=1,
+            key="cost_value_scenario",
+        )
+    with control_3:
+        st.markdown("<div style='height: 29px;'></div>", unsafe_allow_html=True)
+        run_clicked = st.button(
+            "Run Cost vs Value Analyzer",
+            type="primary",
+            use_container_width=True,
+            key="run_cost_value_analyzer",
+        )
+
+    if run_clicked:
+        with st.spinner("Estimating cost and scenario value..."):
+            ok, output = run_cost_value_analyzer(daily_query_volume, scenario)
+        st.session_state["cost_value_raw_output"] = output
+        if ok:
+            st.success("Cost vs value analysis completed. Dashboard outputs have been refreshed.")
+        else:
+            st.error("The cost vs value analyzer could not complete. Review Technical Details below.")
+
+    summary_df = load_csv_if_exists(COST_VALUE_SUMMARY_PATH)
+    by_route_df = load_csv_if_exists(COST_VALUE_BY_ROUTE_PATH)
+    scenarios_df = load_csv_if_exists(COST_VALUE_SCENARIOS_PATH)
+
+    if summary_df.empty:
+        st.markdown(
+            """
+            <div class="info-card-blue">
+                Select a production volume and scenario, then run the analyzer to see estimated
+                monthly economics and the routes that drive cost.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        return
+
+    summary_row = summary_df.iloc[-1].to_dict()
+    recommendation = str(summary_row.get("recommendation", "-")).replace("_", " ").title()
+    metric_columns = st.columns(6)
+    metric_values = [
+        ("Monthly AI Cost", _cost_value_currency(summary_row.get("monthly_cost")), "What it costs", "#22d3ee"),
+        ("Monthly Scenario Value", _cost_value_currency(summary_row.get("monthly_value")), "What it may return", "#34d399"),
+        ("Net Monthly Value", _cost_value_currency(summary_row.get("net_monthly_value")), "Value after cost", "#38bdf8"),
+        ("Value-to-Cost Ratio", f"{safe_float(summary_row.get('value_to_cost_ratio')):,.2f}x", "Estimated return per cost dollar", "#8b5cf6"),
+        ("Break-even Value / Query", f"${safe_float(summary_row.get('break_even_value_per_query')):,.6f}", "What lift is needed to break even", "#f59e0b"),
+        ("Recommendation", recommendation, "Decision under assumptions", "#10b981"),
+    ]
+    for column, (label, value, help_text, accent) in zip(metric_columns, metric_values):
+        with column:
+            render_cost_value_metric_card(label, value, help_text, accent)
+
+    plain_english_summary = summary_row.get("plain_english_summary", "")
+    if pd.notna(plain_english_summary) and str(plain_english_summary).strip():
+        st.markdown(
+            f"""
+            <div class="decision-card">
+                <div class="decision-label">Plain-English Interpretation</div>
+                <div class="simple-card-body">{escape(str(plain_english_summary))}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    if not scenarios_df.empty:
+        scenario_chart_df = scenarios_df.copy()
+        scenario_chart_df["net_monthly_value"] = pd.to_numeric(
+            scenario_chart_df["net_monthly_value"], errors="coerce"
+        )
+        scenario_chart_df["monthly_cost"] = pd.to_numeric(
+            scenario_chart_df["monthly_cost"], errors="coerce"
+        )
+        scenario_chart_df["monthly_value"] = pd.to_numeric(
+            scenario_chart_df["monthly_value"], errors="coerce"
+        )
+
+        chart_left, chart_right = st.columns(2)
+        with chart_left:
+            st.markdown("### What it may return after cost")
+            fig_net = px.bar(
+                scenario_chart_df,
+                x="scenario",
+                y="net_monthly_value",
+                color="scenario",
+                title="Net Monthly Value by Scenario",
+                labels={"scenario": "Scenario", "net_monthly_value": "Net monthly value ($)"},
+                color_discrete_sequence=["#38bdf8", "#22d3ee", "#34d399"],
+            )
+            st.plotly_chart(_style_cost_value_chart(fig_net), use_container_width=True)
+
+        with chart_right:
+            st.markdown("### What it costs vs what it may return")
+            cost_value_chart_df = scenario_chart_df.melt(
+                id_vars=["scenario"],
+                value_vars=["monthly_cost", "monthly_value"],
+                var_name="measure",
+                value_name="amount",
+            )
+            cost_value_chart_df["measure"] = cost_value_chart_df["measure"].map(
+                {"monthly_cost": "Monthly AI Cost", "monthly_value": "Monthly Scenario Value"}
+            )
+            fig_cost_value = px.bar(
+                cost_value_chart_df,
+                x="scenario",
+                y="amount",
+                color="measure",
+                barmode="group",
+                title="Monthly Cost vs Monthly Value",
+                labels={"scenario": "Scenario", "amount": "Monthly amount ($)", "measure": ""},
+                color_discrete_map={"Monthly AI Cost": "#f59e0b", "Monthly Scenario Value": "#22d3ee"},
+            )
+            st.plotly_chart(_style_cost_value_chart(fig_cost_value), use_container_width=True)
+
+    if not by_route_df.empty:
+        route_chart_df = by_route_df.copy()
+        route_chart_df["net_monthly_value"] = pd.to_numeric(
+            route_chart_df["net_monthly_value"], errors="coerce"
+        )
+        st.markdown("### Which routes drive cost and value")
+        fig_routes = px.bar(
+            route_chart_df,
+            x="governance_route",
+            y="net_monthly_value",
+            color="governance_route",
+            title="Route-Level Net Monthly Value",
+            labels={"governance_route": "Governance route", "net_monthly_value": "Net monthly value ($)"},
+            color_discrete_sequence=px.colors.sequential.Teal,
+        )
+        st.plotly_chart(_style_cost_value_chart(fig_routes), use_container_width=True)
+
+    table_left, table_right = st.columns(2)
+    with table_left:
+        st.markdown("### Which routes drive cost")
+        st.dataframe(by_route_df, use_container_width=True, hide_index=True)
+    with table_right:
+        st.markdown("### Scenario comparison")
+        st.dataframe(scenarios_df, use_container_width=True, hide_index=True)
+
+    with st.expander("Technical Details", expanded=False):
+        st.markdown("#### Raw analyzer output")
+        raw_output = st.session_state.get("cost_value_raw_output", "")
+        st.code(raw_output or "Run the analyzer in this session to view its raw console output.")
+        st.markdown("#### Raw summary dataframe")
+        st.dataframe(summary_df, use_container_width=True, hide_index=True)
+        st.markdown("#### Raw by-route dataframe")
+        st.dataframe(by_route_df, use_container_width=True, hide_index=True)
+        st.markdown("#### Raw scenario dataframe")
+        st.dataframe(scenarios_df, use_container_width=True, hide_index=True)
 
 
 # =============================================================================
@@ -3097,6 +3356,7 @@ def render_architecture_page():
         [
             ["MVP 19.2C", "Dark Live Search UX", "Present clean decisions while retaining technical traceability."],
             ["MVP 19.3", "Cost vs Value Governance Analyzer", "Measure intervention value against governed execution cost."],
+            ["MVP 19.4", "Cost vs Value Dashboard", "Show production-scale cost, scenario value, and break-even economics."],
             ["MVP 20", "Final README + Demo Report Polish", "Finish the product narrative and demo evidence."],
         ],
         columns=["Stage", "Planned Capability", "Why It Matters"],
@@ -3117,7 +3377,7 @@ with st.sidebar:
     st.markdown(
         """
         <div class="small-muted">
-            <b>Current MVP: 19.2C</b>
+            <b>Current MVP: 19.4</b>
             <br><br>
             Simple Mode for demos, Technical Mode for internals.
         </div>
@@ -3128,11 +3388,11 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### Project State")
-    st.write("MVP 19.2C in progress")
+    st.write("MVP 19.4 in progress")
     st.write("Governed CORTEX runner complete")
     st.write("Scalable evaluation complete")
-    st.write("Dark dual-mode Live Search UX in progress")
-    st.write("Cost/value analyzer next")
+    st.write("Cost vs Value dashboard in progress")
+    st.write("MVP 20 final polish next")
 
     st.divider()
 
@@ -3144,9 +3404,10 @@ with st.sidebar:
 
 render_header()
 
-tab_search, tab_demo, tab_router, tab_learning, tab_architecture = st.tabs(
+tab_search, tab_cost_value, tab_demo, tab_router, tab_learning, tab_architecture = st.tabs(
     [
         "Live Search Console",
+        "Cost vs Value",
         "CORTEX Demo",
         "Router Dashboard",
         "Learning Dashboard",
@@ -3156,6 +3417,9 @@ tab_search, tab_demo, tab_router, tab_learning, tab_architecture = st.tabs(
 
 with tab_search:
     render_search_console(products)
+
+with tab_cost_value:
+    render_cost_value_dashboard()
 
 with tab_demo:
     render_cortex_demo()
