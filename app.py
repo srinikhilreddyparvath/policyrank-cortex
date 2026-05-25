@@ -1,7 +1,10 @@
 import os
 import json
 import pickle
+import subprocess
+import sys
 from datetime import datetime
+from html import escape
 
 import streamlit as st
 import pandas as pd
@@ -50,6 +53,30 @@ ROUTER_MODEL_PATH = "models/learned_repair_router.pkl"
 ROUTER_FEATURES_PATH = "models/learned_repair_router_features.json"
 ROUTER_METADATA_PATH = "models/learned_repair_router_metadata.json"
 ROUTER_DRY_RUN_LOG_PATH = "storage/router_dry_run_log.csv"
+GOVERNED_SUMMARY_PATH = "outputs/governed_cortex_summary.csv"
+GOVERNED_FINAL_SLATE_PATH = "outputs/governed_cortex_final_slate.csv"
+GOVERNED_TRACE_PATH = "outputs/governed_cortex_trace.csv"
+GOVERNANCE_DECISIONS_PATH = "outputs/cortex_governance_decisions.csv"
+GOVERNANCE_SUMMARY_PATH = "outputs/cortex_governance_summary.csv"
+SCALABLE_GOVERNED_EVAL_SUMMARY_PATH = "outputs/scalable_governed_eval_summary.csv"
+SCALABLE_GOVERNED_EVAL_PATH = "outputs/scalable_governed_eval.csv"
+
+ROUTE_LABELS = {
+    "BASELINE_ONLY": "Preserve baseline",
+    "MISSION_BUILD": "Build mission slate",
+    "MISSION_REPAIR": "Repair mission slate",
+    "STRICT_REPAIR": "Strict repair with guardrails",
+    "BEHAVIOR_AWARE_RERANK": "Behavior-aware CORTEX",
+    "CRITIC_REVIEW": "Send to critic review",
+    "REJECT_REPAIR_NARROW_QUERY": "Block repair for narrow query",
+}
+
+EXECUTION_LABELS = {
+    "behavior_aware": "Behavior-aware CORTEX executed",
+    "strict_repair": "Strict repaired slate executed",
+    "baseline_fallback": "Baseline-style fallback preserved",
+    "fallback_no_slate_available": "Safe fallback used",
+}
 
 
 # =============================================================================
@@ -70,6 +97,10 @@ st.markdown(
         section[data-testid="stSidebar"] {
             background: #ffffff;
             border-right: 1px solid #e2e8f0;
+        }
+
+        [data-testid="stSidebarNav"] {
+            display: none;
         }
 
         .main-title-card {
@@ -131,6 +162,147 @@ st.markdown(
             padding: 18px 20px;
             margin-bottom: 16px;
             box-shadow: 0 8px 22px rgba(15, 23, 42, 0.055);
+        }
+
+        .demo-hero {
+            text-align: center;
+            max-width: 880px;
+            margin: 22px auto 22px auto;
+        }
+
+        .demo-hero-title {
+            color: #0f172a;
+            font-size: 2.35rem;
+            line-height: 1.1;
+            font-weight: 900;
+            letter-spacing: -0.055em;
+            margin-bottom: 10px;
+        }
+
+        .demo-hero-subtitle {
+            color: #475569;
+            line-height: 1.65;
+            font-size: 1.01rem;
+        }
+
+        .search-card {
+            max-width: 820px;
+            margin: 0 auto 22px auto;
+            padding: 22px 26px 12px 26px;
+            background: #ffffff;
+            border: 1px solid #dbeafe;
+            border-radius: 24px;
+            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
+        }
+
+        .decision-card {
+            background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 24px;
+            padding: 25px 28px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.065);
+            margin: 18px 0;
+        }
+
+        .decision-label {
+            color: #2563eb;
+            font-size: 0.76rem;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 7px;
+        }
+
+        .decision-title {
+            color: #0f172a;
+            font-size: 1.9rem;
+            line-height: 1.15;
+            font-weight: 900;
+            letter-spacing: -0.04em;
+            margin-bottom: 10px;
+        }
+
+        .simple-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 19px 20px;
+            min-height: 178px;
+            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
+        }
+
+        .simple-card-title {
+            color: #0f172a;
+            font-weight: 850;
+            font-size: 1rem;
+            margin-bottom: 9px;
+        }
+
+        .simple-card-body {
+            color: #475569;
+            line-height: 1.62;
+            font-size: 0.94rem;
+        }
+
+        .metric-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 18px;
+            min-height: 108px;
+            padding: 14px 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 7px 18px rgba(15, 23, 42, 0.05);
+        }
+
+        .metric-card-label {
+            color: #64748b;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .metric-card-value {
+            color: #0f172a;
+            font-size: 1.45rem;
+            font-weight: 900;
+            margin: 7px 0 4px;
+        }
+
+        .metric-card-help {
+            color: #64748b;
+            font-size: 0.82rem;
+        }
+
+        .product-card {
+            background: #ffffff;
+            border: 1px solid #dbeafe;
+            border-left: 5px solid #2563eb;
+            border-radius: 17px;
+            padding: 14px 17px;
+            margin: 10px 0;
+            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.045);
+        }
+
+        .product-rank {
+            color: #2563eb;
+            font-size: 0.73rem;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .product-title {
+            color: #0f172a;
+            font-weight: 850;
+            font-size: 1.02rem;
+            margin: 5px 0 7px;
+        }
+
+        .product-meta {
+            color: #475569;
+            font-size: 0.88rem;
+            line-height: 1.55;
         }
 
         .info-card-blue {
@@ -261,6 +433,277 @@ st.markdown(
         div[data-testid="stDataFrame"] {
             border-radius: 16px;
             overflow: hidden;
+        }
+
+        /* MVP 19.2C dark product shell */
+        .stApp {
+            background:
+                radial-gradient(circle at 16% 0%, rgba(6, 182, 212, 0.16), transparent 27%),
+                radial-gradient(circle at 90% 7%, rgba(124, 58, 237, 0.15), transparent 29%),
+                linear-gradient(145deg, #030712 0%, #071326 45%, #020617 100%);
+            color: #e5edf8;
+        }
+
+        section[data-testid="stSidebar"] {
+            background: linear-gradient(180deg, #07101d 0%, #050b16 100%);
+            border-right: 1px solid #192b42;
+        }
+
+        section[data-testid="stSidebar"] * {
+            color: #d9e6f5;
+        }
+
+        .main-title-card, .decision-card {
+            background: linear-gradient(135deg, rgba(11, 25, 45, 0.98), rgba(12, 35, 59, 0.96));
+            border: 1px solid rgba(34, 211, 238, 0.20);
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34), 0 0 40px rgba(6, 182, 212, 0.06);
+        }
+
+        .main-eyebrow, .decision-label, .section-kicker, .product-rank {
+            color: #22d3ee;
+        }
+
+        .main-title, .decision-title, .demo-hero-title, .simple-card-title,
+        .product-title, h1, h2, h3 {
+            color: #f8fafc;
+        }
+
+        .main-subtitle, .demo-hero-subtitle, .small-muted, .simple-card-body,
+        .product-meta, .metric-card-help {
+            color: #a6b8cf;
+        }
+
+        .badge {
+            color: #bae6fd;
+            background: rgba(14, 36, 60, 0.74);
+            border-color: rgba(34, 211, 238, 0.20);
+        }
+
+        .soft-card, .simple-card, .metric-card, div[data-testid="stMetric"] {
+            background: rgba(10, 22, 39, 0.94);
+            border: 1px solid #1b314a;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.23);
+        }
+
+        .metric-card-label, div[data-testid="stMetricLabel"] {
+            color: #8ca5c0;
+        }
+
+        .metric-card-value, div[data-testid="stMetricValue"] {
+            color: #f1f5f9;
+        }
+
+        .product-card {
+            background: rgba(9, 22, 39, 0.96);
+            border: 1px solid #1c3850;
+            border-left: 5px solid #22d3ee;
+            box-shadow: 0 9px 23px rgba(0, 0, 0, 0.24);
+        }
+
+        .info-card-blue, .info-card-green, .info-card-yellow, .info-card-purple {
+            background: rgba(9, 23, 42, 0.92);
+            color: #d5e3f4;
+        }
+
+        .info-card-blue { border-color: rgba(34, 211, 238, 0.30); }
+        .info-card-green { border-color: rgba(16, 185, 129, 0.34); }
+        .info-card-yellow { border-color: rgba(245, 158, 11, 0.36); }
+        .info-card-purple { border-color: rgba(139, 92, 246, 0.36); }
+
+        .agent-box {
+            background: #0b182b;
+            border-color: #1e3a55;
+            color: #d8f5ff;
+        }
+
+        .agent-arrow {
+            color: #22d3ee;
+        }
+
+        .stTabs [data-baseweb="tab"] {
+            background: rgba(9, 20, 36, 0.94);
+            border-color: #1c3148;
+            color: #afc2d8;
+        }
+
+        .stTabs [aria-selected="true"] {
+            background: rgba(8, 65, 87, 0.78);
+            border-color: #22d3ee;
+            color: #ecfeff;
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.18);
+        }
+
+        .search-hero {
+            text-align: center;
+            max-width: 900px;
+            margin: 20px auto 14px;
+        }
+
+        .search-hero-title {
+            color: #f8fafc;
+            font-size: clamp(2.2rem, 4vw, 3.3rem);
+            font-weight: 900;
+            letter-spacing: -0.06em;
+            line-height: 1.05;
+            margin: 8px 0 12px;
+        }
+
+        .search-hero-subtitle {
+            color: #b0c2d7;
+            font-size: 1.02rem;
+            line-height: 1.65;
+        }
+
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 9px;
+            justify-content: center;
+            margin: 4px auto 26px;
+        }
+
+        .query-chip {
+            color: #b8d8ea;
+            background: rgba(10, 29, 49, 0.80);
+            border: 1px solid #20405b;
+            padding: 7px 13px;
+            border-radius: 999px;
+            font-size: 0.83rem;
+        }
+
+        .stTextInput input {
+            color: #f8fafc !important;
+            background: #0a172b !important;
+            border: 1px solid #284b68 !important;
+            border-radius: 14px !important;
+            min-height: 52px;
+        }
+
+        .stTextInput input:focus {
+            border-color: #22d3ee !important;
+            box-shadow: 0 0 0 1px #22d3ee, 0 0 22px rgba(34, 211, 238, 0.18) !important;
+        }
+
+        .stButton > button[kind="primary"] {
+            background: linear-gradient(90deg, #0891b2, #2563eb);
+            border: 0;
+            color: #ffffff;
+            font-weight: 750;
+            min-height: 46px;
+            border-radius: 12px;
+            box-shadow: 0 8px 22px rgba(37, 99, 235, 0.28);
+        }
+
+        /* Streamlit widget contrast on the dark canvas. */
+        .stApp label,
+        .stApp p,
+        .stApp span,
+        .stApp div[data-testid="stMarkdownContainer"],
+        .stApp div[data-testid="stMarkdownContainer"] p,
+        .stApp div[data-testid="stWidgetLabel"],
+        .stApp div[data-testid="stWidgetLabel"] p,
+        .stApp .stRadio label,
+        .stApp .stCheckbox label,
+        .stApp .stSelectbox label,
+        .stApp .stTextInput label,
+        .stApp div[data-testid="stRadio"] label,
+        .stApp div[data-testid="stRadio"] label p,
+        .stApp div[data-testid="stCheckbox"] label,
+        .stApp div[data-testid="stCheckbox"] label p,
+        .stApp div[data-testid="stSelectbox"] label,
+        .stApp div[data-testid="stTextInput"] label,
+        .stApp div[data-testid="stSlider"] label {
+            color: #cbd5e1 !important;
+        }
+
+        .stApp h1, .stApp h2, .stApp h3, .stApp h4,
+        .stApp h5, .stApp h6,
+        .stApp div[data-testid="stMarkdownContainer"] strong {
+            color: #f8fafc;
+        }
+
+        .stApp div[data-testid="stRadio"] label p,
+        .stApp .stRadio label p,
+        .stApp div[data-testid="stCheckbox"] label p,
+        .stApp .stCheckbox label p {
+            color: #e5edf8 !important;
+        }
+
+        .stApp div[data-testid="stTextInput"] input,
+        .stApp .stTextInput input {
+            color: #f8fafc !important;
+            caret-color: #38bdf8;
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
+        .stApp div[data-testid="stTextInput"] input::placeholder,
+        .stApp .stTextInput input::placeholder {
+            color: #94a3b8 !important;
+            opacity: 1;
+        }
+
+        .stApp div[data-baseweb="select"],
+        .stApp div[data-baseweb="select"] > div,
+        .stApp div[data-baseweb="select"] * {
+            color: #f8fafc !important;
+        }
+
+        .stApp div[data-baseweb="select"] > div {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
+        .stApp div[data-baseweb="popover"],
+        .stApp div[data-baseweb="menu"],
+        .stApp ul[role="listbox"] {
+            background-color: #111827 !important;
+            color: #f8fafc !important;
+        }
+
+        .stApp li[role="option"],
+        .stApp li[role="option"] * {
+            color: #f8fafc !important;
+        }
+
+        .stApp li[role="option"]:hover,
+        .stApp li[role="option"][aria-selected="true"] {
+            background-color: #1e3a5f !important;
+        }
+
+        .stApp div[data-testid="stExpander"] details,
+        .stApp div[data-testid="stExpander"] summary {
+            background: rgba(10, 22, 39, 0.76);
+            color: #e5edf8 !important;
+        }
+
+        .stApp div[data-testid="stExpander"] summary *,
+        .stApp div[data-testid="stExpander"] details > div * {
+            color: #e5edf8;
+        }
+
+        .stApp .stTabs [data-baseweb="tab"] *,
+        .stApp .stTabs [data-baseweb="tab"] p {
+            color: inherit !important;
+        }
+
+        .stApp div[data-testid="stSpinner"] *,
+        .stApp div[data-testid="stStatusWidget"] *,
+        .stApp div[data-testid="stAlert"] p {
+            color: #e5edf8 !important;
+        }
+
+        section[data-testid="stSidebar"] label,
+        section[data-testid="stSidebar"] p,
+        section[data-testid="stSidebar"] span,
+        section[data-testid="stSidebar"] div[data-testid="stWidgetLabel"] {
+            color: #cbd5e1 !important;
+        }
+
+        /* Keep embedded grid cells free to use Streamlit's high-contrast dataframe theme. */
+        .stApp div[data-testid="stDataFrame"] span,
+        .stApp div[data-testid="stDataFrame"] p {
+            color: inherit !important;
         }
     </style>
     """,
@@ -572,6 +1015,332 @@ def render_product_home():
         """,
         unsafe_allow_html=True,
     )
+
+
+# =============================================================================
+# Governed CORTEX demo helpers
+# =============================================================================
+
+def run_governed_cortex_demo(query, fast_mode):
+    cmd = [
+        sys.executable,
+        "-m",
+        "src.governed_cortex_runner",
+        "--query",
+        query,
+    ]
+
+    if fast_mode:
+        cmd.append("--skip-refresh")
+
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except OSError as exc:
+        return False, str(exc)
+
+    output = result.stdout or ""
+    if result.stderr:
+        output += f"\n\nSTDERR:\n{result.stderr}"
+
+    load_csv_if_exists.clear()
+    return result.returncode == 0, output
+
+
+def filter_by_query(df, query):
+    if df is None or df.empty or not query or "query" not in df.columns:
+        return pd.DataFrame() if df is None else df
+
+    query_lower = str(query).strip().lower()
+    return df[df["query"].astype(str).str.strip().str.lower() == query_lower].copy()
+
+
+def get_latest_row(df):
+    if df is None or df.empty:
+        return {}
+    return df.iloc[-1].to_dict()
+
+
+def friendly_route(route):
+    return ROUTE_LABELS.get(str(route), str(route).replace("_", " ").title())
+
+
+def friendly_execution(source):
+    return EXECUTION_LABELS.get(str(source), str(source).replace("_", " ").title())
+
+
+def _demo_int(value):
+    try:
+        return int(float(value))
+    except Exception:
+        return 0
+
+
+def build_simple_decision(summary_row):
+    if not summary_row:
+        return "Run CORTEX to generate a governed decision."
+    if _demo_int(summary_row.get("baseline_preserved")) == 1:
+        return "CORTEX preserved baseline-style handling."
+    if summary_row.get("final_execution_source") == "behavior_aware":
+        return "CORTEX intervened with behavior-aware mission ranking."
+    if summary_row.get("final_execution_source") == "strict_repair":
+        return "CORTEX intervened with strict repair guardrails."
+    return f"CORTEX selected {friendly_route(summary_row.get('governance_route', 'unknown'))}."
+
+
+def build_simple_why(summary_row):
+    if not summary_row:
+        return "The governance explanation appears after a query is run."
+
+    if _demo_int(summary_row.get("baseline_preserved")) == 1:
+        return (
+            "The governance layer decided aggressive repair was unnecessary or risky for this "
+            "query, so it protected the baseline path."
+        )
+
+    mission = safe_float(summary_row.get("mission_likelihood_score"))
+    risk = safe_float(summary_row.get("repair_risk_score"))
+    coverage = safe_float(summary_row.get("coverage_gap_score"))
+    return (
+        f"Mission likelihood was {mission:.2f}, repair risk was {risk:.2f}, and coverage gap "
+        f"was {coverage:.2f}. CORTEX used those signals to select a governed route."
+    )
+
+
+def build_business_meaning(summary_row):
+    if not summary_row:
+        return "Business impact appears after running CORTEX."
+
+    if _demo_int(summary_row.get("baseline_preserved")) == 1:
+        return (
+            "CORTEX avoided unnecessary compute and ranking risk by declining an aggressive "
+            "intervention where it was not justified."
+        )
+
+    slate_size = _demo_int(summary_row.get("final_slate_size"))
+    needs = _demo_int(summary_row.get("unique_sub_intents"))
+    rescue = _demo_int(summary_row.get("cold_start_proxy_items"))
+    return (
+        f"The result covers {needs} shopping needs across {slate_size} governed items and "
+        f"retains {rescue} potentially useful low-evidence items."
+    )
+
+
+def prepare_simple_slate(slate_df):
+    if slate_df is None or slate_df.empty:
+        return pd.DataFrame()
+
+    cols = [
+        "governed_rank",
+        "product_title",
+        "sub_intent",
+        "mission_stage",
+        "behavior_confidence",
+        "policy_reason",
+        "final_policy_score",
+    ]
+    out = compact_cols(slate_df, cols).copy()
+    out = out.rename(
+        columns={
+            "governed_rank": "Rank",
+            "product_title": "Product",
+            "sub_intent": "Need / Sub-Intent",
+            "mission_stage": "Mission Stage",
+            "behavior_confidence": "Confidence",
+            "policy_reason": "Reason",
+            "final_policy_score": "Score",
+        }
+    )
+    if "Score" in out.columns:
+        out["Score"] = pd.to_numeric(out["Score"], errors="coerce").round(4)
+    return out
+
+
+def _render_demo_metric(label, value, help_text):
+    st.markdown(
+        f"""
+        <div class="metric-card">
+            <div class="metric-card-label">{escape(str(label))}</div>
+            <div class="metric-card-value">{escape(str(value))}</div>
+            <div class="metric-card-help">{escape(str(help_text))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def render_demo_product_cards(slate_df):
+    if slate_df is None or slate_df.empty:
+        st.info("No final governed slate rows are available for this query.")
+        return
+
+    for row in slate_df.head(6).to_dict(orient="records"):
+        st.markdown(
+            f"""
+            <div class="product-card">
+                <div class="product-rank">Rank {escape(str(_demo_int(row.get("governed_rank"))))}</div>
+                <div class="product-title">{escape(str(row.get("product_title", "Untitled result")))}</div>
+                <div class="product-meta">
+                    <b>Need:</b> {escape(str(row.get("sub_intent", "")))}<br>
+                    <b>Reason:</b> {escape(str(row.get("policy_reason", "")))}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+def render_cortex_demo():
+    st.markdown(
+        """
+        <div class="demo-hero">
+            <div class="section-kicker">Governed Search Experience</div>
+            <div class="demo-hero-title">What are you shopping for today?</div>
+            <div class="demo-hero-subtitle">
+                Enter any search query. CORTEX decides whether to preserve a stable baseline
+                or execute governed mission-aware ranking, then explains the result.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    query_col = st.columns([1, 2.2, 1])[1]
+    with query_col:
+        with st.container(border=True):
+            st.markdown(
+                '<div class="section-kicker" style="text-align:center;">Try CORTEX</div>',
+                unsafe_allow_html=True,
+            )
+            query = st.text_input(
+                "Shopping query",
+                placeholder="Example: beach vacation packing list",
+                key="cortex_demo_query",
+                label_visibility="collapsed",
+            ).strip()
+            button_col = st.columns([1, 1.05, 1])[1]
+            with button_col:
+                run_clicked = st.button(
+                    "Run CORTEX",
+                    type="primary",
+                    use_container_width=True,
+                    key="run_cortex_demo",
+                )
+
+    if run_clicked:
+        if not query:
+            st.warning("Enter a query before running CORTEX.")
+        else:
+            with st.spinner(f"Running governed CORTEX for '{query}'..."):
+                ok, output = run_governed_cortex_demo(
+                    query=query,
+                    fast_mode=st.session_state.get("cortex_fast_mode", False),
+                )
+            st.session_state["cortex_demo_raw_output"] = output
+            st.session_state["cortex_demo_last_query"] = query
+            if ok:
+                st.success("CORTEX completed. Governed outputs have been refreshed.")
+            else:
+                st.error("CORTEX could not complete. Switch to Technical Mode to inspect backend output.")
+
+    active_query = query or st.session_state.get("cortex_demo_last_query", "")
+    if not active_query:
+        st.markdown(
+            '<div class="info-card-blue">Enter any query and run CORTEX to see a clean governed decision.</div>',
+            unsafe_allow_html=True,
+        )
+        return
+
+    summary_df = filter_by_query(load_csv_if_exists(GOVERNED_SUMMARY_PATH), active_query)
+    slate_df = filter_by_query(load_csv_if_exists(GOVERNED_FINAL_SLATE_PATH), active_query)
+    trace_df = filter_by_query(load_csv_if_exists(GOVERNED_TRACE_PATH), active_query)
+    decisions_df = filter_by_query(load_csv_if_exists(GOVERNANCE_DECISIONS_PATH), active_query)
+    governance_summary_df = filter_by_query(load_csv_if_exists(GOVERNANCE_SUMMARY_PATH), active_query)
+    scalable_summary_df = load_csv_if_exists(SCALABLE_GOVERNED_EVAL_SUMMARY_PATH)
+    scalable_eval_df = load_csv_if_exists(SCALABLE_GOVERNED_EVAL_PATH)
+
+    if "governed_rank" in slate_df.columns:
+        slate_df["governed_rank"] = pd.to_numeric(slate_df["governed_rank"], errors="coerce")
+        slate_df = slate_df.sort_values("governed_rank")
+
+    summary_row = get_latest_row(summary_df)
+    if not summary_row:
+        st.info("No governed result exists for this query yet. Select Run CORTEX to generate it.")
+        return
+
+    if st.session_state.get("cortex_demo_mode", "Simple Mode") == "Simple Mode":
+        route = friendly_route(summary_row.get("governance_route", "unknown"))
+        execution = friendly_execution(summary_row.get("final_execution_source", "unknown"))
+        st.markdown(
+            f"""
+            <div class="decision-card">
+                <div class="decision-label">CORTEX Decision</div>
+                <div class="decision-title">{escape(build_simple_decision(summary_row))}</div>
+                <div class="small-muted"><b>Route:</b> {escape(route)}<br>
+                <b>Execution source:</b> {escape(execution)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        m1, m2, m3, m4 = st.columns(4)
+        with m1:
+            _render_demo_metric("Final Slate", _demo_int(summary_row.get("final_slate_size")), "Governed results")
+        with m2:
+            _render_demo_metric("Needs Covered", _demo_int(summary_row.get("unique_sub_intents")), "Distinct sub-intents")
+        with m3:
+            _render_demo_metric("Baseline Preserved", _demo_int(summary_row.get("baseline_preserved")), "1 means intervention blocked")
+        with m4:
+            _render_demo_metric("Cold-Start Rescue", _demo_int(summary_row.get("cold_start_proxy_items")), "Useful low-evidence items")
+
+        why_col, business_col = st.columns(2)
+        with why_col:
+            st.markdown(
+                f'<div class="simple-card"><div class="simple-card-title">Why CORTEX chose this route</div>'
+                f'<div class="simple-card-body">{escape(build_simple_why(summary_row))}</div></div>',
+                unsafe_allow_html=True,
+            )
+        with business_col:
+            st.markdown(
+                f'<div class="simple-card"><div class="simple-card-title">Business meaning</div>'
+                f'<div class="simple-card-body">{escape(build_business_meaning(summary_row))}</div></div>',
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("### Final Governed Slate")
+        render_demo_product_cards(slate_df)
+        with st.expander("View as table", expanded=False):
+            st.dataframe(prepare_simple_slate(slate_df), use_container_width=True, hide_index=True)
+        return
+
+    st.markdown("### Technical Mode")
+    tech_summary, tech_signals, tech_slate, tech_eval, tech_raw = st.tabs(
+        ["Governed Summary", "Governance Signals", "Final Slate", "Scalable Evaluation", "Raw Trace"]
+    )
+    with tech_summary:
+        st.dataframe(summary_df, use_container_width=True, hide_index=True)
+    with tech_signals:
+        signal_cols = [
+            "query_type", "recommended_route", "governance_decision",
+            "mission_likelihood_score", "compound_intent_score", "brand_specificity_score",
+            "narrow_query_score", "repair_risk_score", "coverage_gap_score",
+            "behavior_rescue_signal", "critic_need_score", "plain_english_reason",
+        ]
+        st.dataframe(compact_cols(decisions_df, signal_cols), use_container_width=True, hide_index=True)
+        st.markdown("#### Governed Summary")
+        st.dataframe(governance_summary_df, use_container_width=True, hide_index=True)
+    with tech_slate:
+        st.dataframe(slate_df, use_container_width=True, hide_index=True)
+    with tech_eval:
+        st.dataframe(scalable_summary_df, use_container_width=True, hide_index=True)
+        with st.expander("Evaluation rows", expanded=False):
+            st.dataframe(scalable_eval_df, use_container_width=True, hide_index=True)
+    with tech_raw:
+        st.dataframe(trace_df, use_container_width=True, hide_index=True)
+        raw_output = st.session_state.get("cortex_demo_raw_output", "")
+        if raw_output:
+            st.code(raw_output)
+        elif not trace_df.empty and "governance_output_preview" in trace_df.columns:
+            st.code(str(trace_df.iloc[-1].get("governance_output_preview", "")))
 
 
 # =============================================================================
@@ -1315,75 +2084,233 @@ def router_3d_chart(by_policy_df):
 # Live Search Console
 # =============================================================================
 
-def render_search_console(products):
-    st.markdown("## Live Search Console")
-
+def render_search_hero():
     st.markdown(
         """
-        <div class="info-card-blue">
-            Run a query through the working CORTEX pipeline: retrieval, contract generation,
-            contract filtering, policy ranking, final slate enforcement, optional Q-learning,
-            multi-agent diversification, and optional router dry-run.
+        <div class="search-hero">
+            <div class="section-kicker">Live Search Console</div>
+            <div class="search-hero-title">Search with governed intelligence.</div>
+            <div class="search-hero-subtitle">
+                CORTEX retrieves products, understands shopping intent, and shapes a useful
+                final slate with guardrails and explainable ranking decisions.
+            </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    top_controls = st.columns([2.2, 1, 1, 1.55, 1])
 
-    with top_controls[0]:
-        query = st.text_input(
-            "Enter a shopping search query",
-            placeholder="example: adidas soccer cleats",
+def render_dark_metric_card(label, value, help_text):
+    _render_demo_metric(label, value, help_text)
+
+
+def _contract_intent_text(contract):
+    if not isinstance(contract, dict):
+        return ""
+    for key in ["intent", "query_intent", "shopping_intent", "intent_type"]:
+        value = contract.get(key)
+        if value:
+            return str(value)
+    return ""
+
+
+def build_simple_live_search_explanation(
+    selected_policy,
+    retrieval_confidence,
+    retrieved_count,
+    filtered_count,
+    enforcement_report,
+    contract,
+    top_baseline,
+    top_final,
+    slate_quality,
+):
+    intent = _contract_intent_text(contract)
+    coverage_text = ""
+    if enforcement_report and enforcement_report.get("low_coverage", False):
+        coverage_text = " Candidate coverage was limited, so contract guardrails remained conservative."
+    intent_text = f" for the detected {intent} intent" if intent else ""
+    movement_text = (
+        f" The top result changed from {top_baseline} to {top_final}."
+        if top_baseline and top_final and top_baseline != top_final
+        else " The strongest retrieved product remained at the top after governance."
+    )
+    quality_text = ""
+    if slate_quality and "diversity_at_k" in slate_quality:
+        quality_text = (
+            f" Multi-agent diversity@5 measured {safe_float(slate_quality['diversity_at_k']):.3f}."
+        )
+    return (
+        f"CORTEX used {selected_policy}{intent_text}. Retrieval confidence was "
+        f"{retrieval_confidence:.3f}; {filtered_count} of {retrieved_count} retrieved "
+        f"candidates informed the ranked slate.{coverage_text}{movement_text}{quality_text}"
+    )
+
+
+def build_business_value_text(query, enforcement_report, category_count, result_count):
+    if not result_count or (enforcement_report and enforcement_report.get("low_coverage", False)):
+        return (
+            "The local ESCI sample has limited matching coverage for this query. CORTEX can "
+            "still determine a route, while production results would improve with broader inventory."
+        )
+    mission_terms = ["setup", "packing", "decorations", "party", "list", "vacation", "shower"]
+    is_mission_query = any(term in query.lower() for term in mission_terms) or category_count > 1
+    if is_mission_query:
+        return (
+            "This looks like a broader shopping mission. CORTEX preserves useful coverage "
+            "across needs instead of collapsing the result slate around one narrow signal."
+        )
+    return (
+        "This looks like a focused product search. CORTEX keeps relevance central and avoids "
+        "unnecessary expansion that could add ranking risk."
+    )
+
+
+def prepare_simple_live_search_display(results):
+    if results is None or results.empty:
+        return []
+    display_rows = []
+    for rank, row in enumerate(results.head(6).to_dict(orient="records"), start=1):
+        display_rows.append(
+            {
+                "rank": rank,
+                "title": row.get("product_title", "Untitled product"),
+                "category": row.get("category", "Relevant match"),
+                "brand": row.get("brand", ""),
+                "price": row.get("price", ""),
+                "reason": row.get("final_slate_enforcement_reason", row.get("contract_filter_reason", "")),
+            }
+        )
+    return display_rows
+
+
+def render_product_result_cards(results):
+    for row in prepare_simple_live_search_display(results):
+        price = f" | Price: {row['price']}" if str(row["price"]).strip() not in ["", "nan"] else ""
+        reason = (
+            f"<br><b>Why included:</b> {escape(str(row['reason']))}"
+            if str(row["reason"]).strip() not in ["", "nan"]
+            else ""
+        )
+        st.markdown(
+            f"""
+            <div class="product-card">
+                <div class="product-rank">Rank {row["rank"]}</div>
+                <div class="product-title">{escape(str(row["title"]))}</div>
+                <div class="product-meta">
+                    {escape(str(row["category"]))} | {escape(str(row["brand"]))}{escape(price)}
+                    {reason}
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-    with top_controls[1]:
-        retrieval_mode = st.selectbox(
-            "Retrieval mode",
-            ["Semantic", "TF-IDF"],
+
+def render_search_console(products):
+    render_search_hero()
+
+    mode_col = st.columns([1.4, 1, 1.4])[1]
+    with mode_col:
+        live_mode = st.radio(
+            "Experience mode",
+            ["Simple Mode", "Technical Mode"],
+            horizontal=True,
+            index=0,
+            key="live_search_mode",
         )
 
-    with top_controls[2]:
-        contract_mode = st.radio(
-            "Contract mode",
-            [
-                "LLM Agent",
-                "Rule-based",
-            ],
-        )
+    search_col = st.columns([1, 2.35, 1])[1]
+    with search_col:
+        query_input = st.text_input(
+            "Shopping query",
+            placeholder="Try any shopping query...",
+            key="live_search_query",
+            label_visibility="collapsed",
+        ).strip()
+        run_col = st.columns([1, 1.08, 1])[1]
+        with run_col:
+            run_clicked = st.button(
+                "Run CORTEX",
+                type="primary",
+                use_container_width=True,
+                key="run_live_search",
+            )
 
-    with top_controls[3]:
-        policy_mode = st.radio(
-            "Policy mode",
-            [
-                "Slate Q-Learning + Multi-Agent Diversification",
-                "Router-Integrated CORTEX Dry Run",
-                "Slate Q-Learning",
-                "Bandit auto-select",
-                "Manual",
-            ],
-        )
+    st.markdown(
+        """
+        <div class="chip-row">
+            <span class="query-chip">beach vacation packing list</span>
+            <span class="query-chip">new apartment kitchen setup</span>
+            <span class="query-chip">adidas soccer cleats</span>
+            <span class="query-chip">office desk setup</span>
+            <span class="query-chip">baby shower decorations</span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    with top_controls[4]:
-        manual_preference = st.selectbox(
-            "Manual objective",
-            ["Most relevant", "Best rating", "Lowest price"],
-        )
+    if run_clicked:
+        if not query_input:
+            st.warning("Enter a shopping query before running CORTEX.")
+            return
+        st.session_state["last_live_search_query"] = query_input
 
-    st.divider()
-
+    query = st.session_state.get("last_live_search_query", "")
     if not query:
         st.markdown(
             """
-            <div class="info-card-green">
-                Type a search query above to start. Recommended setting:
-                <b>Semantic + LLM Agent + Slate Q-Learning + Multi-Agent Diversification</b>.
-                Use <b>Router-Integrated CORTEX Dry Run</b> to see what the saved router would choose.
+            <div class="info-card-blue">
+                Enter any shopping query and select <b>Run CORTEX</b>. Simple Mode uses the
+                recommended governed ranking path automatically.
             </div>
             """,
             unsafe_allow_html=True,
         )
         return
+
+    if live_mode == "Simple Mode":
+        retrieval_mode = "Semantic"
+        contract_mode = "LLM Agent"
+        policy_mode = "Slate Q-Learning + Multi-Agent Diversification"
+        manual_preference = "Most relevant"
+    else:
+        st.markdown("### Technical Controls")
+        top_controls = st.columns([1, 1, 1.65, 1])
+        with top_controls[0]:
+            retrieval_mode = st.selectbox(
+                "Retrieval mode",
+                ["Semantic", "TF-IDF"],
+            )
+
+        with top_controls[1]:
+            contract_mode = st.radio(
+                "Contract mode",
+                [
+                    "LLM Agent",
+                    "Rule-based",
+                ],
+            )
+
+        with top_controls[2]:
+            policy_mode = st.radio(
+                "Policy mode",
+                [
+                    "Slate Q-Learning + Multi-Agent Diversification",
+                    "Router-Integrated CORTEX Dry Run",
+                    "Slate Q-Learning",
+                    "Bandit auto-select",
+                    "Manual",
+                ],
+            )
+
+        with top_controls[3]:
+            manual_preference = st.selectbox(
+                "Manual objective",
+                ["Most relevant", "Best rating", "Lowest price"],
+            )
+
+    st.markdown(f"### Results for: `{query}`")
 
     router_dry_run_enabled = policy_mode == "Router-Integrated CORTEX Dry Run"
 
@@ -1392,8 +2319,6 @@ def render_search_console(products):
         if router_dry_run_enabled
         else policy_mode
     )
-
-    st.markdown(f"### Query: `{query}`")
 
     if router_dry_run_enabled:
         st.markdown(
@@ -1455,6 +2380,9 @@ def render_search_console(products):
             min_match_score=0.50,
             strict_top_k=20,
         )
+        filtered_candidate_count = (
+            len(contract_filtered_results) if contract_filtered_results is not None else 0
+        )
 
         if contract_filtered_results is not None and len(contract_filtered_results) > 0:
             ranking_input_results = contract_filtered_results
@@ -1515,10 +2443,77 @@ def render_search_console(products):
             slate_reward = 0.0
 
     if len(baseline_results) == 0:
-        st.warning("No matching products found.")
+        st.warning(
+            "CORTEX could not find enough matching products in the local ESCI sample for this "
+            "query. The query can still be routed, but product results depend on candidate coverage."
+        )
         return
 
-    st.markdown("### Run Summary")
+    if live_mode == "Simple Mode":
+        top_baseline = get_top_product_title(baseline_results)
+        top_final = get_top_product_title(feedback_results)
+        categories = (
+            feedback_results["category"].dropna().astype(str).nunique()
+            if "category" in feedback_results.columns
+            else 0
+        )
+        explanation = build_simple_live_search_explanation(
+            selected_policy=selected_policy,
+            retrieval_confidence=retrieval_confidence,
+            retrieved_count=len(baseline_results),
+            filtered_count=filtered_candidate_count,
+            enforcement_report=enforcement_report,
+            contract=contract,
+            top_baseline=top_baseline,
+            top_final=top_final,
+            slate_quality=slate_quality,
+        )
+        business_text = build_business_value_text(
+            query=query,
+            enforcement_report=enforcement_report,
+            category_count=categories,
+            result_count=len(feedback_results),
+        )
+        st.markdown(
+            f"""
+            <div class="decision-card">
+                <div class="decision-label">CORTEX Result Summary</div>
+                <div class="decision-title">{escape(top_final or "A governed product slate is ready.")}</div>
+                <div class="small-muted">Top ranked result for <b>{escape(query)}</b></div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            render_dark_metric_card("Final Slate Size", len(feedback_results), "Ranked products")
+        with c2:
+            render_dark_metric_card("Unique Categories", categories, "Coverage in slate")
+        with c3:
+            render_dark_metric_card("Slate Reward@5", round(slate_reward, 4), "Governed quality")
+        with c4:
+            render_dark_metric_card("Top Result", top_final[:34] if top_final else "-", "Leading match")
+
+        why_col, business_col = st.columns(2)
+        with why_col:
+            st.markdown(
+                f'<div class="simple-card"><div class="simple-card-title">Why CORTEX chose this ranking route</div>'
+                f'<div class="simple-card-body">{escape(explanation)}</div></div>',
+                unsafe_allow_html=True,
+            )
+        with business_col:
+            st.markdown(
+                f'<div class="simple-card"><div class="simple-card-title">Business meaning</div>'
+                f'<div class="simple-card-body">{escape(business_text)}</div></div>',
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("### Final Ranked Slate")
+        render_product_result_cards(feedback_results)
+        return
+
+    st.markdown("### Technical Run Summary")
 
     c1, c2, c3, c4, c5 = st.columns(5)
     c1.metric("Selected Policy", selected_policy)
@@ -2100,11 +3095,9 @@ def render_architecture_page():
 
     roadmap = pd.DataFrame(
         [
-            ["MVP 16.3", "Unified Mission + Behavior Dashboard", "Bring mission repair and behavior-aware outputs into one view."],
-            ["MVP 17", "Pseudo-CTR Scoring Layer", "Add CTR-like behavior scoring using ESCI proxy labels."],
-            ["MVP 17.1", "CTR vs CORTEX Evaluation Dashboard", "Compare pure behavior ranking against CORTEX policy ranking."],
-            ["MVP 18", "Embedding Retrieval / FAISS Optional Layer", "Add retrieval infrastructure only if needed after ranking layer is stable."],
-            ["MVP 19", "Bandit Feedback Loop", "Make exploration and exploitation more explicitly RL-like."],
+            ["MVP 19.2C", "Dark Live Search UX", "Present clean decisions while retaining technical traceability."],
+            ["MVP 19.3", "Cost vs Value Governance Analyzer", "Measure intervention value against governed execution cost."],
+            ["MVP 20", "Final README + Demo Report Polish", "Finish the product narrative and demo evidence."],
         ],
         columns=["Stage", "Planned Capability", "Why It Matters"],
     )
@@ -2119,19 +3112,14 @@ def render_architecture_page():
 products = load_products()
 
 with st.sidebar:
-    st.markdown("## CORTEX Controls")
+    st.markdown("## CORTEX Engine")
 
     st.markdown(
         """
         <div class="small-muted">
-            Recommended live setting:
-            <br><b>Semantic + LLM Agent + Slate Q-Learning + Multi-Agent Diversification</b>
+            <b>Current MVP: 19.2C</b>
             <br><br>
-            Behavior demo:
-            <br><b>Open the Behavior-Aware CORTEX page from the sidebar.</b>
-            <br><br>
-            Router dry-run option:
-            <br><b>Router-Integrated CORTEX Dry Run</b>
+            Simple Mode for demos, Technical Mode for internals.
         </div>
         """,
         unsafe_allow_html=True,
@@ -2140,40 +3128,37 @@ with st.sidebar:
     st.divider()
 
     st.markdown("### Project State")
-    st.write("MVP 16.2 in progress")
-    st.write("Behavior-Aware CORTEX added")
-    st.write("Mission repair stack complete")
-    st.write("Router stack available")
-    st.write("UI renovation underway")
+    st.write("MVP 19.2C in progress")
+    st.write("Governed CORTEX runner complete")
+    st.write("Scalable evaluation complete")
+    st.write("Dark dual-mode Live Search UX in progress")
+    st.write("Cost/value analyzer next")
 
     st.divider()
 
-    st.markdown("### Useful Commands")
+    st.markdown("### Useful Command")
     st.code(
-        ".venv\\Scripts\\streamlit.exe run app.py\n"
-        ".venv\\Scripts\\python.exe -m src.behavior_aware_cortex --query \"beach vacation packing list\"\n"
-        ".venv\\Scripts\\python.exe -m src.router_integrated_scalable_evaluator\n"
-        "git status",
+        ".\\.venv\\Scripts\\streamlit.exe run app.py",
         language="powershell",
     )
 
 render_header()
 
-tab_home, tab_search, tab_router, tab_learning, tab_architecture = st.tabs(
+tab_search, tab_demo, tab_router, tab_learning, tab_architecture = st.tabs(
     [
-        "Product Home",
         "Live Search Console",
+        "CORTEX Demo",
         "Router Dashboard",
         "Learning Dashboard",
         "Architecture",
     ]
 )
 
-with tab_home:
-    render_product_home()
-
 with tab_search:
     render_search_console(products)
+
+with tab_demo:
+    render_cortex_demo()
 
 with tab_router:
     render_router_dashboard()
