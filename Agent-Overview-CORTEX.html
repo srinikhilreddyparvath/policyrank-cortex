@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agent Overview - Deep Technical Dive: CORTEX Engine</title>
+  <style>
+    :root {
+      --bg0: #070717;
+      --bg1: #0e1028;
+      --bg2: #121631;
+      --card: rgba(255,255,255,0.075);
+      --card2: rgba(255,255,255,0.105);
+      --text: #f4f7ff;
+      --muted: #aab4d6;
+      --cyan: #55e6ff;
+      --blue: #6d8dff;
+      --purple: #b676ff;
+      --pink: #ff6bb5;
+      --orange: #ffb86b;
+      --green: #62f4b4;
+      --yellow: #ffe36e;
+      --red: #ff7070;
+      --line: rgba(255,255,255,0.18);
+      --shadow: 0 24px 70px rgba(0,0,0,0.35);
+      --radius: 26px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(85, 230, 255, 0.22), transparent 32%),
+        radial-gradient(circle at 88% 10%, rgba(255, 107, 181, 0.22), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(98, 244, 180, 0.14), transparent 35%),
+        linear-gradient(135deg, var(--bg0), var(--bg1) 48%, #15112c);
+      min-height: 100vh;
+      line-height: 1.55;
+    }
+
+    a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .page {
+      width: min(1220px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 42px 0 90px;
+    }
+
+    .hero {
+      position: relative;
+      padding: 54px;
+      border-radius: 36px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.14), rgba(255,255,255,0.05)),
+        radial-gradient(circle at 20% 0%, rgba(85,230,255,0.18), transparent 45%),
+        radial-gradient(circle at 80% 20%, rgba(255,107,181,0.14), transparent 45%);
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -120px;
+      top: -120px;
+      width: 360px;
+      height: 360px;
+      border-radius: 999px;
+      background: conic-gradient(from 120deg, var(--cyan), var(--purple), var(--pink), var(--orange), var(--green), var(--cyan));
+      opacity: 0.18;
+      filter: blur(8px);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(85,230,255,0.13);
+      border: 1px solid rgba(85,230,255,0.32);
+      color: var(--cyan);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 12px;
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      margin: 22px 0 14px;
+      font-size: clamp(40px, 7vw, 78px);
+      line-height: 0.94;
+      letter-spacing: -0.06em;
+    }
+
+    h1 span {
+      background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink), var(--orange));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .subtitle {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      color: #d9e3ff;
+      font-size: 20px;
+      line-height: 1.55;
+    }
+
+    .hero-grid {
+      position: relative;
+      z-index: 1;
+      margin-top: 34px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .metric {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .metric .value {
+      font-size: 32px;
+      font-weight: 850;
+      letter-spacing: -0.04em;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    nav {
+      margin: 28px 0 36px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    nav a {
+      padding: 11px 15px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #dce6ff;
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    section {
+      margin-top: 42px;
+      padding: 34px;
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.065);
+      border: 1px solid rgba(255,255,255,0.13);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+      backdrop-filter: blur(14px);
+    }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 34px;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+
+    h3 {
+      margin: 30px 0 12px;
+      font-size: 23px;
+      letter-spacing: -0.02em;
+    }
+
+    h4 {
+      margin: 22px 0 10px;
+      font-size: 17px;
+      color: #eaf0ff;
+    }
+
+    p {
+      color: #d8e0fb;
+      margin: 10px 0;
+    }
+
+    .lede {
+      font-size: 18px;
+      color: #e4ebff;
+      max-width: 980px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 18px 0 6px;
+    }
+
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 750;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.08);
+      color: #f8fbff;
+    }
+
+    .pill.cyan { color: var(--cyan); border-color: rgba(85,230,255,0.34); }
+    .pill.green { color: var(--green); border-color: rgba(98,244,180,0.34); }
+    .pill.pink { color: var(--pink); border-color: rgba(255,107,181,0.34); }
+    .pill.yellow { color: var(--yellow); border-color: rgba(255,227,110,0.34); }
+    .pill.purple { color: var(--purple); border-color: rgba(182,118,255,0.34); }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      border-radius: 22px;
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 22px;
+    }
+
+    .card.highlight {
+      background:
+        linear-gradient(145deg, rgba(85,230,255,0.12), rgba(182,118,255,0.09)),
+        rgba(255,255,255,0.06);
+      border-color: rgba(85,230,255,0.24);
+    }
+
+    .card.warning {
+      background:
+        linear-gradient(145deg, rgba(255,184,107,0.13), rgba(255,112,112,0.08)),
+        rgba(255,255,255,0.06);
+      border-color: rgba(255,184,107,0.25);
+    }
+
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    .agent {
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+      border-radius: 26px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.115), rgba(255,255,255,0.055));
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .agent::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 12% 0%, var(--accent), transparent 34%);
+      opacity: 0.16;
+      pointer-events: none;
+    }
+
+    .agent .num {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--accent) 28%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent) 54%, transparent);
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 14px;
+    }
+
+    .agent h3 {
+      position: relative;
+      margin-top: 0;
+      font-size: 24px;
+    }
+
+    .agent p, .agent ul, .agent pre {
+      position: relative;
+    }
+
+    ul {
+      padding-left: 20px;
+      color: #d8e0fb;
+    }
+
+    li { margin: 7px 0; }
+
+    code, pre {
+      font-family: var(--mono);
+    }
+
+    pre {
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.32);
+      color: #e8f2ff;
+      overflow-x: auto;
+      border: 1px solid rgba(255,255,255,0.11);
+      font-size: 13px;
+    }
+
+    .diagram-wrap {
+      margin-top: 22px;
+      padding: 22px;
+      border-radius: 24px;
+      background:
+        linear-gradient(145deg, rgba(0,0,0,0.22), rgba(255,255,255,0.055));
+      border: 1px solid rgba(255,255,255,0.13);
+      overflow-x: auto;
+    }
+
+    svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .standard {
+      border-color: rgba(255,112,112,0.28);
+      background: linear-gradient(145deg, rgba(255,112,112,0.10), rgba(255,255,255,0.055));
+    }
+
+    .cortex {
+      border-color: rgba(98,244,180,0.28);
+      background: linear-gradient(145deg, rgba(98,244,180,0.10), rgba(85,230,255,0.07));
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 18px;
+      margin-top: 18px;
+      font-size: 14px;
+    }
+
+    th, td {
+      padding: 14px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.10);
+      vertical-align: top;
+    }
+
+    th {
+      background: rgba(255,255,255,0.10);
+      color: #ffffff;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    td {
+      color: #dce5ff;
+      background: rgba(255,255,255,0.035);
+    }
+
+    tr:hover td {
+      background: rgba(255,255,255,0.07);
+    }
+
+    .big-number {
+      font-size: 42px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+
+    .result-viz-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 18px;
+      margin: 22px 0 26px;
+    }
+
+    .viz-card {
+      padding: 22px;
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(85,230,255,0.12), transparent 38%),
+        radial-gradient(circle at 90% 20%, rgba(255,107,181,0.10), transparent 36%),
+        rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 16px 50px rgba(0,0,0,0.22);
+    }
+
+    .viz-card h3 {
+      margin-top: 0;
+    }
+
+    .viz-note {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .mini-bars {
+      display: grid;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .mini-bar-row {
+      display: grid;
+      grid-template-columns: 150px 1fr 80px;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .mini-bar-track {
+      height: 13px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.10);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+
+    .mini-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+    }
+
+    .mini-bar-fill.alt {
+      background: linear-gradient(90deg, var(--purple), var(--pink));
+    }
+
+    .mini-bar-value {
+      font-family: var(--mono);
+      color: #ffffff;
+      font-weight: 800;
+      text-align: right;
+    }
+
+    .timeline {
+      margin-top: 22px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 18px;
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.065);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .step .tag {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--cyan);
+      font-weight: 800;
+    }
+
+    .footnotes {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .footnotes li {
+      margin-bottom: 10px;
+    }
+
+    .print-note {
+      margin-top: 22px;
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px dashed rgba(255,255,255,0.25);
+      color: #cbd6f7;
+    }
+
+    @media (max-width: 900px) {
+      .hero { padding: 34px; }
+      .hero-grid, .grid-2, .grid-3, .agent-grid, .compare, .result-viz-grid {
+        grid-template-columns: 1fr;
+      }
+      .step {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+        color: #111;
+      }
+      .page {
+        width: 100%;
+        padding: 0;
+      }
+      section, .hero, .card, .agent {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+      nav {
+        display: none;
+      }
+      a {
+        color: #0645ad;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="eyebrow">PolicyRank-RL · Multi-Agent Search Reranking · CORTEX Engine</div>
+      <h1>Agent Overview - Deep Technical Dive: <span>CORTEX Engine</span></h1>
+      <p class="subtitle">
+        CORTEX is a multi-agent, contract-aware, reinforcement-learning-inspired search reranking engine.
+        It converts a raw shopping query into a structured intent contract, applies policy-aware filtering and slate optimization,
+        diversifies the result set, and uses a baseline-aware safety gate to decide when to trust, lightly rerank,
+        or fully override the semantic baseline.
+      </p>
+
+    </header>
+
+    <nav>
+      <a href="#executive">Executive summary</a>
+      <a href="#architecture">Architecture diagram</a>
+      <a href="#agents">Agent deep dive</a>
+      <a href="#standard">Standard vs CORTEX</a>
+      <a href="#results">Current results</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#citations">Citations</a>
+    </nav>
+
+    <section id="executive">
+      <h2>1. Executive summary</h2>
+      <p class="lede">
+        Standard product search systems typically retrieve a candidate set, compute relevance scores, and sort products with either
+        lexical, neural, or learning-to-rank models. CORTEX extends this paradigm with an explicit agentic control layer:
+        agents inspect the query, infer user intent, create a machine-readable search contract, enforce constraints,
+        select a ranking policy, diversify the slate, and then determine whether CORTEX should fully rerank or defer to a strong baseline.
+      </p>
+
+      <div class="grid-3">
+        <div class="card highlight">
+          <h3>What makes it agentic?</h3>
+          <p>
+            CORTEX is not a single scoring function. It is a coordinated decision system with specialized modules that observe state,
+            execute ranking actions, produce intermediate artifacts, and feed logs into future policy updates.
+          </p>
+        </div>
+        <div class="card highlight">
+          <h3>What does it optimize?</h3>
+          <p>
+            The current offline objective is SlateReward@5, combining simulated user feedback with relevance-oriented slate quality.
+            The system compares semantic baseline, full CORTEX, and gated CORTEX.
+          </p>
+        </div>
+        <div class="card highlight">
+          <h3>Why is it better?</h3>
+          <p>
+            It attacks common failure modes in product search: semantic false positives, query-intent mismatch,
+            over-reranking, under-diversified slates, and brittle dependence on a single model score.
+          </p>
+        </div>
+      </div>
+
+      <div class="pill-row">
+        <span class="pill cyan">Semantic retrieval</span>
+        <span class="pill purple">LLM search contracts</span>
+        <span class="pill green">Slate Q-learning</span>
+        <span class="pill pink">Multi-agent diversification</span>
+        <span class="pill yellow">Baseline-aware safety gate</span>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2>2. CORTEX system architecture</h2>
+      <p>
+        The system is best understood as an orchestration graph. Each agent receives a state representation, produces either
+        a transformed candidate set or a control decision, and passes structured information to the next stage.
+      </p>
+
+      <div class="diagram-wrap">
+        <svg width="1160" height="640" viewBox="0 0 1160 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CORTEX multi-agent architecture">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1">
+              <stop offset="0%" stop-color="#55e6ff"/>
+              <stop offset="100%" stop-color="#b676ff"/>
+            </linearGradient>
+            <linearGradient id="g2" x1="0" x2="1">
+              <stop offset="0%" stop-color="#62f4b4"/>
+              <stop offset="100%" stop-color="#55e6ff"/>
+            </linearGradient>
+            <linearGradient id="g3" x1="0" x2="1">
+              <stop offset="0%" stop-color="#ff6bb5"/>
+              <stop offset="100%" stop-color="#ffb86b"/>
+            </linearGradient>
+            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#000" flood-opacity="0.35"/>
+            </filter>
+            <marker id="arrow" markerWidth="12" markerHeight="12" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+              <path d="M0,0 L0,6 L9,3 z" fill="#dce6ff"/>
+            </marker>
+          </defs>
+
+          <rect x="0" y="0" width="1160" height="640" rx="30" fill="#0b0e24"/>
+          <text x="40" y="50" fill="#ffffff" font-size="26" font-weight="800">CORTEX Engine: Multi-Agent Policy Ranking Loop</text>
+          <text x="40" y="78" fill="#aab4d6" font-size="14">Query → Retrieval → Intent Contract → Policy Selection → Slate Enforcement → Diversification → Gate → Feedback</text>
+
+          <!-- Nodes row 1 -->
+          <g filter="url(#shadow)">
+            <rect x="45" y="125" width="160" height="92" rx="18" fill="url(#g1)" opacity="0.95"/>
+            <text x="125" y="158" text-anchor="middle" fill="#06111f" font-size="16" font-weight="900">User Query</text>
+            <text x="125" y="184" text-anchor="middle" fill="#06111f" font-size="12">raw intent signal</text>
+
+            <rect x="250" y="125" width="180" height="92" rx="18" fill="#151c3d" stroke="#55e6ff" stroke-width="1.4"/>
+            <text x="340" y="154" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">Semantic Retrieval</text>
+            <text x="340" y="180" text-anchor="middle" fill="#aab4d6" font-size="12">top-20 candidates</text>
+
+            <rect x="475" y="125" width="190" height="92" rx="18" fill="#151c3d" stroke="#b676ff" stroke-width="1.4"/>
+            <text x="570" y="154" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">LLM Contract Agent</text>
+            <text x="570" y="180" text-anchor="middle" fill="#aab4d6" font-size="12">intent + constraints</text>
+
+            <rect x="710" y="125" width="190" height="92" rx="18" fill="#151c3d" stroke="#ff6bb5" stroke-width="1.4"/>
+            <text x="805" y="154" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">Contract Filter</text>
+            <text x="805" y="180" text-anchor="middle" fill="#aab4d6" font-size="12">candidate pruning</text>
+
+            <rect x="945" y="125" width="170" height="92" rx="18" fill="#151c3d" stroke="#62f4b4" stroke-width="1.4"/>
+            <text x="1030" y="154" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">Policy Compiler</text>
+            <text x="1030" y="180" text-anchor="middle" fill="#aab4d6" font-size="12">feature weights</text>
+          </g>
+
+          <!-- Row 2 -->
+          <g filter="url(#shadow)">
+            <rect x="945" y="305" width="170" height="92" rx="18" fill="#151c3d" stroke="#ffe36e" stroke-width="1.4"/>
+            <text x="1030" y="334" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">Slate Q-Agent</text>
+            <text x="1030" y="360" text-anchor="middle" fill="#aab4d6" font-size="12">ranking action</text>
+
+            <rect x="710" y="305" width="190" height="92" rx="18" fill="#151c3d" stroke="#55e6ff" stroke-width="1.4"/>
+            <text x="805" y="334" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">Final Enforcer</text>
+            <text x="805" y="360" text-anchor="middle" fill="#aab4d6" font-size="12">contract consistency</text>
+
+            <rect x="475" y="305" width="190" height="92" rx="18" fill="#151c3d" stroke="#ffb86b" stroke-width="1.4"/>
+            <text x="570" y="334" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">Diversifier Agents</text>
+            <text x="570" y="360" text-anchor="middle" fill="#aab4d6" font-size="12">slate composition</text>
+
+            <rect x="250" y="305" width="180" height="92" rx="18" fill="#151c3d" stroke="#62f4b4" stroke-width="1.4"/>
+            <text x="340" y="334" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">Baseline Gate</text>
+            <text x="340" y="360" text-anchor="middle" fill="#aab4d6" font-size="12">route decision</text>
+
+            <rect x="45" y="305" width="160" height="92" rx="18" fill="url(#g2)" opacity="0.95"/>
+            <text x="125" y="334" text-anchor="middle" fill="#06111f" font-size="16" font-weight="900">Final Slate</text>
+            <text x="125" y="360" text-anchor="middle" fill="#06111f" font-size="12">top-5 products</text>
+          </g>
+
+          <!-- Feedback bottom -->
+          <g filter="url(#shadow)">
+            <rect x="250" y="500" width="665" height="78" rx="20" fill="#141936" stroke="#ffffff" stroke-opacity="0.18"/>
+            <text x="582" y="532" text-anchor="middle" fill="#ffffff" font-size="16" font-weight="900">Feedback + Experiment Memory</text>
+            <text x="582" y="558" text-anchor="middle" fill="#aab4d6" font-size="12">simulated clicks · SlateReward@5 · contract cache · snapshots · calibration analyzer</text>
+          </g>
+
+          <!-- Arrows -->
+          <path d="M205 171 H245" stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M430 171 H470" stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M665 171 H705" stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M900 171 H940" stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M1030 217 V300" stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M945 351 H905" stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M710 351 H670" stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M475 351 H435" stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M250 351 H210" stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow)"/>
+          <path d="M125 397 C125 520 235 539 250 539" stroke="#dce6ff" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+          <path d="M915 539 C1060 520 1080 400 1035 397" stroke="#dce6ff" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+          <!-- Decision labels -->
+          <rect x="286" y="410" width="108" height="28" rx="14" fill="#0c2e2b" stroke="#62f4b4" stroke-opacity="0.45"/>
+          <text x="340" y="429" text-anchor="middle" fill="#62f4b4" font-size="12" font-weight="800">preserve</text>
+          <rect x="286" y="443" width="108" height="28" rx="14" fill="#2d2440" stroke="#b676ff" stroke-opacity="0.45"/>
+          <text x="340" y="462" text-anchor="middle" fill="#b676ff" font-size="12" font-weight="800">light rerank</text>
+          <rect x="286" y="476" width="108" height="28" rx="14" fill="#302033" stroke="#ff6bb5" stroke-opacity="0.45"/>
+          <text x="340" y="495" text-anchor="middle" fill="#ff6bb5" font-size="12" font-weight="800">full CORTEX</text>
+        </svg>
+      </div>
+    </section>
+
+    <section id="agents">
+      <h2>3. Agent-by-agent deep technical dive</h2>
+      <p class="lede">
+        Each CORTEX agent is a specialized decision component. The power comes from composing them:
+        the output of one agent becomes the structured state used by the next.
+      </p>
+
+      <div class="agent-grid">
+        <article class="agent" style="--accent:#55e6ff;">
+          <div class="num">01</div>
+          <h3>Semantic Retrieval Agent</h3>
+          <p>
+            The retrieval agent uses cached dense embeddings to convert lexical query text into vector-space candidate retrieval.
+            It produces the initial top-K candidate pool that downstream CORTEX agents operate on.
+          </p>
+          <h4>Input</h4>
+          <pre>q = user query
+D = product catalog rows
+E(q), E(d_i) = embedding vectors</pre>
+          <h4>Operation</h4>
+          <pre>score(q, d_i) = cosine(E(q), E(d_i))
+C_K = topK_d score(q, d)</pre>
+          <h4>Why it improves standard search</h4>
+          <ul>
+            <li>Captures semantic similarity beyond exact token overlap.</li>
+            <li>Supports multilingual/noisy product queries better than pure lexical scoring.</li>
+            <li>Creates a strong baseline that the gate can preserve when already reliable.</li>
+          </ul>
+        </article>
+
+        <article class="agent" style="--accent:#b676ff;">
+          <div class="num">02</div>
+          <h3>LLM Contract Agent</h3>
+          <p>
+            The LLM Contract Agent transforms an ambiguous shopping query into a structured machine-readable search contract.
+            This is the intent layer that standard ranking pipelines usually lack.
+          </p>
+          <h4>Output schema</h4>
+          <pre>{
+  "intent": {
+    "detected_category": "...",
+    "product_type": "...",
+    "price_sensitivity": "...",
+    "quality_preference": "...",
+    "ambiguity_level": "..."
+  },
+  "dynamic_filters": {
+    "must_have_terms": [...],
+    "blocked_terms": [...]
+  }
+}</pre>
+          <h4>Technical function</h4>
+          <ul>
+            <li>Converts unstructured query language into explicit constraints.</li>
+            <li>Separates hard requirements from soft preferences.</li>
+            <li>Creates an auditable intermediate artifact for downstream enforcement.</li>
+          </ul>
+        </article>
+
+        <article class="agent" style="--accent:#ff6bb5;">
+          <div class="num">03</div>
+          <h3>Contract Filter Agent</h3>
+          <p>
+            This agent applies the search contract to candidate products before expensive reranking logic.
+            It reduces semantic false positives and filters candidates that violate inferred user intent.
+          </p>
+          <h4>Decision score</h4>
+          <pre>match_score(d) =
+  w_required * required_term_match(d)
++ w_preferred * preferred_term_match(d)
+- w_blocked  * blocked_term_violation(d)</pre>
+          <h4>Why it matters</h4>
+          <ul>
+            <li>Semantic similarity can retrieve plausible but intent-misaligned products.</li>
+            <li>Filtering early reduces downstream ranking noise.</li>
+            <li>It makes the ranking pipeline constraint-aware, not just score-aware.</li>
+          </ul>
+        </article>
+
+        <article class="agent" style="--accent:#ffe36e;">
+          <div class="num">04</div>
+          <h3>Slate Q-Learning Policy Agent</h3>
+          <p>
+            The Slate Q-Learning Agent chooses a ranking action based on the current contract state and retrieval confidence.
+            It represents the RL side of CORTEX: the system is not only scoring products but selecting ranking policies.
+          </p>
+          <h4>State abstraction</h4>
+          <pre>s_t = {
+  retrieval_confidence,
+  contract_strength,
+  ambiguity_level,
+  coverage_status
+}</pre>
+          <h4>Action abstraction</h4>
+          <pre>a_t ∈ {
+  semantic_priority,
+  contract_priority,
+  diversity_priority,
+  brand_priority,
+  exploration_priority
+}</pre>
+          <h4>Reward</h4>
+          <pre>R(slate@5) = SlateReward@5</pre>
+          <p>
+            Slate-oriented RL is motivated by the fact that user response depends on the whole slate, not simply an independent item score.
+          </p>
+        </article>
+
+        <article class="agent" style="--accent:#62f4b4;">
+          <div class="num">05</div>
+          <h3>Policy Compiler Agent</h3>
+          <p>
+            The policy compiler translates the selected RL action into concrete ranking weights.
+            This creates a bridge between high-level policy selection and low-level scoring.
+          </p>
+          <h4>Example</h4>
+          <pre>final_score(d) =
+  α * semantic_score(d)
++ β * contract_match(d)
++ γ * brand_preference(d)
++ δ * diversity_utility(d)</pre>
+          <h4>Technical advantage</h4>
+          <ul>
+            <li>Allows the system to change ranking behavior dynamically per query.</li>
+            <li>Keeps policy choices interpretable.</li>
+            <li>Supports experimentation over ranking action spaces.</li>
+          </ul>
+        </article>
+
+        <article class="agent" style="--accent:#ffb86b;">
+          <div class="num">06</div>
+          <h3>Final Slate Enforcement Agent</h3>
+          <p>
+            This agent performs a post-ranking contract audit. It verifies that the slate still satisfies the search contract after policy scoring.
+          </p>
+          <h4>Enforcement checks</h4>
+          <ul>
+            <li>Are required terms represented?</li>
+            <li>Are blocked terms leaking into the slate?</li>
+            <li>Does the preferred brand or product type appear when relevant?</li>
+            <li>Is contract coverage too low?</li>
+          </ul>
+          <p>
+            Unlike standard ranking systems that only optimize score order, this layer enforces semantic correctness at the slate level.
+          </p>
+        </article>
+
+        <article class="agent" style="--accent:#55e6ff;">
+          <div class="num">07</div>
+          <h3>Multi-Agent Diversifier</h3>
+          <p>
+            The diversifier behaves like a committee of slate specialists. It balances relevance, brand preference,
+            contract priority, and novelty to reduce redundancy in the final page.
+          </p>
+          <h4>Slate objective</h4>
+          <pre>U(S) =
+  Σ relevance(d_i)
++ λ₁ contract_coverage(S)
++ λ₂ diversity(S)
++ λ₃ brand_alignment(S)
+- λ₄ redundancy(S)</pre>
+          <h4>Why it matters</h4>
+          <ul>
+            <li>A top-5 page should not be five near-duplicate products.</li>
+            <li>Diversity improves coverage of ambiguous intent.</li>
+            <li>Slate-level composition is closer to real search UX than item-level sorting.</li>
+          </ul>
+        </article>
+
+        <article class="agent" style="--accent:#62f4b4;">
+          <div class="num">08</div>
+          <h3>Baseline-Aware Gate Agent</h3>
+          <p>
+            This is the safety controller added in MVP 13.3.1. It decides whether the semantic baseline should be preserved,
+            lightly reranked, or fully overridden by CORTEX.
+          </p>
+          <h4>Gate signals</h4>
+          <pre>g = {
+  baseline_confidence_score,
+  contract_alignment_score,
+  top1_score,
+  top5_mean_score,
+  label_quality_score,
+  exclusion_violation_rate
+}</pre>
+          <h4>Decision</h4>
+          <pre>π_gate(g) ∈ {
+  preserve_baseline,
+  light_rerank,
+  full_cortex
+}</pre>
+          <h4>Why it is important</h4>
+          <ul>
+            <li>Prevents over-reranking when semantic baseline is already strong.</li>
+            <li>Defaults to full CORTEX when baseline confidence is insufficient.</li>
+            <li>Improved full CORTEX from 167 wins to 175 wins on 250 queries.</li>
+          </ul>
+        </article>
+
+        <article class="agent" style="--accent:#b676ff;">
+          <div class="num">09</div>
+          <h3>Feedback + Experiment Memory Agent</h3>
+          <p>
+            This layer logs simulated clicks, rewards, contracts, gate decisions, and evaluation snapshots.
+            It turns CORTEX from a static pipeline into a learning system.
+          </p>
+          <h4>Logged artifacts</h4>
+          <ul>
+            <li>Per-query baseline reward</li>
+            <li>Per-query gated CORTEX reward</li>
+            <li>Full CORTEX reward</li>
+            <li>Gate decision and reason</li>
+            <li>Contract source and fallback status</li>
+            <li>Lift, win/loss/tie, rescued baseline-loss cases</li>
+          </ul>
+        </article>
+
+        <article class="agent" style="--accent:#ff6bb5;">
+          <div class="num">10</div>
+          <h3>Resilient Contract Fallback Agent</h3>
+          <p>
+            Added to improve scalable evaluation robustness. If LLM contract generation fails, the system generates a local query-term fallback contract
+            rather than failing the entire query.
+          </p>
+          <h4>Fallback logic</h4>
+          <pre>if LLM_contract(q) succeeds:
+    use LLM contract
+else:
+    build local fallback contract from query tokens</pre>
+          <h4>Why it matters</h4>
+          <ul>
+            <li>Prevents long evaluations from collapsing due to transient client/API failures.</li>
+            <li>Preserves downstream compatibility with contract filters and gate logging.</li>
+            <li>Supports graceful degradation, a necessary property for production-grade agent systems.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="standard">
+      <h2>4. Standard ranking stack vs CORTEX agentic ranking</h2>
+      <p>
+        The standard industrial search stack is powerful but typically score-centric: retrieve candidates, compute features,
+        run a ranking model, then sort. CORTEX keeps the strong parts of that pipeline but adds structured intent,
+        slate-level policy control, multi-agent diversification, and a gate that explicitly manages reranking risk.
+      </p>
+
+      <div class="compare">
+        <div class="card standard">
+          <h3>Conventional ranking pipeline</h3>
+          <div class="diagram-wrap">
+            <svg width="480" height="390" viewBox="0 0 480 390" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <marker id="arrow2" markerWidth="12" markerHeight="12" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L0,6 L9,3 z" fill="#ffb3b3"/>
+                </marker>
+              </defs>
+              <rect x="0" y="0" width="480" height="390" rx="24" fill="#171126"/>
+              <g fill="#231a35" stroke="#ff7070" stroke-opacity="0.55">
+                <rect x="135" y="35" width="210" height="52" rx="14"/>
+                <rect x="135" y="115" width="210" height="52" rx="14"/>
+                <rect x="135" y="195" width="210" height="52" rx="14"/>
+                <rect x="135" y="275" width="210" height="52" rx="14"/>
+              </g>
+              <g fill="#fff" font-size="14" font-weight="800" text-anchor="middle">
+                <text x="240" y="67">Query</text>
+                <text x="240" y="147">Retrieve candidates</text>
+                <text x="240" y="227">Rank by model score</text>
+                <text x="240" y="307">Return top-K</text>
+              </g>
+              <g stroke="#ffb3b3" stroke-width="2" marker-end="url(#arrow2)">
+                <path d="M240 88 V112"/>
+                <path d="M240 168 V192"/>
+                <path d="M240 248 V272"/>
+              </g>
+            </svg>
+          </div>
+          <ul>
+            <li>Often optimized for item-level relevance.</li>
+            <li>Weak explicit representation of query intent constraints.</li>
+            <li>Can over-rerank strong baseline results.</li>
+            <li>Hard to audit why a product appeared.</li>
+            <li>Limited slate-level control unless explicitly added.</li>
+          </ul>
+        </div>
+
+        <div class="card cortex">
+          <h3>CORTEX agentic ranking pipeline</h3>
+          <div class="diagram-wrap">
+            <svg width="560" height="390" viewBox="0 0 560 390" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="cx" x1="0" x2="1">
+                  <stop offset="0%" stop-color="#62f4b4"/>
+                  <stop offset="100%" stop-color="#55e6ff"/>
+                </linearGradient>
+                <marker id="arrow3" markerWidth="12" markerHeight="12" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L0,6 L9,3 z" fill="#dce6ff"/>
+                </marker>
+              </defs>
+              <rect x="0" y="0" width="560" height="390" rx="24" fill="#0d1722"/>
+              <g fill="#14233a" stroke="#62f4b4" stroke-opacity="0.55">
+                <rect x="35" y="35" width="145" height="52" rx="14"/>
+                <rect x="215" y="35" width="145" height="52" rx="14"/>
+                <rect x="395" y="35" width="130" height="52" rx="14"/>
+                <rect x="395" y="135" width="130" height="52" rx="14"/>
+                <rect x="215" y="135" width="145" height="52" rx="14"/>
+                <rect x="35" y="135" width="145" height="52" rx="14"/>
+                <rect x="35" y="235" width="145" height="52" rx="14"/>
+                <rect x="215" y="235" width="145" height="52" rx="14"/>
+                <rect x="395" y="235" width="130" height="52" rx="14" fill="url(#cx)" stroke="none"/>
+              </g>
+              <g fill="#fff" font-size="12.5" font-weight="800" text-anchor="middle">
+                <text x="107" y="66">Semantic baseline</text>
+                <text x="287" y="66">LLM contract</text>
+                <text x="460" y="66">Filter</text>
+                <text x="460" y="166">Q-policy</text>
+                <text x="287" y="166">Enforce</text>
+                <text x="107" y="166">Diversify</text>
+                <text x="107" y="266">Baseline gate</text>
+                <text x="287" y="266">Feedback memory</text>
+                <text x="460" y="266" fill="#06111f">Optimized slate</text>
+              </g>
+              <g stroke="#dce6ff" stroke-width="2" marker-end="url(#arrow3)">
+                <path d="M180 61 H212"/>
+                <path d="M360 61 H392"/>
+                <path d="M460 88 V132"/>
+                <path d="M395 161 H362"/>
+                <path d="M215 161 H182"/>
+                <path d="M107 188 V232"/>
+                <path d="M180 261 H212"/>
+                <path d="M360 261 H392"/>
+                <path d="M287 235 C287 205 392 206 420 188"/>
+              </g>
+            </svg>
+          </div>
+          <ul>
+            <li>Combines neural retrieval with explicit intent contracts.</li>
+            <li>Uses policy selection rather than one static scoring recipe.</li>
+            <li>Optimizes slate behavior, not only individual item scores.</li>
+            <li>Routes between baseline, light rerank, and full CORTEX.</li>
+            <li>Logs traces that can train future learned gate/classifier agents.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Why this is technically better than the standard approach</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Failure mode in standard ranking</th>
+            <th>CORTEX mechanism</th>
+            <th>Technical effect</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Semantic retrieval retrieves plausible but wrong products.</td>
+            <td>LLM Contract Agent + Contract Filter Agent.</td>
+            <td>Introduces explicit intent constraints and blocked-term filtering.</td>
+          </tr>
+          <tr>
+            <td>Ranking model treats each item independently.</td>
+            <td>Slate Q-Agent + Multi-Agent Diversifier.</td>
+            <td>Optimizes the whole top-K composition and reduces redundancy.</td>
+          </tr>
+          <tr>
+            <td>Strong baseline gets damaged by unnecessary reranking.</td>
+            <td>Baseline-Aware Gate Agent.</td>
+            <td>Routes between preserve, light rerank, and full CORTEX based on confidence/alignment signals.</td>
+          </tr>
+          <tr>
+            <td>Pipeline failures stop long evaluations.</td>
+            <td>Resilient Contract Fallback Agent.</td>
+            <td>Maintains evaluation continuity when the LLM contract generator fails.</td>
+          </tr>
+          <tr>
+            <td>Black-box ranking decisions are hard to debug.</td>
+            <td>Experiment Memory + Analyzer.</td>
+            <td>Produces per-query traces, reward deltas, gate reasons, and threshold diagnostics.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="results">
+      <h2>5. What has been built so far</h2>
+      <p class="lede">
+        The current implementation is a functioning MVP stack, not just a concept. It includes retrieval,
+        LLM contracts, policy scoring, slate enforcement, diversification, Q-learning action selection,
+        feedback logging, evaluation, and gate calibration analysis.
+      </p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Implemented components</h3>
+          <ul>
+            <li>Streamlit app</li>
+            <li>Amazon ESCI balanced sample ingestion</li>
+            <li>Semantic retrieval with cached embeddings</li>
+            <li>LLM-based intent extraction</li>
+            <li>Dynamic LLM search contracts</li>
+            <li>Dynamic contract filters</li>
+            <li>Contract-aware candidate filtering</li>
+            <li>Final slate contract enforcement</li>
+            <li>Brand preference scoring</li>
+            <li>Contract-priority multi-agent diversification</li>
+            <li>Slate Q-learning policy selection</li>
+            <li>Feedback logging</li>
+            <li>Experiment snapshot logging</li>
+            <li>Baseline vs CORTEX evaluator</li>
+            <li>Scalable evaluator with resume support and contract cache</li>
+            <li>Resilient fallback contract logic</li>
+            <li>Gate calibration analyzer</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>Current best app setting</h3>
+          <pre>Retrieval mode = Semantic
+Contract mode  = LLM Agent
+Policy mode    = Slate Q-Learning
+                 + Multi-Agent Diversification</pre>
+          <h3>Dataset</h3>
+          <pre>data/esci_balanced_sample.csv
+Rows: 51,077
+Unique queries: 41,313</pre>
+        </div>
+      </div>
+
+
+      <h3>Visual result summary</h3>
+      <div class="result-viz-grid">
+        <div class="viz-card">
+          <h3>Validated 250-query outcome: full CORTEX vs gated CORTEX</h3>
+          <svg width="100%" height="315" viewBox="0 0 720 315" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart comparing full CORTEX and gated CORTEX wins, baseline wins, and ties">
+            <defs>
+              <linearGradient id="barA" x1="0" x2="1"><stop offset="0%" stop-color="#6d8dff"/><stop offset="100%" stop-color="#b676ff"/></linearGradient>
+              <linearGradient id="barB" x1="0" x2="1"><stop offset="0%" stop-color="#55e6ff"/><stop offset="100%" stop-color="#62f4b4"/></linearGradient>
+              <linearGradient id="barC" x1="0" x2="1"><stop offset="0%" stop-color="#ffb86b"/><stop offset="100%" stop-color="#ff6bb5"/></linearGradient>
+            </defs>
+            <rect x="0" y="0" width="720" height="315" rx="22" fill="rgba(255,255,255,0.035)"/>
+            <line x1="90" y1="250" x2="670" y2="250" stroke="rgba(255,255,255,0.28)"/>
+            <line x1="90" y1="205" x2="670" y2="205" stroke="rgba(255,255,255,0.08)"/>
+            <line x1="90" y1="160" x2="670" y2="160" stroke="rgba(255,255,255,0.08)"/>
+            <line x1="90" y1="115" x2="670" y2="115" stroke="rgba(255,255,255,0.08)"/>
+            <line x1="90" y1="70" x2="670" y2="70" stroke="rgba(255,255,255,0.08)"/>
+            <text x="45" y="254" fill="#aab4d6" font-size="12">0</text>
+            <text x="38" y="209" fill="#aab4d6" font-size="12">50</text>
+            <text x="30" y="164" fill="#aab4d6" font-size="12">100</text>
+            <text x="30" y="119" fill="#aab4d6" font-size="12">150</text>
+            <text x="30" y="74" fill="#aab4d6" font-size="12">200</text>
+
+            <rect x="145" y="99.7" width="58" height="150.3" rx="10" fill="url(#barA)"/>
+            <rect x="213" y="92.5" width="58" height="157.5" rx="10" fill="url(#barB)"/>
+            <text x="174" y="87" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">167</text>
+            <text x="242" y="80" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">175</text>
+            <text x="208" y="282" text-anchor="middle" fill="#dce6ff" font-size="13" font-weight="800">Wins</text>
+
+            <rect x="345" y="179.8" width="58" height="70.2" rx="10" fill="url(#barA)"/>
+            <rect x="413" y="187.0" width="58" height="63.0" rx="10" fill="url(#barB)"/>
+            <text x="374" y="168" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">78</text>
+            <text x="442" y="176" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">70</text>
+            <text x="408" y="282" text-anchor="middle" fill="#dce6ff" font-size="13" font-weight="800">Baseline wins</text>
+
+            <rect x="545" y="245.5" width="58" height="4.5" rx="3" fill="url(#barA)"/>
+            <rect x="613" y="245.5" width="58" height="4.5" rx="3" fill="url(#barB)"/>
+            <text x="574" y="234" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">5</text>
+            <text x="642" y="234" text-anchor="middle" fill="#ffffff" font-size="15" font-weight="900">5</text>
+            <text x="608" y="282" text-anchor="middle" fill="#dce6ff" font-size="13" font-weight="800">Ties</text>
+
+            <circle cx="150" cy="28" r="6" fill="url(#barA)"/><text x="164" y="33" fill="#dce6ff" font-size="13">Full CORTEX</text>
+            <circle cx="290" cy="28" r="6" fill="url(#barB)"/><text x="304" y="33" fill="#dce6ff" font-size="13">Gated CORTEX</text>
+          </svg>
+          <p class="viz-note">The validated checkpoint reduced baseline losses from 78 to 70 and increased wins from 167 to 175 on the same 250-query run.</p>
+        </div>
+
+        <div class="viz-card">
+          <h3>Reward and lift movement</h3>
+          <div class="mini-bars">
+            <div class="mini-bar-row">
+              <span>Avg full reward</span>
+              <div class="mini-bar-track"><div class="mini-bar-fill alt" style="width:98.7%"></div></div>
+              <span class="mini-bar-value">0.8529</span>
+            </div>
+            <div class="mini-bar-row">
+              <span>Avg gated reward</span>
+              <div class="mini-bar-track"><div class="mini-bar-fill" style="width:100%"></div></div>
+              <span class="mini-bar-value">0.8644</span>
+            </div>
+            <div class="mini-bar-row">
+              <span>Full avg lift</span>
+              <div class="mini-bar-track"><div class="mini-bar-fill alt" style="width:88.5%"></div></div>
+              <span class="mini-bar-value">+0.0886</span>
+            </div>
+            <div class="mini-bar-row">
+              <span>Gated avg lift</span>
+              <div class="mini-bar-track"><div class="mini-bar-fill" style="width:100%"></div></div>
+              <span class="mini-bar-value">+0.1001</span>
+            </div>
+            <div class="mini-bar-row">
+              <span>Gate delta</span>
+              <div class="mini-bar-track"><div class="mini-bar-fill" style="width:57%"></div></div>
+              <span class="mini-bar-value">+0.0115</span>
+            </div>
+          </div>
+          <p class="viz-note">The gate is not a broad blocker. It acts as a rare safety valve that improves the aggregate reward curve.</p>
+        </div>
+      </div>
+
+      <div class="viz-card">
+        <h3>Gate behavior distribution</h3>
+        <svg width="100%" height="170" viewBox="0 0 1000 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stacked bar showing gate behavior distribution">
+          <rect x="0" y="0" width="1000" height="170" rx="22" fill="rgba(255,255,255,0.035)"/>
+          <text x="30" y="38" fill="#ffffff" font-size="18" font-weight="900">Validated gate routing on 250 queries</text>
+          <text x="30" y="62" fill="#aab4d6" font-size="13">Full CORTEX remains the default; light-rerank activates only when risk control is justified.</text>
+          <rect x="30" y="90" width="936" height="34" rx="17" fill="rgba(255,255,255,0.10)"/>
+          <rect x="30" y="90" width="913.5" height="34" rx="17" fill="url(#barB)"/>
+          <rect x="943.5" y="90" width="22.5" height="34" rx="12" fill="url(#barC)"/>
+          <text x="486" y="113" text-anchor="middle" fill="#06111f" font-size="14" font-weight="900">Full CORTEX: 244 queries</text>
+          <text x="955" y="146" text-anchor="middle" fill="#ffb86b" font-size="12" font-weight="900">Light rerank: 6</text>
+          <text x="115" y="146" text-anchor="middle" fill="#62f4b4" font-size="12" font-weight="900">Preserve baseline: 0</text>
+        </svg>
+      </div>
+
+      <h3>Evaluation progression</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>MVP</th>
+            <th>Configuration</th>
+            <th>Queries</th>
+            <th>Wins</th>
+            <th>Baseline wins</th>
+            <th>Average lift</th>
+            <th>Interpretation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>MVP 13.2</td>
+            <td>Full CORTEX</td>
+            <td>100</td>
+            <td>74</td>
+            <td>25</td>
+            <td>+0.1061</td>
+            <td>Strong lift, but over-reranked some strong baseline cases.</td>
+          </tr>
+          <tr>
+            <td>MVP 13.3</td>
+            <td>Initial gate</td>
+            <td>100</td>
+            <td>63</td>
+            <td>32</td>
+            <td>+0.0601</td>
+            <td>Gate was too conservative; suppressed CORTEX too often.</td>
+          </tr>
+          <tr>
+            <td>MVP 13.3.1</td>
+            <td>Tuned gate</td>
+            <td>100</td>
+            <td>76</td>
+            <td>24</td>
+            <td>+0.1022</td>
+            <td>Gate became selective and improved over full CORTEX.</td>
+          </tr>
+          <tr>
+            <td>MVP 13.3.1 resilient</td>
+            <td>Best validated version</td>
+            <td>250</td>
+            <td>175</td>
+            <td>70</td>
+            <td>+0.1001</td>
+            <td>Best checkpoint: +8 wins over full CORTEX and fewer baseline losses.</td>
+          </tr>
+          <tr>
+            <td>MVP 13.4 v1</td>
+            <td>Adaptive rule expansion</td>
+            <td>250</td>
+            <td>179</td>
+            <td>66</td>
+            <td>+0.0999</td>
+            <td>Rejected: full CORTEX did better on that run, gate delta turned negative.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Best validated result: MVP 13.3.1 resilient</h3>
+      <div class="grid-3">
+        <div class="card">
+          <div class="big-number">175</div>
+          <p>Gated CORTEX wins out of 250 queries.</p>
+        </div>
+        <div class="card">
+          <div class="big-number">70.0%</div>
+          <p>Gated win rate versus 66.8% for full CORTEX.</p>
+        </div>
+        <div class="card">
+          <div class="big-number">+0.0115</div>
+          <p>Average gate delta versus full CORTEX.</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Full CORTEX</th>
+            <th>Gated CORTEX</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Total queries</td>
+            <td>250</td>
+            <td>250</td>
+          </tr>
+          <tr>
+            <td>Wins</td>
+            <td>167</td>
+            <td>175</td>
+          </tr>
+          <tr>
+            <td>Baseline wins</td>
+            <td>78</td>
+            <td>70</td>
+          </tr>
+          <tr>
+            <td>Ties</td>
+            <td>5</td>
+            <td>5</td>
+          </tr>
+          <tr>
+            <td>Win rate</td>
+            <td>66.8%</td>
+            <td>70.0%</td>
+          </tr>
+          <tr>
+            <td>Average reward</td>
+            <td>0.852933</td>
+            <td>0.864411</td>
+          </tr>
+          <tr>
+            <td>Average absolute lift</td>
+            <td>+0.088628</td>
+            <td>+0.100106</td>
+          </tr>
+          <tr>
+            <td>Median absolute lift</td>
+            <td>+0.065693</td>
+            <td>+0.076642</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="card warning">
+        <h3>Important experimental note</h3>
+        <p>
+          MVP 13.4 adaptive rule expansion was tested and rejected. It expanded light-rerank coverage,
+          but the average gate delta became negative. The correct engineering decision is to keep
+          MVP 13.3.1 resilient as the validated checkpoint and move next toward a learned gate classifier
+          rather than more hand-tuned threshold rules.
+        </p>
+      </div>
+    </section>
+
+    <section id="technical">
+      <h2>6. Technical framing</h2>
+      <p>
+        CORTEX can be formalized as a modular policy over a candidate slate. Let the user query be
+        <code>q</code>, the candidate universe be <code>D</code>, the retrieved candidate set be <code>C_K</code>,
+        the LLM contract be <code>κ</code>, and the final slate be <code>S@5</code>.
+      </p>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Formal pipeline</h3>
+          <pre>C_K = Retrieve(q, D)
+
+κ = ContractAgent(q, C_K)
+
+C'_K = ContractFilter(C_K, κ)
+
+a = QPolicyAgent(state(q, κ, C'_K))
+
+R = PolicyCompiler(C'_K, a)
+
+S_full = Diversify(Enforce(R, κ))
+
+S_final = Gate(S_baseline, S_full, κ)</pre>
+        </div>
+        <div class="card">
+          <h3>Gate objective</h3>
+          <pre>Gate should maximize:
+
+E[Reward(S_final) - Reward(S_baseline)]
+
+while minimizing:
+
+P(over_rerank | baseline strong)
+
+and preserving:
+
+contract_alignment(S_final, κ)</pre>
+        </div>
+      </div>
+
+      <h3>Why this is not just reranking</h3>
+      <p>
+        A conventional reranker is usually a mapping from features to a scalar score:
+        <code>f(q, d) → score</code>. CORTEX is closer to a hierarchical policy:
+        <code>π(q, C_K, κ) → {action, slate, trace}</code>. The trace matters because it exposes
+        the internal decisions: contract generation, filter behavior, RL action, enforcement status,
+        gate decision, and reward deltas.
+      </p>
+
+      <h3>Research-grade novelty angle</h3>
+      <ul>
+        <li>
+          <strong>Contract-aware ranking:</strong> Query understanding becomes an enforceable object,
+          not a hidden latent vector.
+        </li>
+        <li>
+          <strong>Slate-aware decisioning:</strong> The system optimizes top-K page quality rather than individual item relevance only.
+        </li>
+        <li>
+          <strong>Risk-aware reranking:</strong> The gate explicitly models the risk that reranking harms a strong semantic baseline.
+        </li>
+        <li>
+          <strong>Agentic orchestration:</strong> Specialized agents coordinate through structured intermediate states.
+        </li>
+        <li>
+          <strong>Learning-ready traces:</strong> Evaluation logs can train future query difficulty, gate classifier, and reward critic agents.
+        </li>
+      </ul>
+    </section>
+
+    <section id="roadmap">
+      <h2>7. What comes next</h2>
+      <p class="lede">
+        The best next step is not another hand-tuned threshold expansion. The failed MVP 13.4 v1 experiment showed that
+        naive expansion can hurt. The next phase should turn the gate into a learned routing policy.
+      </p>
+
+      <div class="timeline">
+        <div class="step">
+          <div class="tag">MVP 13.4</div>
+          <div>
+            <h3>Learned Gate Classifier Agent</h3>
+            <p>
+              Train a classifier using evaluator logs to predict which route is best:
+              full CORTEX, light rerank, or baseline preservation. Features include baseline confidence,
+              contract alignment, top-1 score, top-5 mean score, label quality, ambiguity, enforcement status,
+              and historical reward deltas.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="tag">MVP 13.5</div>
+          <div>
+            <h3>Query Difficulty Agent</h3>
+            <p>
+              Estimate whether a query is easy, ambiguous, sparse, multilingual, typo-heavy, brand-driven,
+              or attribute-heavy. Query difficulty becomes a first-class state variable for the RL policy and gate.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="tag">MVP 13.6</div>
+          <div>
+            <h3>Reward Critic Agent</h3>
+            <p>
+              Add a final critic that inspects the slate for intent mismatch, redundancy, missing constraints,
+              and contract violations before the final result is accepted.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="tag">MVP 14</div>
+          <div>
+            <h3>Bandit / RL Feedback Loop</h3>
+            <p>
+              Move from offline simulated reward to a bandit-style policy update loop. Use logged reward outcomes
+              to update route selection and ranking policy over time.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="tag">Research</div>
+          <div>
+            <h3>Counterfactual Evaluation + IPS/DR Scoring</h3>
+            <p>
+              Introduce counterfactual estimators for offline evaluation under exposure bias.
+              This makes the project more defensible for publication-oriented ranking/recommender systems work.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="citations">
+      <h2>8. Research anchors and citations</h2>
+      <p>
+        The CORTEX architecture is implemented as a project-specific agentic reranking system,
+        but it is grounded in several established research areas:
+        product-search relevance datasets, neural retrieval, learning-to-rank, slate recommendation,
+        reinforcement learning, and reasoning/acting LLM agents.
+      </p>
+
+      <ol class="footnotes">
+        <li>
+          Amazon Science. <em>Shopping Queries Dataset: A Large-Scale ESCI Benchmark for Improving Product Search.</em>
+          The ESCI dataset provides query-product pairs with Exact, Substitute, Complement, and Irrelevant judgments.
+          <a href="https://www.amazon.science/code-and-datasets/shopping-queries-dataset-a-large-scale-esci-benchmark-for-improving-product-search">Source</a>.
+        </li>
+        <li>
+          Amazon Science GitHub. <em>amazon-science/esci-data.</em>
+          Public repository for the Shopping Queries Dataset.
+          <a href="https://github.com/amazon-science/esci-data">Source</a>.
+        </li>
+        <li>
+          Burges, C. J. C. <em>From RankNet to LambdaRank to LambdaMART.</em>
+          Foundational learning-to-rank report describing RankNet, LambdaRank, and LambdaMART.
+          <a href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/MSR-TR-2010-82.pdf">Source</a>.
+        </li>
+        <li>
+          Khattab, O., & Zaharia, M. <em>ColBERT: Efficient and Effective Passage Search via Contextualized Late Interaction over BERT.</em>
+          Introduces late-interaction neural retrieval with precomputed document representations.
+          <a href="https://arxiv.org/abs/2004.12832">Source</a>.
+        </li>
+        <li>
+          Ie, E. et al. <em>Reinforcement Learning for Slate-based Recommender Systems.</em>
+          Introduces SLATEQ decomposition for tractable slate recommendation.
+          <a href="https://arxiv.org/abs/1905.12767">Source</a>.
+        </li>
+        <li>
+          Yao, S. et al. <em>ReAct: Synergizing Reasoning and Acting in Language Models.</em>
+          Shows how reasoning traces and task actions can be interleaved for interpretable decision-making agents.
+          <a href="https://arxiv.org/abs/2210.03629">Source</a>.
+        </li>
+        <li>
+          Hu, Z. et al. <em>An Unbiased Pairwise Learning-to-Rank Algorithm.</em>
+          Discusses learning-to-rank under click-position bias and debiased click data.
+          <a href="https://arxiv.org/abs/1809.05818">Source</a>.
+        </li>
+      </ol>
+
+      <div class="print-note">
+        This document is self-contained and can be shared as an HTML artifact. Results reported here are from the local
+        PolicyRank-RL / CORTEX Engine experiment logs supplied during project development.
+      </div>
+    </section>
+  </main>
+</body>
+</html>

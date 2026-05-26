@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CORTEX / PolicyRank-RL — Progression Report</title>
+  <style>
+    :root {
+      --bg0: #020617;
+      --bg1: #071326;
+      --bg2: #0f172a;
+      --card: rgba(15, 23, 42, 0.82);
+      --card2: rgba(30, 41, 59, 0.76);
+      --line: rgba(148, 163, 184, 0.22);
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --muted2: #94a3b8;
+      --cyan: #22d3ee;
+      --blue: #60a5fa;
+      --green: #34d399;
+      --purple: #a78bfa;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+      --shadow: 0 18px 60px rgba(0,0,0,.36);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(34, 211, 238, .16), transparent 32%),
+        radial-gradient(circle at 90% 6%, rgba(167, 139, 250, .18), transparent 34%),
+        radial-gradient(circle at 60% 50%, rgba(52, 211, 153, .08), transparent 36%),
+        linear-gradient(135deg, var(--bg0) 0%, var(--bg1) 42%, #020617 100%);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(148, 163, 184, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.035) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.85), rgba(0,0,0,0.15));
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    a { color: var(--cyan); text-decoration: none; }
+    .page { position: relative; z-index: 1; }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(18px);
+      background: rgba(2, 6, 23, .72);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; letter-spacing: -.02em; }
+    .orb {
+      width: 32px; height: 32px; border-radius: 999px;
+      background: conic-gradient(from 210deg, var(--cyan), var(--purple), var(--green), var(--cyan));
+      box-shadow: 0 0 28px rgba(34, 211, 238, .35);
+    }
+    .nav-links { display: flex; gap: 14px; flex-wrap: wrap; }
+    .nav-links a { color: var(--muted); font-size: 13px; font-weight: 700; }
+
+    .hero {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 72px 22px 42px;
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border: 1px solid rgba(34, 211, 238, .34);
+      border-radius: 999px;
+      background: rgba(34, 211, 238, .08);
+      color: #a5f3fc;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 20px 0 16px;
+      font-size: clamp(42px, 6vw, 82px);
+      line-height: .94;
+      letter-spacing: -.07em;
+      font-weight: 950;
+    }
+    .gradient-text {
+      background: linear-gradient(90deg, #f8fafc, #67e8f9 35%, #a78bfa 65%, #86efac);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero p { color: var(--muted); font-size: 18px; line-height: 1.72; max-width: 720px; }
+
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 28px; }
+    .button {
+      border: 1px solid rgba(148, 163, 184, .3);
+      border-radius: 999px;
+      padding: 12px 16px;
+      background: rgba(15, 23, 42, .75);
+      color: var(--text);
+      font-weight: 850;
+      box-shadow: 0 10px 28px rgba(0,0,0,.22);
+    }
+    .button.primary {
+      border-color: rgba(34, 211, 238, .48);
+      background: linear-gradient(135deg, rgba(34, 211, 238, .22), rgba(99, 102, 241, .22));
+    }
+
+    .glass {
+      background: linear-gradient(180deg, rgba(15, 23, 42, .86), rgba(15, 23, 42, .62));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-panel { padding: 24px; position: relative; overflow: hidden; min-height: 460px; }
+    .hero-panel::before {
+      content: "";
+      position: absolute;
+      width: 280px; height: 280px;
+      right: -100px; top: -80px;
+      background: radial-gradient(circle, rgba(34, 211, 238, .22), transparent 68%);
+      pointer-events: none;
+    }
+
+    .query-box {
+      border: 1px solid rgba(34, 211, 238, .25);
+      border-radius: 18px;
+      background: rgba(2, 6, 23, .55);
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .query-title { color: var(--muted2); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .14em; }
+    .query-text { margin-top: 8px; font-size: 20px; font-weight: 900; color: var(--text); }
+
+    .pulse-flow {
+      position: relative;
+      margin: 26px 0;
+      height: 220px;
+    }
+    .node {
+      position: absolute;
+      width: 138px;
+      min-height: 70px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, .92);
+      border: 1px solid rgba(148, 163, 184, .28);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      font-size: 13px;
+      color: #e2e8f0;
+      box-shadow: 0 0 24px rgba(34, 211, 238, .08);
+    }
+    .node small { display: block; color: var(--muted2); font-weight: 650; margin-top: 4px; }
+    .n1 { left: 0; top: 70px; border-color: rgba(34, 211, 238, .5); }
+    .n2 { left: 180px; top: 16px; border-color: rgba(96, 165, 250, .5); }
+    .n3 { left: 180px; top: 132px; border-color: rgba(167, 139, 250, .5); }
+    .n4 { right: 0; top: 70px; border-color: rgba(52, 211, 153, .5); }
+
+    svg.motion-lines { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+    .route-line {
+      fill: none;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-dasharray: 10 12;
+      animation: dash 1.2s linear infinite;
+      opacity: .9;
+    }
+    @keyframes dash { to { stroke-dashoffset: -44; } }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 8px 22px 46px;
+    }
+    .kpi { padding: 18px; border-radius: 20px; background: rgba(15, 23, 42, .82); border: 1px solid var(--line); }
+    .kpi .label { color: var(--muted2); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; }
+    .kpi .value { margin-top: 9px; font-size: 30px; font-weight: 950; letter-spacing: -.04em; }
+    .kpi .note { margin-top: 7px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+    section { max-width: 1180px; margin: 0 auto; padding: 46px 22px; }
+    .section-header { margin-bottom: 22px; }
+    .section-header h2 { margin: 0; font-size: clamp(30px, 4vw, 52px); letter-spacing: -.05em; line-height: 1.02; }
+    .section-header p { color: var(--muted); font-size: 17px; line-height: 1.7; max-width: 850px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .card { padding: 22px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--line); box-shadow: 0 16px 44px rgba(0,0,0,.22); }
+    .card h3 { margin: 0 0 10px; font-size: 22px; letter-spacing: -.03em; }
+    .card p, .card li { color: var(--muted); line-height: 1.62; }
+    .accent-cyan { border-left: 6px solid var(--cyan); }
+    .accent-green { border-left: 6px solid var(--green); }
+    .accent-purple { border-left: 6px solid var(--purple); }
+    .accent-amber { border-left: 6px solid var(--amber); }
+    .accent-rose { border-left: 6px solid var(--rose); }
+
+    .timeline { position: relative; padding-left: 26px; }
+    .timeline::before { content: ""; position: absolute; left: 8px; top: 4px; bottom: 4px; width: 2px; background: linear-gradient(var(--cyan), var(--purple), var(--green)); }
+    .milestone { position: relative; margin: 0 0 16px; padding: 16px 18px; border-radius: 18px; background: rgba(15, 23, 42, .72); border: 1px solid var(--line); }
+    .milestone::before { content: ""; position: absolute; left: -25px; top: 22px; width: 12px; height: 12px; border-radius: 999px; background: var(--cyan); box-shadow: 0 0 18px var(--cyan); }
+    .milestone b { color: var(--text); }
+    .milestone span { display: block; color: var(--muted); margin-top: 5px; }
+
+    .arch-wrap { padding: 22px; overflow: hidden; }
+    .arch-svg { width: 100%; min-height: 420px; }
+    .arch-box { fill: rgba(15, 23, 42, .88); stroke: rgba(148, 163, 184, .34); stroke-width: 1.5; }
+    .arch-text { fill: #f8fafc; font-weight: 800; font-size: 14px; }
+    .arch-small { fill: #cbd5e1; font-size: 11px; }
+    .moving-path {
+      fill: none;
+      stroke: url(#grad);
+      stroke-width: 4;
+      stroke-linecap: round;
+      stroke-dasharray: 16 18;
+      animation: dash 1.1s linear infinite;
+    }
+
+    .math {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: rgba(2, 6, 23, .72);
+      border: 1px solid rgba(34, 211, 238, .24);
+      border-radius: 16px;
+      padding: 16px;
+      color: #e0f2fe;
+      overflow-x: auto;
+      line-height: 1.7;
+    }
+
+    .code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #020617;
+      border: 1px solid rgba(148, 163, 184, .22);
+      border-radius: 18px;
+      padding: 18px;
+      color: #dbeafe;
+      overflow-x: auto;
+      line-height: 1.62;
+      font-size: 13px;
+      white-space: pre;
+    }
+
+    .bar-chart { display: grid; gap: 12px; }
+    .bar-row { display: grid; grid-template-columns: 190px 1fr 90px; align-items: center; gap: 12px; }
+    .bar-label { color: var(--muted); font-weight: 800; font-size: 13px; }
+    .bar-track { height: 14px; border-radius: 999px; background: rgba(148, 163, 184, .14); overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--green)); box-shadow: 0 0 20px rgba(34, 211, 238, .18); }
+    .bar-value { color: var(--text); font-weight: 900; font-size: 13px; text-align: right; }
+
+    .callout { border-radius: 20px; padding: 18px 20px; border: 1px solid rgba(251, 191, 36, .32); background: rgba(251, 191, 36, .08); color: #fde68a; line-height: 1.65; }
+    .footer { max-width: 1180px; margin: 0 auto; padding: 34px 22px 60px; color: var(--muted2); border-top: 1px solid var(--line); }
+
+
+
+    .neon-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(34,211,238,.8), rgba(167,139,250,.8), transparent);
+      margin: 24px 0;
+    }
+
+    .motion-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 260px;
+    }
+    .motion-card::after {
+      content: "";
+      position: absolute;
+      inset: -80px;
+      background: conic-gradient(from 180deg, transparent, rgba(34,211,238,.14), transparent, rgba(167,139,250,.12), transparent);
+      animation: spin 10s linear infinite;
+      opacity: .8;
+      pointer-events: none;
+    }
+    .motion-card > * { position: relative; z-index: 1; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .comparison-lane {
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(15,23,42,.72);
+      padding: 18px;
+      min-height: 320px;
+    }
+    .lane-title { font-size: 18px; font-weight: 950; letter-spacing: -.02em; margin-bottom: 14px; }
+    .lane-step {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 12px; margin: 10px 0;
+      border-radius: 16px;
+      background: rgba(2,6,23,.45);
+      border: 1px solid rgba(148,163,184,.18);
+      color: var(--muted);
+    }
+    .lane-step .dot { width: 12px; height: 12px; border-radius: 999px; background: var(--muted2); }
+    .lane-step.hot { color: #f8fafc; border-color: rgba(34,211,238,.38); box-shadow: 0 0 22px rgba(34,211,238,.08); }
+    .lane-step.hot .dot { background: var(--cyan); box-shadow: 0 0 18px var(--cyan); }
+
+    .query-stage {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      align-items: stretch;
+      margin-top: 18px;
+    }
+    .query-stage .stage {
+      padding: 14px 12px;
+      border-radius: 18px;
+      background: rgba(2,6,23,.58);
+      border: 1px solid rgba(148,163,184,.22);
+      text-align: center;
+      min-height: 110px;
+    }
+    .stage b { display: block; color: #f8fafc; font-size: 14px; margin-bottom: 6px; }
+    .stage small { color: var(--muted2); line-height: 1.45; }
+    .stage.active { border-color: rgba(52,211,153,.5); box-shadow: 0 0 28px rgba(52,211,153,.1); }
+    .stage.active b { color: #bbf7d0; }
+
+    .particle-svg { width: 100%; height: 300px; overflow: visible; }
+    .particle-path { fill: none; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 14 16; animation: dash 1.4s linear infinite; }
+    .particle-node { fill: rgba(15,23,42,.95); stroke: rgba(148,163,184,.34); stroke-width: 1.5; }
+    .particle-text { fill: #f8fafc; font-size: 13px; font-weight: 800; }
+    .particle-small { fill: #cbd5e1; font-size: 10px; }
+    .spark { animation: floaty 3.2s ease-in-out infinite; }
+    @keyframes floaty { 0%, 100% { transform: translateY(0); opacity: .82; } 50% { transform: translateY(-7px); opacity: 1; } }
+
+    .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .result-card {
+      padding: 16px;
+      border-radius: 20px;
+      background: rgba(2,6,23,.58);
+      border: 1px solid rgba(148,163,184,.22);
+      min-height: 190px;
+    }
+    .rank-pill {
+      display: inline-flex; padding: 5px 9px; border-radius: 999px;
+      background: rgba(34,211,238,.12); border: 1px solid rgba(34,211,238,.34);
+      color: #a5f3fc; font-size: 12px; font-weight: 900; margin-bottom: 10px;
+    }
+    .result-title { font-weight: 900; color: #f8fafc; line-height: 1.35; margin-bottom: 8px; }
+    .result-meta { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .tag {
+      display: inline-flex; padding: 4px 8px; border-radius: 999px; margin: 4px 4px 0 0;
+      font-size: 11px; font-weight: 850; color: #e0f2fe; background: rgba(96,165,250,.12); border: 1px solid rgba(96,165,250,.28);
+    }
+
+    .decision-matrix {
+      display: grid;
+      grid-template-columns: 1.1fr repeat(4, .9fr);
+      gap: 1px;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }
+    .matrix-cell {
+      background: rgba(15,23,42,.9);
+      padding: 13px;
+      color: var(--muted);
+      min-height: 62px;
+      font-size: 13px;
+    }
+    .matrix-head { color: #f8fafc; font-weight: 900; background: rgba(34,211,238,.12); }
+    .matrix-good { color: #bbf7d0; background: rgba(34,197,94,.10); }
+    .matrix-warn { color: #fde68a; background: rgba(251,191,36,.10); }
+    .matrix-stop { color: #fecdd3; background: rgba(251,113,133,.10); }
+
+    .swimlane {
+      position: relative;
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: rgba(2,6,23,.45);
+      overflow: hidden;
+    }
+    .swimlane-row { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; margin: 14px 0; }
+    .swimlane-label { color: var(--muted); font-weight: 900; font-size: 13px; }
+    .swim-track { position: relative; height: 34px; border-radius: 999px; background: rgba(148,163,184,.10); overflow: hidden; border: 1px solid rgba(148,163,184,.16); }
+    .swim-dot { position: absolute; top: 8px; width: 18px; height: 18px; border-radius: 999px; background: var(--cyan); box-shadow: 0 0 20px var(--cyan); animation: swim 4s ease-in-out infinite; }
+    .swim-dot.green { background: var(--green); box-shadow: 0 0 20px var(--green); animation-delay: .5s; }
+    .swim-dot.purple { background: var(--purple); box-shadow: 0 0 20px var(--purple); animation-delay: .9s; }
+    .swim-dot.amber { background: var(--amber); box-shadow: 0 0 20px var(--amber); animation-delay: 1.2s; }
+    @keyframes swim { 0% { left: 4%; } 50% { left: 78%; } 100% { left: 4%; } }
+
+
+
+    .route-exec {
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .route-exec-row {
+      display: grid;
+      grid-template-columns: 190px 1fr 190px;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 20px;
+      background: rgba(15,23,42,.72);
+      border: 1px solid rgba(148,163,184,.18);
+    }
+    .route-endpoint {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(2,6,23,.72);
+      border: 1px solid rgba(34,211,238,.22);
+      color: #f8fafc;
+      font-weight: 900;
+      text-align: center;
+      min-height: 58px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .route-endpoint small {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 5px;
+      font-weight: 750;
+    }
+    .route-track {
+      position: relative;
+      min-height: 58px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(34,211,238,.08), rgba(167,139,250,.09), rgba(52,211,153,.08));
+      border: 1px solid rgba(148,163,184,.18);
+      overflow: hidden;
+    }
+    .route-track::before {
+      content: "";
+      position: absolute;
+      inset: 27px 22px auto 22px;
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--cyan), var(--purple), var(--green));
+      box-shadow: 0 0 18px rgba(34,211,238,.22);
+      opacity: .75;
+    }
+    .route-packet {
+      position: absolute;
+      top: 13px;
+      left: 18px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      color: #020617;
+      background: linear-gradient(135deg, #22d3ee, #a7f3d0);
+      font-size: 11px;
+      font-weight: 950;
+      box-shadow: 0 0 24px rgba(34,211,238,.38);
+      animation: packetFlow 5.8s linear infinite;
+      white-space: nowrap;
+    }
+    .route-packet.purple { background: linear-gradient(135deg, #a78bfa, #f0abfc); animation-delay: .8s; }
+    .route-packet.green { background: linear-gradient(135deg, #34d399, #bef264); animation-delay: 1.3s; }
+    .route-packet.amber { background: linear-gradient(135deg, #fbbf24, #fb7185); animation-delay: 1.8s; }
+    @keyframes packetFlow {
+      0% { transform: translateX(-10px); opacity: 0; }
+      12% { opacity: 1; }
+      82% { opacity: 1; }
+      100% { transform: translateX(calc(100vw - 520px)); opacity: 0; }
+    }
+    .route-note {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.65;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 980px) {
+      .hero { grid-template-columns: 1fr; }
+      .kpi-grid, .grid-3, .grid-2, .comparison-grid, .result-grid, .query-stage { grid-template-columns: 1fr; }
+      .node { position: relative; left: auto !important; right: auto !important; top: auto !important; margin-bottom: 10px; width: 100%; }
+      .pulse-flow { height: auto; }
+      svg.motion-lines { display: none; }
+      .bar-row { grid-template-columns: 1fr; }
+      .nav-inner { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media print {
+      body { background: #fff; color: #111827; }
+      .nav { position: static; }
+      .glass, .card, .kpi { box-shadow: none; border-color: #e5e7eb; background: #fff; color: #111827; }
+      .card p, .card li, .hero p, .section-header p { color: #374151; }
+      .gradient-text { color: #111827; background: none; -webkit-text-fill-color: initial; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="nav">
+      <div class="nav-inner">
+        <div class="brand"><div class="orb"></div><span>CORTEX / PolicyRank-RL</span></div>
+        <div class="nav-links">
+          <a href="#progression">Progression</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#unique">Why unique</a>
+          <a href="#querylab">Query lab</a>
+          <a href="#agents">Agents</a>
+          <a href="#governance">Governance</a>
+          <a href="#math">Math</a>
+          <a href="#cost">Cost/value</a>
+          <a href="#code">Code</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <div>
+        <div class="eyebrow">MVP 13 → MVP 20 · Final project progression</div>
+        <h1><span class="gradient-text">CORTEX</span><br/>agentic search governance</h1>
+        <p>
+          CORTEX / PolicyRank-RL evolved from a ranking prototype into a governed agentic search system:
+          it retrieves products, generates search contracts, repairs broad shopping missions, protects narrow
+          product queries, reranks with behavior-aware policy logic, evaluates routes at scale, and estimates
+          cost-versus-value at production query volume.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#architecture">Explore architecture</a>
+          <a class="button" href="#governance">Governance agent</a>
+          <a class="button" href="#cost">Business case</a>
+        </div>
+      </div>
+
+      <div class="hero-panel glass">
+        <div class="query-box">
+          <div class="query-title">Example query</div>
+          <div class="query-text">“beach vacation packing list”</div>
+        </div>
+
+        <div class="pulse-flow">
+          <svg class="motion-lines" viewBox="0 0 520 220" preserveAspectRatio="none">
+            <path class="route-line" d="M120 105 C185 105, 190 50, 250 50" stroke="#22d3ee"/>
+            <path class="route-line" d="M120 105 C185 105, 190 166, 250 166" stroke="#a78bfa"/>
+            <path class="route-line" d="M320 50 C380 60, 390 96, 400 105" stroke="#60a5fa"/>
+            <path class="route-line" d="M320 166 C380 154, 390 118, 400 105" stroke="#34d399"/>
+          </svg>
+          <div class="node n1">Query Signals<small>intent, brand, compound</small></div>
+          <div class="node n2">Mission Repair<small>coverage gaps</small></div>
+          <div class="node n3">Strict Guardrails<small>reject weak repair</small></div>
+          <div class="node n4">Governed Slate<small>final route</small></div>
+        </div>
+
+        <div class="callout">
+          <strong>Core decision:</strong> run mission repair and behavior-aware ranking for broad missions;
+          preserve baseline for narrow branded queries; estimate the cost/value tradeoff before scaling.
+        </div>
+      </div>
+    </header>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="label">Final stage</div><div class="value">MVP 20</div><div class="note">Documentation, demo report, and repo polish complete.</div></div>
+      <div class="kpi"><div class="label">Scalable eval</div><div class="value">100</div><div class="note">Queries used in the latest scalable governed evaluation run.</div></div>
+      <div class="kpi"><div class="label">Success rate</div><div class="value">90%</div><div class="note">Successful governed evaluation queries in the latest run.</div></div>
+      <div class="kpi"><div class="label">Base V/C ratio</div><div class="value">7.21×</div><div class="note">Scenario-based value-to-cost ratio at 1M queries/day.</div></div>
+    </div>
+
+    <section id="progression">
+      <div class="section-header">
+        <h2>Project progression</h2>
+        <p>Each MVP added a concrete system capability. The final product is not just a reranker; it is an orchestrated policy-governed search engine.</p>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="timeline">
+            <div class="milestone"><b>MVP 13.x — Governance foundation</b><span>Baseline preservation gate, agent governance controller, critic/verifier, repair simulator, learned repair router, and out-of-sample validation.</span></div>
+            <div class="milestone"><b>MVP 14.x — Router stack</b><span>Saved router model, scalable router evaluator, Streamlit dry-run toggle, decision logging, and router analyzer.</span></div>
+            <div class="milestone"><b>MVP 15.x — Mission intelligence</b><span>Mission detection, slate builder, relevance guardrails, coverage analyzer, critic, repair loop, repair quality guardrails, and strict compound-intent repair rules.</span></div>
+            <div class="milestone"><b>MVP 16.x — Behavior-aware CORTEX</b><span>Mission-stage scoring, behavior confidence, cold-start rescue, exploration flags, policy reason codes, and dark demo UX work.</span></div>
+            <div class="milestone"><b>MVP 17 — Governance agent</b><span>Top-level decision layer that determines when CORTEX should intervene, repair, rerank, preserve baseline, or reject over-repair.</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="timeline">
+            <div class="milestone"><b>MVP 18 — Governed runner</b><span>End-to-end execution layer: governance decides the route, runner executes the selected route, outputs one final governed slate.</span></div>
+            <div class="milestone"><b>MVP 19 — Scale + UX + business case</b><span>Scalable governed evaluation, dark Live Search UX, cost/value governance analyzer, and Cost vs Value dashboard.</span></div>
+            <div class="milestone"><b>MVP 20 — Final polish</b><span>README, project status, demo report, and final status text polish.</span></div>
+          </div>
+          <div class="callout">
+            Evidence boundary: CORTEX uses ESCI/sample data. Cost/value outputs are scenario assumptions, not measured production revenue.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <div class="section-header">
+        <h2>Architecture: governed agentic ranking</h2>
+        <p>The system routes a user query through retrieval, contract intelligence, policy ranking, mission repair, governance, execution, and cost/value analysis.</p>
+      </div>
+      <div class="card arch-wrap">
+        <svg class="arch-svg" viewBox="0 0 1140 430">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#22d3ee"/>
+              <stop offset="50%" stop-color="#a78bfa"/>
+              <stop offset="100%" stop-color="#34d399"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+              <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <path class="moving-path" filter="url(#glow)" d="M90 120 C210 120, 215 70, 320 70 C445 70, 460 120, 560 120 C670 120, 700 70, 830 70 C950 70, 970 120, 1050 120"/>
+          <path class="moving-path" filter="url(#glow)" d="M90 295 C210 295, 215 245, 320 245 C455 245, 470 300, 580 300 C700 300, 720 245, 830 245 C950 245, 980 300, 1050 300"/>
+
+          <rect class="arch-box" x="20" y="80" rx="18" width="140" height="80"/><text class="arch-text" x="90" y="113" text-anchor="middle">Query</text><text class="arch-small" x="90" y="134" text-anchor="middle">free-form intent</text>
+          <rect class="arch-box" x="250" y="30" rx="18" width="160" height="80"/><text class="arch-text" x="330" y="63" text-anchor="middle">Retrieval</text><text class="arch-small" x="330" y="84" text-anchor="middle">TF-IDF / semantic</text>
+          <rect class="arch-box" x="490" y="80" rx="18" width="160" height="80"/><text class="arch-text" x="570" y="113" text-anchor="middle">Contract Agent</text><text class="arch-small" x="570" y="134" text-anchor="middle">LLM / rules</text>
+          <rect class="arch-box" x="760" y="30" rx="18" width="160" height="80"/><text class="arch-text" x="840" y="63" text-anchor="middle">Policy Ranker</text><text class="arch-small" x="840" y="84" text-anchor="middle">Q-learning slate</text>
+          <rect class="arch-box" x="980" y="80" rx="18" width="140" height="80"/><text class="arch-text" x="1050" y="113" text-anchor="middle">Final Slate</text><text class="arch-small" x="1050" y="134" text-anchor="middle">ranked results</text>
+
+          <rect class="arch-box" x="20" y="255" rx="18" width="140" height="80"/><text class="arch-text" x="90" y="288" text-anchor="middle">Mission Agent</text><text class="arch-small" x="90" y="309" text-anchor="middle">compound intent</text>
+          <rect class="arch-box" x="250" y="205" rx="18" width="160" height="80"/><text class="arch-text" x="330" y="238" text-anchor="middle">Repair Loop</text><text class="arch-small" x="330" y="259" text-anchor="middle">coverage gaps</text>
+          <rect class="arch-box" x="500" y="260" rx="18" width="160" height="80"/><text class="arch-text" x="580" y="293" text-anchor="middle">Governance Agent</text><text class="arch-small" x="580" y="314" text-anchor="middle">route decision</text>
+          <rect class="arch-box" x="760" y="205" rx="18" width="160" height="80"/><text class="arch-text" x="840" y="238" text-anchor="middle">Governed Runner</text><text class="arch-small" x="840" y="259" text-anchor="middle">execute route</text>
+          <rect class="arch-box" x="980" y="260" rx="18" width="140" height="80"/><text class="arch-text" x="1050" y="293" text-anchor="middle">Cost / Value</text><text class="arch-small" x="1050" y="314" text-anchor="middle">business case</text>
+        </svg>
+      </div>
+    </section>
+
+
+
+    <section id="unique">
+      <div class="section-header">
+        <h2>Why this is unique</h2>
+        <p>CORTEX is different because it does not treat every query as the same ranking problem. It first decides whether the query deserves intervention, then chooses the lowest-risk route that still solves the user’s shopping intent.</p>
+      </div>
+
+      <div class="comparison-grid">
+        <div class="comparison-lane">
+          <div class="lane-title">Traditional search / reranking</div>
+          <div class="lane-step hot"><span class="dot"></span><span>Retrieve candidates</span></div>
+          <div class="lane-step hot"><span class="dot"></span><span>Rank by relevance / behavior proxy</span></div>
+          <div class="lane-step"><span class="dot"></span><span>May over-focus on popular items</span></div>
+          <div class="lane-step"><span class="dot"></span><span>May miss mission-completion needs</span></div>
+          <div class="lane-step"><span class="dot"></span><span>Same style of ranking for narrow and broad queries</span></div>
+        </div>
+
+        <div class="comparison-lane motion-card">
+          <div class="lane-title">CORTEX governed ranking</div>
+          <div class="lane-step hot"><span class="dot"></span><span>Classify query intent and risk</span></div>
+          <div class="lane-step hot"><span class="dot"></span><span>Generate a contract and candidate slate</span></div>
+          <div class="lane-step hot"><span class="dot"></span><span>Repair only when the mission needs coverage</span></div>
+          <div class="lane-step hot"><span class="dot"></span><span>Block repair for narrow branded queries</span></div>
+          <div class="lane-step hot"><span class="dot"></span><span>Estimate cost/value before scale</span></div>
+        </div>
+      </div>
+
+      <div class="neon-divider"></div>
+
+      <div class="card">
+        <h3>Decision matrix: what CORTEX changes</h3>
+        <div class="decision-matrix">
+          <div class="matrix-cell matrix-head">Query type</div><div class="matrix-cell matrix-head">Risk</div><div class="matrix-cell matrix-head">Best route</div><div class="matrix-cell matrix-head">Why it matters</div><div class="matrix-cell matrix-head">Outcome</div>
+          <div class="matrix-cell">Broad mission</div><div class="matrix-cell matrix-warn">Coverage gaps</div><div class="matrix-cell matrix-good">Mission repair + behavior-aware</div><div class="matrix-cell">User needs a full basket, not one item.</div><div class="matrix-cell matrix-good">Balanced slate</div>
+          <div class="matrix-cell">Narrow branded</div><div class="matrix-cell matrix-stop">Over-expansion risk</div><div class="matrix-cell matrix-good">Reject repair / preserve baseline</div><div class="matrix-cell">Repair could add irrelevant accessories.</div><div class="matrix-cell matrix-good">Safer ranking</div>
+          <div class="matrix-cell">Low coverage</div><div class="matrix-cell matrix-warn">Candidate pool weak</div><div class="matrix-cell matrix-warn">Fallback / critic path</div><div class="matrix-cell">The local data may not support rich results.</div><div class="matrix-cell matrix-warn">Honest fallback</div>
+          <div class="matrix-cell">High uncertainty</div><div class="matrix-cell matrix-warn">Repair not trusted</div><div class="matrix-cell matrix-warn">Critic review</div><div class="matrix-cell">Avoid trusting a weak repaired slate.</div><div class="matrix-cell matrix-good">Guarded decision</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="querylab">
+      <div class="section-header">
+        <h2>Query lab: illustrative examples and outputs</h2>
+        <p>The examples below are illustrative demo outputs designed for tomorrow’s walkthrough. They show the type of result CORTEX is designed to produce; product names are sample-style examples, not production claims.</p>
+      </div>
+
+      <div class="card motion-card">
+        <h3>Animated query journey: one query becoming a governed slate</h3>
+        <svg class="particle-svg" viewBox="0 0 1120 300">
+          <defs>
+            <linearGradient id="particleGrad" x1="0" x2="1">
+              <stop offset="0%" stop-color="#22d3ee"/><stop offset="55%" stop-color="#a78bfa"/><stop offset="100%" stop-color="#34d399"/>
+            </linearGradient>
+          </defs>
+          <path class="particle-path" d="M90 150 C210 40, 320 40, 430 150 S650 260, 760 150 S950 40, 1030 150" stroke="url(#particleGrad)"/>
+          <circle class="particle-node" cx="90" cy="150" r="54"/><text class="particle-text" x="90" y="145" text-anchor="middle">Query</text><text class="particle-small" x="90" y="164" text-anchor="middle">free text</text>
+          <circle class="particle-node" cx="320" cy="58" r="54"/><text class="particle-text" x="320" y="53" text-anchor="middle">Contract</text><text class="particle-small" x="320" y="72" text-anchor="middle">intent rules</text>
+          <circle class="particle-node" cx="560" cy="238" r="54"/><text class="particle-text" x="560" y="233" text-anchor="middle">Governance</text><text class="particle-small" x="560" y="252" text-anchor="middle">route choice</text>
+          <circle class="particle-node" cx="800" cy="60" r="54"/><text class="particle-text" x="800" y="55" text-anchor="middle">Runner</text><text class="particle-small" x="800" y="74" text-anchor="middle">execute</text>
+          <circle class="particle-node" cx="1030" cy="150" r="54"/><text class="particle-text" x="1030" y="145" text-anchor="middle">Slate</text><text class="particle-small" x="1030" y="164" text-anchor="middle">explainable</text>
+          <circle class="spark" cx="175" cy="97" r="7" fill="#22d3ee"><title>Intent signal</title></circle><circle class="spark" cx="468" cy="158" r="7" fill="#a78bfa"><title>Governance signal</title></circle><circle class="spark" cx="700" cy="185" r="7" fill="#34d399"><title>Execution signal</title></circle><circle class="spark" cx="910" cy="91" r="7" fill="#fbbf24"><title>Cost/value signal</title></circle>
+        </svg>
+      </div>
+
+      <div class="grid-3">
+        <div class="card accent-green">
+          <h3>beach vacation packing list</h3>
+          <p><b>Governance:</b> strict repair + behavior-aware rerank.</p>
+          <p><b>Reason:</b> broad mission with multiple needs: sun protection, towels, footwear, bags, hydration, and comfort.</p>
+        </div>
+        <div class="card accent-purple">
+          <h3>office desk setup</h3>
+          <p><b>Governance:</b> mission repair + behavior-aware rerank.</p>
+          <p><b>Reason:</b> setup queries need complementary items such as risers, keyboard, lamp, organizer, and cable management.</p>
+        </div>
+        <div class="card accent-amber">
+          <h3>iphone case</h3>
+          <p><b>Governance:</b> baseline or narrow-product route.</p>
+          <p><b>Reason:</b> specific product intent; expansion into chargers, headphones, or accessories should be controlled.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Illustrative governed slate: “beach vacation packing list”</h3>
+        <div class="result-grid">
+          <div class="result-card"><span class="rank-pill">Rank 1</span><div class="result-title">Broad-spectrum SPF sunscreen pack</div><div class="result-meta">Need: sun protection<br/>Policy reason: mission core item<br/><span class="tag">high coverage</span><span class="tag">core</span></div></div>
+          <div class="result-card"><span class="rank-pill">Rank 2</span><div class="result-title">Quick-dry oversized beach towel</div><div class="result-meta">Need: beach comfort<br/>Policy reason: balanced mission item<br/><span class="tag">supporting</span><span class="tag">coverage</span></div></div>
+          <div class="result-card"><span class="rank-pill">Rank 3</span><div class="result-title">Waterproof phone pouch</div><div class="result-meta">Need: protection/storage<br/>Policy reason: cold-start rescue candidate<br/><span class="tag">rescue</span><span class="tag">completion</span></div></div>
+          <div class="result-card"><span class="rank-pill">Rank 4</span><div class="result-title">Lightweight beach tote bag</div><div class="result-meta">Need: carry/storage<br/>Policy reason: mission completion<br/><span class="tag">completion</span><span class="tag">utility</span></div></div>
+          <div class="result-card"><span class="rank-pill">Rank 5</span><div class="result-title">Comfortable slide sandals</div><div class="result-meta">Need: footwear<br/>Policy reason: category coverage<br/><span class="tag">diversity</span><span class="tag">travel</span></div></div>
+          <div class="result-card"><span class="rank-pill">Rank 6</span><div class="result-title">Reusable insulated water bottle</div><div class="result-meta">Need: hydration<br/>Policy reason: exploration-safe add<br/><span class="tag">exploration</span><span class="tag">mission</span></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Route execution view: what moves through the system</h3>
+        <p>This replaces the decorative moving dots with labeled “query packets.” Each packet represents a query being routed through a specific governed path. The animation is left-to-right because CORTEX is making a sequence of decisions: classify intent → select route → execute the governed slate.</p>
+        <div class="route-exec">
+          <div class="route-exec-row">
+            <div class="route-endpoint">Broad Mission<small>“beach vacation packing list”</small></div>
+            <div class="route-track"><div class="route-packet">MISSION REPAIR</div></div>
+            <div class="route-endpoint">Balanced Slate<small>coverage + rescue</small></div>
+          </div>
+          <div class="route-exec-row">
+            <div class="route-endpoint">Repair Risk<small>weak added candidates</small></div>
+            <div class="route-track"><div class="route-packet purple">STRICT GUARDRAILS</div></div>
+            <div class="route-endpoint">Accepted Repairs<small>reject weak items</small></div>
+          </div>
+          <div class="route-exec-row">
+            <div class="route-endpoint">Cold-Start Item<small>useful but low evidence</small></div>
+            <div class="route-track"><div class="route-packet green">BEHAVIOR-AWARE</div></div>
+            <div class="route-endpoint">Rescued Item<small>mission completion</small></div>
+          </div>
+          <div class="route-exec-row">
+            <div class="route-endpoint">Narrow Query<small>“adidas soccer cleats”</small></div>
+            <div class="route-track"><div class="route-packet amber">PRESERVE BASELINE</div></div>
+            <div class="route-endpoint">Safe Output<small>avoid over-repair</small></div>
+          </div>
+        </div>
+        <div class="route-note"><b>Interpretation:</b> CORTEX does not push every query through the same expensive route. The governance agent chooses the route based on mission likelihood, brand specificity, repair risk, coverage gap, and behavior-rescue signals.</div>
+      </div>
+    </section>
+
+    <section id="agents">
+      <div class="section-header">
+        <h2>The agents and what each one owns</h2>
+        <p>CORTEX is intentionally decomposed into specialized agents. Each agent owns a decision boundary and produces traceable artifacts.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card accent-cyan"><h3>Intent / Contract Agent</h3><p>Turns a query into a structured search contract. It captures product type, brand preferences, quality signals, price sensitivity, and ranking weights.</p></div>
+        <div class="card accent-green"><h3>Retrieval Agent</h3><p>Retrieves a candidate pool using TF-IDF or semantic retrieval. This is the candidate stage before policy, repair, and governance intervene.</p></div>
+        <div class="card accent-purple"><h3>Filtering Agent</h3><p>Applies contract-aware candidate filtering so the downstream policy does not rank clearly misaligned products too highly.</p></div>
+        <div class="card accent-amber"><h3>Policy Ranking Agent</h3><p>Applies policy ranking and slate Q-learning actions. It balances relevance, rating, diversity, and contract priority.</p></div>
+        <div class="card accent-cyan"><h3>Mission Agent</h3><p>Detects broad compound queries like “beach vacation packing list” or “new apartment kitchen setup,” where the user needs a multi-category mission slate.</p></div>
+        <div class="card accent-green"><h3>Mission Repair Loop</h3><p>Finds missing sub-intents and adds useful items only when guardrails accept them. This prevents both under-coverage and over-repair.</p></div>
+        <div class="card accent-purple"><h3>Critic / Verifier</h3><p>Reviews the slate for weak coverage, irrelevant items, high risk, or likely failure modes. It acts like a quality-control agent.</p></div>
+        <div class="card accent-rose"><h3>Governance Agent</h3><p>The top-level brain. It decides whether to preserve baseline, repair, rerank, send to critic, or block repair for narrow branded queries.</p></div>
+        <div class="card accent-amber"><h3>Cost / Value Agent</h3><p>Converts route mix and execution cost into scenario-based business analysis: monthly cost, scenario value, net value, and break-even thresholds.</p></div>
+      </div>
+    </section>
+
+    <section id="governance">
+      <div class="section-header">
+        <h2>Governance agent: how the “brain” works</h2>
+        <p>The Governance Agent is what makes CORTEX agentic instead of merely procedural. It decides whether the system should intervene at all.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card accent-rose">
+          <h3>Inputs</h3>
+          <ul>
+            <li>Query token count and query type</li>
+            <li>Brand specificity score</li>
+            <li>Compound intent and mission likelihood</li>
+            <li>Strict repair acceptance/rejection signals</li>
+            <li>Coverage gap and repair risk</li>
+            <li>Behavior-aware rescue and exploration signals</li>
+            <li>Critic need score</li>
+          </ul>
+        </div>
+        <div class="card accent-green">
+          <h3>Routes</h3>
+          <ul>
+            <li><b>BASELINE_ONLY</b> — preserve safe baseline</li>
+            <li><b>MISSION_REPAIR</b> — broaden mission coverage</li>
+            <li><b>STRICT_REPAIR</b> — repair only with accepted candidates</li>
+            <li><b>BEHAVIOR_AWARE_RERANK</b> — rerank with policy signals</li>
+            <li><b>CRITIC_REVIEW</b> — send to critic before trusting repair</li>
+            <li><b>REJECT_REPAIR_NARROW_QUERY</b> — block over-expansion</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px;">
+        <h3>Route distribution from latest scalable run</h3>
+        <div class="bar-chart">
+          <div class="bar-row"><div class="bar-label">BASELINE_ONLY</div><div class="bar-track"><div class="bar-fill" style="width:92.2%"></div></div><div class="bar-value">83</div></div>
+          <div class="bar-row"><div class="bar-label">BEHAVIOR_AWARE</div><div class="bar-track"><div class="bar-fill" style="width:2.2%"></div></div><div class="bar-value">2</div></div>
+          <div class="bar-row"><div class="bar-label">STRICT_REPAIR</div><div class="bar-track"><div class="bar-fill" style="width:2.2%"></div></div><div class="bar-value">2</div></div>
+          <div class="bar-row"><div class="bar-label">REJECT_REPAIR</div><div class="bar-track"><div class="bar-fill" style="width:2.2%"></div></div><div class="bar-value">2</div></div>
+          <div class="bar-row"><div class="bar-label">MISSION_REPAIR</div><div class="bar-track"><div class="bar-fill" style="width:1.1%"></div></div><div class="bar-value">1</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="math">
+      <div class="section-header">
+        <h2>The math behind the policy layer</h2>
+        <p>CORTEX uses interpretable scoring and routing formulas rather than pretending to have real click labels when it does not.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card accent-cyan">
+          <h3>Governance decision score</h3>
+          <div class="math">
+            mission_likelihood = f(query_terms, mission_keywords, token_count, brand_penalty)<br/>
+            repair_risk = 0.45·rejection_rate + 0.30·narrow_query + 0.15·no_accepted_repairs<br/>
+            critic_need = 0.40·coverage_gap + 0.35·repair_risk + rejection_bonus + low_confidence_bonus
+          </div>
+          <p>The route is selected using thresholds over these signals. Narrow branded queries are blocked from aggressive repair; broad mission queries are routed to repair and behavior-aware reranking.</p>
+        </div>
+
+        <div class="card accent-green">
+          <h3>Behavior-aware policy scoring</h3>
+          <div class="math">
+            final_policy_score = α·behavior_proxy + β·mission_stage + γ·coverage_contribution<br/>
+            + δ·cold_start_rescue + ε·exploration_bonus − λ·risk_penalty
+          </div>
+          <p>This prevents the system from becoming purely click-greedy. A useful low-evidence item can survive if it helps complete the mission.</p>
+        </div>
+
+        <div class="card accent-purple">
+          <h3>Slate reward</h3>
+          <div class="math">
+            SlateReward@K = Σ<sub>i=1..K</sub> discount(i) · quality(label<sub>i</sub>)<br/>
+            quality(E)=1.0, quality(S)=0.75, quality(C)=0.55, quality(I)=0
+          </div>
+          <p>Reward is used for prototype policy learning and evaluation on ESCI labels. It is not presented as production CTR or purchase lift.</p>
+        </div>
+
+        <div class="card accent-amber">
+          <h3>Cost vs value</h3>
+          <div class="math">
+            monthly_cost = 30 · daily_queries · E[cost_per_query(route)]<br/>
+            monthly_value = 30 · daily_queries · E[value_per_query(route, scenario)]<br/>
+            net_value = monthly_value − monthly_cost<br/>
+            value_to_cost = monthly_value / monthly_cost
+          </div>
+          <p>These are configurable assumptions for business-case planning, not measured production revenue.</p>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="examples">
+      <div class="section-header">
+        <h2>Decision walkthroughs</h2>
+        <p>Governance makes the system adaptive. The same ranking machinery is not blindly applied to every query; each query gets a route that matches its intent and risk.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card accent-green motion-card">
+          <h3>Broad mission</h3>
+          <p><b>Query:</b> “new apartment kitchen setup”</p>
+          <p><b>Route:</b> behavior-aware mission ranking.</p>
+          <p><b>Effect:</b> balances cookware, dinnerware, storage, prep, and cleaning items instead of over-ranking one product family.</p>
+        </div>
+        <div class="card accent-purple motion-card">
+          <h3>Event mission</h3>
+          <p><b>Query:</b> “world cup watch party”</p>
+          <p><b>Route:</b> mission repair + behavior-aware rerank.</p>
+          <p><b>Effect:</b> includes snacks, decor, viewing setup, fan items, and serving supplies for a fuller basket.</p>
+        </div>
+        <div class="card accent-amber motion-card">
+          <h3>Narrow product</h3>
+          <p><b>Query:</b> “adidas soccer cleats”</p>
+          <p><b>Route:</b> reject repair / preserve baseline.</p>
+          <p><b>Effect:</b> prevents the system from drifting into generic soccer accessories or unrelated training items.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="cost">
+      <div class="section-header">
+        <h2>Cost vs value scenario analysis</h2>
+        <p>The business layer estimates whether the governed AI routing strategy is cost-justified at production-like query volume.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card accent-green">
+          <h3>Scenario comparison at 1M queries/day</h3>
+          <div class="bar-chart">
+            <div class="bar-row"><div class="bar-label">Conservative net/month</div><div class="bar-track"><div class="bar-fill" style="width:19.4%"></div></div><div class="bar-value">$8.9K</div></div>
+            <div class="bar-row"><div class="bar-label">Base net/month</div><div class="bar-track"><div class="bar-fill" style="width:46.3%"></div></div><div class="bar-value">$21.2K</div></div>
+            <div class="bar-row"><div class="bar-label">Optimistic net/month</div><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div><div class="bar-value">$45.8K</div></div>
+          </div>
+          <p>Base scenario produced a scenario value-to-cost ratio of <b>7.21×</b>. This is a planning estimate, not measured production lift.</p>
+        </div>
+
+        <div class="card accent-cyan">
+          <h3>Why governance controls cost</h3>
+          <p>The latest run routed most queries to baseline or fallback paths, and used expensive behavior-aware routes selectively. That is the core cost-control thesis: spend more only when the query needs agentic intervention.</p>
+          <div class="math">
+            baseline_or_reject_route_share = 94.44%<br/>
+            behavior_aware_execution_share = 4.44%<br/>
+            monthly_cost(base) = $3,416.67<br/>
+            net_monthly_value(base) = $21,213.33
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="code">
+      <div class="section-header">
+        <h2>Representative code snippets</h2>
+        <p>The implementation is modular: governance decides, the runner executes, the scalable evaluator measures, and the cost/value analyzer frames the business case.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3>Governance route selection</h3>
+          <div class="code">def choose_route_and_decision(signals):
+    if signals.query_type == "narrow_branded_product_query":
+        return "REJECT_REPAIR_NARROW_QUERY", "REJECT_REPAIR_USE_BASELINE"
+
+    if signals.critic_need_score >= 0.70:
+        return "CRITIC_REVIEW", "SEND_TO_CRITIC_REVIEW"
+
+    if signals.strict_accepted_repair_rows > 0 and signals.strict_rejected_repair_rows > 0:
+        return "STRICT_REPAIR", "RUN_STRICT_REPAIR_AND_BEHAVIOR_AWARE"
+
+    if signals.mission_likelihood_score >= 0.65:
+        return "BEHAVIOR_AWARE_RERANK", "RUN_MISSION_REPAIR_AND_BEHAVIOR_AWARE"
+
+    return "BASELINE_ONLY", "USE_BASELINE_ONLY"</div>
+        </div>
+
+        <div class="card">
+          <h3>Governed runner execution</h3>
+          <div class="code">def run_governed_cortex(query, skip_refresh=False):
+    governance_ok, governance_output = run_governance_agent(query, skip_refresh)
+    governance_decision = get_governance_decision(query)
+
+    final_rows, final_source = select_final_slate(
+        query=query,
+        governance_decision=governance_decision,
+    )
+
+    summary = summarize_final_slate(
+        query=query,
+        final_rows=final_rows,
+        final_source=final_source,
+        governance_decision=governance_decision,
+    )
+
+    write_governed_outputs(final_rows, summary)
+    return final_rows, summary</div>
+        </div>
+
+        <div class="card">
+          <h3>Scalable evaluation</h3>
+          <div class="code">python -m src.scalable_governed_evaluator \
+  --sample-size 100 \
+  --query-mode esci
+
+# Outputs:
+# outputs/scalable_governed_eval.csv
+# outputs/scalable_governed_eval_summary.csv
+# outputs/scalable_governed_eval_by_route.csv</div>
+        </div>
+
+        <div class="card">
+          <h3>Cost/value analyzer</h3>
+          <div class="code">python -m src.cost_value_governance_analyzer \
+  --daily-query-volume 1000000 \
+  --scenario base
+
+# Estimates:
+# monthly cost
+# monthly scenario value
+# net monthly value
+# break-even value per query</div>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="final">
+      <div class="section-header">
+        <h2>Ready for tomorrow’s walkthrough</h2>
+        <p>The repository now tells a complete story: a user-friendly dark Streamlit demo, governed execution, scalable evaluation, scenario-based business analysis, and documentation that explains the architecture without overstating the evidence.</p>
+      </div>
+      <div class="grid-3">
+        <div class="card accent-cyan"><h3>Clear demo path</h3><p>Open the Streamlit app, start on Live Search Console, type any query, run Simple Mode, then switch to Technical Mode when deeper inspection is needed.</p></div>
+        <div class="card accent-green"><h3>Defensible system story</h3><p>CORTEX explains why it intervenes, why it preserves baseline, which route was chosen, and how the final slate was generated.</p></div>
+        <div class="card accent-purple"><h3>Honest evidence boundary</h3><p>The project uses ESCI/sample data. Cost/value outputs are scenario assumptions for planning, not measured production revenue.</p></div>
+      </div>
+    </section>
+
+    <div class="footer">
+      <strong>CORTEX / PolicyRank-RL</strong> · Agentic AI search-ranking prototype · ESCI/sample-data research demo · Scenario assumptions, not measured production revenue.
+    </div>
+  </div>
+</body>
+</html>

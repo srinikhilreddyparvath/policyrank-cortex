@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Turning Point for CORTEX Engine — From Agentic Reranking to Self-Healing RL Search</title>
+  <style>
+    :root {
+      --bg0: #080b18;
+      --bg1: #101633;
+      --bg2: #17204a;
+      --ink: #eef4ff;
+      --muted: #aebce0;
+      --cyan: #38d5ff;
+      --blue: #6c8cff;
+      --violet: #a855f7;
+      --pink: #ff4ecd;
+      --orange: #ffb347;
+      --green: #42f5b3;
+      --red: #ff6b7a;
+      --yellow: #ffe066;
+      --card: rgba(255,255,255,0.08);
+      --card2: rgba(255,255,255,0.13);
+      --stroke: rgba(255,255,255,0.18);
+      --shadow: 0 30px 80px rgba(0,0,0,0.45);
+      --radius: 26px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 5%, rgba(56,213,255,.22), transparent 30%),
+        radial-gradient(circle at 90% 10%, rgba(168,85,247,.25), transparent 34%),
+        radial-gradient(circle at 50% 50%, rgba(255,78,205,.12), transparent 30%),
+        linear-gradient(140deg, var(--bg0) 0%, var(--bg1) 45%, #050713 100%);
+      line-height: 1.58;
+    }
+    a { color: #8ee9ff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .page { width: min(1240px, calc(100% - 40px)); margin: 0 auto; padding: 34px 0 70px; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 54px;
+      border: 1px solid var(--stroke);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.05)),
+        radial-gradient(circle at 20% 20%, rgba(56,213,255,.24), transparent 35%),
+        radial-gradient(circle at 80% 20%, rgba(255,78,205,.18), transparent 32%);
+      border-radius: 38px;
+      box-shadow: var(--shadow);
+      isolation: isolate;
+    }
+    .hero:before {
+      content: "";
+      position: absolute;
+      inset: -200px -80px auto auto;
+      width: 500px; height: 500px;
+      background: conic-gradient(from 90deg, var(--cyan), var(--violet), var(--pink), var(--green), var(--cyan));
+      opacity: .16;
+      filter: blur(30px);
+      z-index: -1;
+      animation: spin 18s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .kicker { color: var(--green); letter-spacing: .14em; text-transform: uppercase; font-weight: 800; font-size: 13px; }
+    h1 { font-size: clamp(38px, 7vw, 78px); line-height: .96; margin: 14px 0 20px; letter-spacing: -0.065em; }
+    .subtitle { max-width: 930px; font-size: 21px; color: var(--muted); }
+    .pillrow { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .pill { padding: 10px 14px; border: 1px solid var(--stroke); border-radius: 999px; background: rgba(255,255,255,.09); color: #dfe8ff; font-size: 13px; font-weight: 700; }
+    .toc { margin: 24px 0 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .toc a { padding: 14px 16px; border-radius: 18px; background: rgba(255,255,255,.075); border: 1px solid var(--stroke); color: var(--ink); font-weight: 800; }
+    section { margin-top: 34px; padding: 34px; border: 1px solid var(--stroke); background: rgba(255,255,255,.07); border-radius: var(--radius); box-shadow: 0 18px 50px rgba(0,0,0,.22); backdrop-filter: blur(12px); }
+    h2 { margin: 0 0 18px; font-size: 36px; line-height: 1.05; letter-spacing: -0.04em; }
+    h3 { margin: 26px 0 12px; font-size: 23px; letter-spacing: -0.02em; }
+    h4 { margin: 18px 0 8px; font-size: 16px; color: #dce9ff; }
+    p { color: #dce5ff; }
+    .lead { color: #dce5ff; font-size: 18px; max-width: 980px; }
+    .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+    .card { grid-column: span 4; padding: 22px; border-radius: 22px; background: var(--card); border: 1px solid var(--stroke); }
+    .card.wide { grid-column: span 6; }
+    .card.full { grid-column: 1 / -1; }
+    .metric { font-size: 36px; line-height: 1; font-weight: 900; letter-spacing: -0.04em; }
+    .metric small { display: block; font-size: 12px; color: var(--muted); letter-spacing: 0; margin-top: 8px; font-weight: 700; text-transform: uppercase; }
+    .green { color: var(--green); } .cyan { color: var(--cyan); } .violet { color: #c084fc; } .pink { color: var(--pink); } .orange { color: var(--orange); } .red { color: var(--red); } .yellow { color: var(--yellow); }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; overflow: hidden; border-radius: 16px; font-size: 14px; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.12); text-align: left; vertical-align: top; }
+    th { background: rgba(255,255,255,.12); color: #fff; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+    tr:nth-child(even) td { background: rgba(255,255,255,.035); }
+    code, pre { font-family: "Cascadia Code", "Fira Code", Consolas, monospace; }
+    pre { overflow: auto; white-space: pre; padding: 20px; border-radius: 18px; border: 1px solid rgba(255,255,255,.14); background: rgba(2,6,23,.74); color: #dff7ff; box-shadow: inset 0 0 30px rgba(56,213,255,.05); }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; }
+    .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .four { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .chartBox { padding: 20px; border-radius: 22px; background: rgba(255,255,255,.075); border: 1px solid var(--stroke); }
+    svg { width: 100%; height: auto; display: block; }
+    .caption { color: var(--muted); font-size: 13px; margin-top: 8px; }
+    .flow { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .node { padding: 14px 16px; border-radius: 18px; background: linear-gradient(135deg, rgba(56,213,255,.18), rgba(168,85,247,.13)); border: 1px solid rgba(255,255,255,.18); font-weight: 900; }
+    .arrow { color: var(--green); font-size: 25px; font-weight: 900; }
+    .mesh { position: relative; height: 620px; border-radius: 30px; background: radial-gradient(circle at center, rgba(56,213,255,.16), rgba(255,255,255,.04) 40%, rgba(255,255,255,.02)); border: 1px solid var(--stroke); overflow: hidden; }
+    .mesh svg { position: absolute; inset: 0; width: 100%; height: 100%; opacity: .8; }
+    .agentBubble { position: absolute; width: 170px; min-height: 76px; border-radius: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 12px; border: 1px solid rgba(255,255,255,.24); background: linear-gradient(145deg, rgba(255,255,255,.18), rgba(255,255,255,.06)); box-shadow: 0 18px 50px rgba(0,0,0,.28); font-weight: 900; }
+    .agentBubble span { display:block; font-size: 11px; color: var(--muted); font-weight: 700; margin-top: 4px; }
+    .center { left: 50%; top: 50%; transform: translate(-50%, -50%); width: 210px; height: 120px; background: linear-gradient(145deg, rgba(66,245,179,.24), rgba(56,213,255,.13)); }
+    .b1 { left: 5%; top: 8%; } .b2 { left: 36%; top: 4%; } .b3 { right: 5%; top: 8%; }
+    .b4 { left: 3%; top: 42%; } .b5 { right: 3%; top: 42%; }
+    .b6 { left: 10%; bottom: 8%; } .b7 { left: 40%; bottom: 4%; } .b8 { right: 8%; bottom: 8%; }
+    .cubeScene { perspective: 1000px; min-height: 320px; display: flex; align-items:center; justify-content:center; gap: 34px; flex-wrap: wrap; }
+    .cubeCard { width: 230px; height: 230px; position: relative; transform-style: preserve-3d; transform: rotateX(12deg) rotateY(-22deg); transition: transform .4s ease; }
+    .cubeCard:hover { transform: rotateX(6deg) rotateY(-6deg) translateY(-8px); }
+    .cubeFace { position:absolute; inset:0; border-radius: 28px; background: linear-gradient(135deg, rgba(56,213,255,.22), rgba(168,85,247,.2)); border: 1px solid rgba(255,255,255,.28); box-shadow: 0 35px 70px rgba(0,0,0,.35); padding: 24px; display:flex; flex-direction:column; justify-content:center; }
+    .cubeFace:before { content:""; position:absolute; inset:0; transform: translateZ(-26px) translate(18px,18px); border-radius: 28px; background: rgba(0,0,0,.25); z-index:-1; }
+    .cubeFace .big { font-size: 48px; font-weight: 1000; letter-spacing: -0.06em; }
+    .badge { display: inline-block; padding: 6px 9px; border-radius: 10px; background: rgba(66,245,179,.14); color: var(--green); border: 1px solid rgba(66,245,179,.2); font-size: 12px; font-weight: 900; }
+    .warn { background: rgba(255,179,71,.13); color: #ffd59a; border-color: rgba(255,179,71,.3); }
+    .danger { background: rgba(255,107,122,.13); color: #ffb1ba; border-color: rgba(255,107,122,.3); }
+    .timeline { position: relative; margin: 28px 0 0; padding-left: 26px; }
+    .timeline:before { content:""; position:absolute; left: 8px; top: 0; bottom: 0; width: 3px; background: linear-gradient(var(--cyan), var(--pink), var(--green)); border-radius: 99px; }
+    .milestone { position: relative; margin: 0 0 18px; padding: 16px 18px; border: 1px solid rgba(255,255,255,.14); border-radius: 18px; background: rgba(255,255,255,.06); }
+    .milestone:before { content:""; position:absolute; left:-25px; top: 20px; width: 15px; height:15px; border-radius:50%; background: var(--green); box-shadow: 0 0 0 6px rgba(66,245,179,.12); }
+    .mini { color: var(--muted); font-size: 13px; }
+    .sources li { margin-bottom: 10px; color: #dce5ff; }
+    .printNote { display:none; }
+    @media (max-width: 900px) {
+      .toc, .two, .three, .four { grid-template-columns: 1fr; }
+      .card, .card.wide { grid-column: 1 / -1; }
+      .hero { padding: 32px; }
+      .mesh { height: 980px; }
+      .agentBubble { width: 44%; }
+      .center { top: 46%; }
+      .b1 { left: 4%; top: 4%; } .b2 { left: 52%; top: 4%; } .b3 { left: 4%; top: 17%; }
+      .b4 { left: 52%; top: 17%; } .b5 { left: 4%; top: 70%; }
+      .b6 { left: 52%; top: 70%; } .b7 { left: 4%; bottom: 3%; } .b8 { left: 52%; bottom: 3%; }
+    }
+    @media print {
+      body { background: white; color: #111; }
+      .page { width: 100%; padding: 0; }
+      section, .hero, .card, .chartBox { box-shadow: none; background: #fff; color: #111; border-color: #ccc; }
+      p, td, li, .mini, .caption { color: #222; }
+      h1,h2,h3,th { color: #111; }
+      .printNote { display:block; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <div class="kicker">CORTEX-RL • MVP 13.3.1 → 13.9 • Agentic Search Ranking</div>
+    <h1>Turning Point for CORTEX Engine</h1>
+    <p class="subtitle">From agentic reranking to a governed, critic-aware, self-healing reinforcement-learning search system. This document captures the architecture, code logic, 1000-query validation, learned routing results, market context, and the technical path toward autonomous commerce search.</p>
+    <div class="pillrow">
+      <span class="pill">1000-query ESCI validation</span>
+      <span class="pill">74.1% gated CORTEX win rate</span>
+      <span class="pill">+0.1176 avg lift vs baseline</span>
+      <span class="pill">Learned repair router OOS validated</span>
+      <span class="pill">+0.0364 test reward vs gated CORTEX</span>
+      <span class="pill">Governance + Critic + Repair loop</span>
+    </div>
+    <nav class="toc">
+      <a href="#exec">Executive summary</a>
+      <a href="#architecture">Agent architecture</a>
+      <a href="#results">Results & charts</a>
+      <a href="#code">Code deep dive</a>
+      <a href="#market">Market comparison</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#columns">Column glossary</a>
+      <a href="#sources">Sources</a>
+    </nav>
+  </header>
+
+  <section id="exec">
+    <h2>1. Executive summary: why this is a turning point</h2>
+    <p class="lead">The project crossed an important threshold. CORTEX is no longer only an LLM-assisted reranker; it is now a governed, self-diagnosing, repair-routing ranking system. The strongest evidence is the out-of-sample validation of the Learned Repair Router: on 300 held-out queries, it improved average reward over both the current gated CORTEX system and full CORTEX.</p>
+    <div class="grid">
+      <div class="card"><div class="metric green">1000<small>validated ESCI queries</small></div><p>The stable run evaluated 1000 query-level search scenarios using the Amazon ESCI balanced sample.</p></div>
+      <div class="card"><div class="metric cyan">74.1%<small>MVP 13.3.1 gated win rate</small></div><p>The baseline-aware gate beat the semantic baseline on 741 of 1000 queries.</p></div>
+      <div class="card"><div class="metric violet">0.8704<small>current gated Reward@5</small></div><p>Average SlateReward@5 rose from baseline 0.7528 to gated CORTEX 0.8704.</p></div>
+      <div class="card"><div class="metric pink">0.90496<small>OOS learned-router reward</small></div><p>The held-out learned repair router outperformed current gated CORTEX by +0.0364 average reward.</p></div>
+      <div class="card"><div class="metric orange">85.3%<small>RF OOS router accuracy</small></div><p>The Random Forest router achieved strong held-out multiclass policy-selection accuracy.</p></div>
+      <div class="card"><div class="metric yellow">87.3%<small>Logistic OOS accuracy</small></div><p>The logistic router was even stronger as a classifier, showing the signal is robust and learnable.</p></div>
+    </div>
+    <div class="chartBox">
+      <h3>Turning-point thesis</h3>
+      <p>CORTEX has evolved from a fixed reranking pipeline into a policy-selection system. Instead of always choosing semantic baseline, full CORTEX, or gated CORTEX, the system can learn a per-query router that chooses the highest-value policy using critic, governance, and gate features. This is the core autonomy step.</p>
+      <pre><code>Old framing:
+query → retrieve candidates → rerank → evaluate
+
+New framing:
+query → retrieve candidates → contract → rerank candidates
+      → govern agent route → critic diagnoses risk
+      → repair router selects best policy
+      → reward logs update future routing</code></pre>
+    </div>
+  </section>
+
+  <section id="architecture">
+    <h2>2. End-to-end agent architecture</h2>
+    <p class="lead">CORTEX should be understood as a governed multi-agent system. Each agent has a bounded role, its own signals, and its own evaluation surface. The central governance controller decides which agents are needed, while the critic and repair router create the self-healing loop.</p>
+
+    <div class="flow">
+      <div class="node">User query</div><div class="arrow">→</div>
+      <div class="node">Semantic retrieval</div><div class="arrow">→</div>
+      <div class="node">LLM contract</div><div class="arrow">→</div>
+      <div class="node">Contract filter</div><div class="arrow">→</div>
+      <div class="node">Slate Q-learning</div><div class="arrow">→</div>
+      <div class="node">Diversifier</div><div class="arrow">→</div>
+      <div class="node">Gate</div><div class="arrow">→</div>
+      <div class="node">Governance</div><div class="arrow">→</div>
+      <div class="node">Critic</div><div class="arrow">→</div>
+      <div class="node">Repair router</div>
+    </div>
+
+    <h3>Spider-web view: agents working in tangent</h3>
+    <div class="mesh">
+      <svg viewBox="0 0 1200 620" preserveAspectRatio="none" aria-label="CORTEX agent mesh diagram">
+        <defs>
+          <linearGradient id="lineg" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#38d5ff"/><stop offset="1" stop-color="#ff4ecd"/></linearGradient>
+        </defs>
+        <g stroke="url(#lineg)" stroke-width="2" opacity=".55" fill="none">
+          <path d="M600,310 L150,80 L450,50 L1030,85 L1040,310 L970,540 L560,560 L170,540 L150,80"/>
+          <path d="M600,310 L450,50"/><path d="M600,310 L1030,85"/><path d="M600,310 L1040,310"/><path d="M600,310 L970,540"/><path d="M600,310 L560,560"/><path d="M600,310 L170,540"/><path d="M600,310 L150,310"/>
+          <path d="M150,80 C390,190 810,190 1030,85"/>
+          <path d="M170,540 C390,420 810,420 970,540"/>
+          <path d="M150,310 C390,250 810,250 1040,310"/>
+        </g>
+      </svg>
+      <div class="agentBubble center">CORTEX Governance Controller<span>routes, budgets, conflict resolution</span></div>
+      <div class="agentBubble b1">Semantic Retrieval<span>cached embeddings</span></div>
+      <div class="agentBubble b2">LLM Contract Agent<span>intent → structured constraints</span></div>
+      <div class="agentBubble b3">Contract Filter<span>hard/soft candidate enforcement</span></div>
+      <div class="agentBubble b4">Slate Q-Learning<span>policy action selection</span></div>
+      <div class="agentBubble b5">Diversifier<span>slate balance & coverage</span></div>
+      <div class="agentBubble b6">Baseline Gate<span>over-rerank protection</span></div>
+      <div class="agentBubble b7">Critic / Verifier<span>failure diagnosis</span></div>
+      <div class="agentBubble b8">Repair Router<span>learned policy selection</span></div>
+    </div>
+
+    <h3>Agent responsibilities</h3>
+    <table>
+      <thead><tr><th>Agent</th><th>Technical function</th><th>Outputs</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        <tr><td>Semantic Retrieval Agent</td><td>Uses cached embeddings to retrieve query-product candidate sets.</td><td>Candidate pool, semantic scores, baseline order.</td><td>Provides the raw retrieval substrate; CORTEX improves on top of it rather than replacing retrieval.</td></tr>
+        <tr><td>LLM Contract Agent</td><td>Converts natural-language search intent into a machine-readable contract.</td><td>Product type, must-have terms, blocked terms, preference terms, ambiguity markers.</td><td>Turns vague search into explicit constraints, avoiding pure score-and-sort behavior.</td></tr>
+        <tr><td>Contract Filter Agent</td><td>Applies contract-aware filtering and demotion to candidates.</td><td>Filtered candidates, positive contract rows, blocked rows.</td><td>Prevents semantically similar but intent-invalid products from dominating.</td></tr>
+        <tr><td>Slate Q-Learning Agent</td><td>Chooses a ranking policy action for the candidate slate.</td><td>RL action, ranking weights, slate reward context.</td><td>Introduces policy learning beyond supervised item scoring.</td></tr>
+        <tr><td>Multi-Agent Diversifier</td><td>Balances relevance, contract priority, brand preference, and diversity.</td><td>Contract-prioritized diversified slate.</td><td>Optimizes the slate as a set, not only independent product scores.</td></tr>
+        <tr><td>Baseline-Aware Gate</td><td>Decides whether to use full CORTEX, light rerank, or preserve baseline.</td><td>Gate decision, confidence, alignment, final gate score.</td><td>Controls over-reranking risk and protects strong semantic baselines.</td></tr>
+        <tr><td>Agent Governance Controller</td><td>Assigns each query to an agent route and estimates cost/reward tradeoffs.</td><td>Governance route, agents to run/skip, route cost proxy.</td><td>Transforms the pipeline into a dynamic route-selection system.</td></tr>
+        <tr><td>Critic / Verifier Agent</td><td>Diagnoses failure modes and recommends repair actions.</td><td>Risk score, priority, failure modes, repair actions.</td><td>Provides self-diagnosis, which standard rerankers generally lack.</td></tr>
+        <tr><td>Learned Repair Router</td><td>Predicts the best policy: baseline, gated CORTEX, or full CORTEX.</td><td>Predicted policy, confidence, reward simulation.</td><td>Creates the first validated autonomy layer.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="results">
+    <h2>3. Results: 1000-query validation and autonomy milestones</h2>
+    <p class="lead">The results show a staged progression: stable gated CORTEX improves over baseline, governance identifies query routes, the critic diagnoses failures, the repair simulator reveals recoverable reward, and the learned repair router validates out-of-sample.</p>
+
+    <div class="two">
+      <div class="chartBox">
+        <h3>Average Reward@5 by policy</h3>
+        <svg viewBox="0 0 760 360" role="img" aria-label="Average reward bar chart">
+          <rect x="0" y="0" width="760" height="360" rx="22" fill="rgba(255,255,255,.03)"/>
+          <g font-family="Inter, sans-serif" font-size="14" fill="#dce5ff">
+            <line x1="100" y1="300" x2="700" y2="300" stroke="rgba(255,255,255,.25)"/>
+            <line x1="100" y1="70" x2="100" y2="300" stroke="rgba(255,255,255,.25)"/>
+            <rect x="130" y="111" width="95" height="189" rx="10" fill="#6c8cff"/><text x="177" y="326" text-anchor="middle">Baseline</text><text x="177" y="98" text-anchor="middle" fill="#fff" font-weight="900">0.7528</text>
+            <rect x="260" y="82" width="95" height="218" rx="10" fill="#38d5ff"/><text x="307" y="326" text-anchor="middle">Full</text><text x="307" y="69" text-anchor="middle" fill="#fff" font-weight="900">0.8669</text>
+            <rect x="390" y="81" width="95" height="219" rx="10" fill="#42f5b3"/><text x="437" y="326" text-anchor="middle">Gated</text><text x="437" y="68" text-anchor="middle" fill="#fff" font-weight="900">0.8704</text>
+            <rect x="520" y="72" width="95" height="228" rx="10" fill="#ff4ecd"/><text x="567" y="326" text-anchor="middle">Router OOS</text><text x="567" y="59" text-anchor="middle" fill="#fff" font-weight="900">0.9050</text>
+          </g>
+        </svg>
+        <p class="caption">OOS router reward is from the held-out 300-query test split. Other values are from the 1000-query run.</p>
+      </div>
+
+      <div class="chartBox">
+        <h3>Policy-selection distribution</h3>
+        <svg viewBox="0 0 760 360" role="img" aria-label="Policy distribution donut chart">
+          <rect x="0" y="0" width="760" height="360" rx="22" fill="rgba(255,255,255,.03)"/>
+          <g transform="translate(245 180)">
+            <circle r="105" fill="none" stroke="#6c8cff" stroke-width="54" stroke-dasharray="105.6 659.7" transform="rotate(-90)"/>
+            <circle r="105" fill="none" stroke="#42f5b3" stroke-width="54" stroke-dasharray="287.8 659.7" stroke-dashoffset="-105.6" transform="rotate(-90)"/>
+            <circle r="105" fill="none" stroke="#ff4ecd" stroke-width="54" stroke-dasharray="235.0 659.7" stroke-dashoffset="-393.4" transform="rotate(-90)"/>
+            <circle r="70" fill="rgba(8,11,24,.9)"/>
+            <text y="-6" text-anchor="middle" fill="#fff" font-size="24" font-weight="900">OOS Test</text>
+            <text y="24" text-anchor="middle" fill="#aebce0" font-size="13">predicted route</text>
+          </g>
+          <g font-family="Inter, sans-serif" font-size="16" fill="#dce5ff">
+            <rect x="470" y="100" width="18" height="18" rx="4" fill="#6c8cff"/><text x="500" y="115">Baseline selected: 60</text>
+            <rect x="470" y="142" width="18" height="18" rx="4" fill="#42f5b3"/><text x="500" y="157">Gated CORTEX selected: 143</text>
+            <rect x="470" y="184" width="18" height="18" rx="4" fill="#ff4ecd"/><text x="500" y="199">Full CORTEX selected: 97</text>
+          </g>
+        </svg>
+        <p class="caption">The learned router does not collapse to one policy. It chooses a mixture of baseline, gated CORTEX, and full CORTEX.</p>
+      </div>
+    </div>
+
+    <div class="cubeScene">
+      <div class="cubeCard"><div class="cubeFace"><span class="badge">1000-query run</span><div class="big green">741</div><p>Gated CORTEX wins vs baseline</p></div></div>
+      <div class="cubeCard"><div class="cubeFace"><span class="badge warn">Risk-control layer</span><div class="big cyan">105</div><p>Baseline-loss cases rescued</p></div></div>
+      <div class="cubeCard"><div class="cubeFace"><span class="badge">OOS router</span><div class="big pink">+0.0364</div><p>Reward gain over current gated CORTEX on test</p></div></div>
+    </div>
+
+    <h3>Stable CORTEX 1000-query summary</h3>
+    <table>
+      <thead><tr><th>Metric</th><th>Baseline</th><th>Full CORTEX</th><th>MVP 13.3.1 Gated CORTEX</th></tr></thead>
+      <tbody>
+        <tr><td>Average SlateReward@5</td><td>0.752832</td><td>0.866860</td><td><strong>0.870426</strong></td></tr>
+        <tr><td>Wins vs semantic baseline</td><td>—</td><td>734</td><td><strong>741</strong></td></tr>
+        <tr><td>Baseline wins against policy</td><td>—</td><td>255</td><td><strong>237</strong></td></tr>
+        <tr><td>Ties</td><td>—</td><td>11</td><td>22</td></tr>
+        <tr><td>Win rate</td><td>—</td><td>73.4%</td><td><strong>74.1%</strong></td></tr>
+        <tr><td>Average absolute lift vs baseline</td><td>—</td><td>+0.114029</td><td><strong>+0.117594</strong></td></tr>
+        <tr><td>Average gate delta vs full CORTEX</td><td>—</td><td>—</td><td><strong>+0.003566</strong></td></tr>
+      </tbody>
+    </table>
+
+    <h3>MVP 13.5–13.9 milestone table</h3>
+    <table>
+      <thead><tr><th>MVP</th><th>Component</th><th>Key result</th><th>Interpretation</th></tr></thead>
+      <tbody>
+        <tr><td>13.5</td><td>Agent Governance Controller</td><td>596 critic-needed, 361 full-CORTEX, 30 mission-candidate, 13 light-rerank routes.</td><td>Routing analysis shows CORTEX needs governed execution, not a static pipeline.</td></tr>
+        <tr><td>13.6</td><td>Critic / Verifier Agent</td><td>380 high/critical queries need online critic; 976 queries received at least one diagnosable signal.</td><td>System can diagnose risk and failure modes instead of only reporting scores.</td></tr>
+        <tr><td>13.7</td><td>Critic-Guided Repair Simulator</td><td>Conservative repair reward: 0.905787 vs current gated 0.870426.</td><td>Critic recommendations expose a large recoverable reward gap.</td></tr>
+        <tr><td>13.8</td><td>Learned Repair Router</td><td>RF accuracy 85.33%; Logistic accuracy 87.33%; simulated reward 0.908188.</td><td>Policy-selection target is much cleaner than binary gate-help prediction.</td></tr>
+        <tr><td>13.9</td><td>OOS Repair Router Validation</td><td>Test reward 0.904957 vs gated 0.868525 and full 0.863460.</td><td>Learned routing generalizes to held-out queries.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="two">
+      <div class="chartBox">
+        <h3>Out-of-sample reward comparison</h3>
+        <svg viewBox="0 0 760 380">
+          <rect width="760" height="380" rx="22" fill="rgba(255,255,255,.03)"/>
+          <g font-size="13" fill="#dce5ff" font-family="Inter, sans-serif">
+            <line x1="120" y1="315" x2="700" y2="315" stroke="rgba(255,255,255,.25)"/>
+            <rect x="150" y="129" width="90" height="186" rx="12" fill="#6c8cff"/><text x="195" y="340" text-anchor="middle">Baseline</text><text x="195" y="116" text-anchor="middle" font-weight="900">0.7588</text>
+            <rect x="285" y="72" width="90" height="243" rx="12" fill="#42f5b3"/><text x="330" y="340" text-anchor="middle">Gated</text><text x="330" y="59" text-anchor="middle" font-weight="900">0.8685</text>
+            <rect x="420" y="75" width="90" height="240" rx="12" fill="#38d5ff"/><text x="465" y="340" text-anchor="middle">Full</text><text x="465" y="62" text-anchor="middle" font-weight="900">0.8635</text>
+            <rect x="555" y="52" width="90" height="263" rx="12" fill="#ff4ecd"/><text x="600" y="340" text-anchor="middle">Router</text><text x="600" y="39" text-anchor="middle" font-weight="900">0.9050</text>
+          </g>
+        </svg>
+      </div>
+      <div class="chartBox">
+        <h3>Router vs oracle gap</h3>
+        <svg viewBox="0 0 760 380">
+          <rect width="760" height="380" rx="22" fill="rgba(255,255,255,.03)"/>
+          <g font-family="Inter, sans-serif" fill="#dce5ff">
+            <line x1="130" y1="295" x2="650" y2="295" stroke="rgba(255,255,255,.25)"/>
+            <path d="M130 285 C 260 230, 390 210, 650 65" fill="none" stroke="#42f5b3" stroke-width="8" stroke-linecap="round"/>
+            <circle cx="130" cy="285" r="10" fill="#6c8cff"/><text x="130" y="320" text-anchor="middle" font-size="13">Baseline</text>
+            <circle cx="345" cy="158" r="10" fill="#ff4ecd"/><text x="345" y="138" text-anchor="middle" font-size="13">Router 0.9050</text>
+            <circle cx="650" cy="65" r="10" fill="#ffe066"/><text x="650" y="45" text-anchor="middle" font-size="13">Oracle 0.9139</text>
+            <text x="370" y="245" text-anchor="middle" font-size="18" font-weight="900" fill="#fff">Router captures most of logged-policy upside</text>
+          </g>
+        </svg>
+        <p class="caption">On held-out test queries, the learned router is only 0.0089 below the oracle logged-policy upper bound.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="code">
+    <h2>4. Code deep dive: how the autonomy stack works</h2>
+    <p class="lead">The codebase now has a layered experimental stack. Each file adds one new capability while preserving the stable MVP 13.3.1 pipeline. This is important: the system was not randomly modified; every new module is initially offline, measured, and only then considered for integration.</p>
+
+    <h3>Core files and functions</h3>
+    <table>
+      <thead><tr><th>File</th><th>Role</th><th>Main output</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/baseline_preservation_gate.py</code></td><td>Stable MVP 13.3.1 gate. Computes baseline confidence, contract alignment, label quality, exclusion violation, and decides full CORTEX vs light rerank.</td><td>Gate decision + final slate.</td></tr>
+        <tr><td><code>src/scalable_evaluator.py</code></td><td>Runs baseline, full CORTEX, gated CORTEX, rewards, resume support, and CSV outputs at scale.</td><td>1000-query evaluation files.</td></tr>
+        <tr><td><code>src/gate_calibration_analyzer.py</code></td><td>Measures when the gate helped or hurt and rejects weak threshold experiments.</td><td>Gate calibration summaries.</td></tr>
+        <tr><td><code>src/learned_gate_classifier.py</code></td><td>Early binary gate-help classifier. Useful research module but weak classifier signal.</td><td>Offline classifier metrics.</td></tr>
+        <tr><td><code>src/agent_governance_controller.py</code></td><td>Assigns each query to route types: critic needed, full CORTEX, mission candidate, light rerank.</td><td>Governance routes and route quality.</td></tr>
+        <tr><td><code>src/critic_verifier_agent.py</code></td><td>Diagnoses failure modes and repair actions.</td><td>Critic report, risk score, failure modes.</td></tr>
+        <tr><td><code>src/critic_guided_repair_simulator.py</code></td><td>Simulates whether critic recommendations could improve reward using logged policies.</td><td>Repair simulation and oracle upper bound.</td></tr>
+        <tr><td><code>src/learned_repair_router.py</code></td><td>Trains a multiclass policy-selection router over baseline, gated CORTEX, full CORTEX.</td><td>Router classifier and full-data policy simulation.</td></tr>
+        <tr><td><code>src/repair_router_validator.py</code></td><td>Validates the learned router out-of-sample with train/test reward simulation.</td><td>Held-out reward proof.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Key algorithmic snippets</h3>
+    <div class="two">
+      <div>
+        <h4>Baseline-aware gate signal</h4>
+        <pre><code>baseline_confidence_score = (
+    0.45 * top5_mean_score
+  + 0.20 * top1_score
+  + 0.15 * score_decay_strength
+  + 0.20 * label_quality_score
+)
+
+final_gate_score = (
+    0.60 * baseline_confidence_score
+  + 0.40 * contract_alignment_score
+)</code></pre>
+        <p>The gate combines retrieval strength, score stability, label quality, and contract alignment. The intention is not to replace CORTEX, but to avoid harmful over-reranking when the baseline is already reliable.</p>
+      </div>
+      <div>
+        <h4>Repair-router target</h4>
+        <pre><code>best_logged_policy = argmax({
+    "baseline": baseline_reward_at_5,
+    "gated_cortex": cortex_reward_at_5,
+    "full_cortex": full_cortex_reward_at_5
+})</code></pre>
+        <p>This target is cleaner than predicting whether the gate helped. It asks the direct operational question: which policy should the system have selected for this query?</p>
+      </div>
+    </div>
+
+    <div class="two">
+      <div>
+        <h4>Critic risk scoring</h4>
+        <pre><code>if baseline_stronger_than_cortex: risk += 0.25
+if full_cortex_over_reranked:    risk += 0.20
+if low_contract_alignment:       risk += 0.15
+if retrieval_uncertainty:        risk += 0.10
+if gate_failed_to_rescue:        risk += 0.18
+
+critic_risk_score = clip(risk, 0, 1)</code></pre>
+        <p>The critic converts qualitative failure modes into quantitative features that the router can learn from.</p>
+      </div>
+      <div>
+        <h4>Router reward simulation</h4>
+        <pre><code>predicted_policy = router.predict(features)
+
+predicted_reward = reward_of(
+    predicted_policy,
+    baseline_reward,
+    gated_reward,
+    full_cortex_reward
+)</code></pre>
+        <p>The OOS validator trains on 700 rows and evaluates only on 300 held-out rows, making the reward test much more credible than full-file in-sample simulation.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="columns">
+    <h2>5. Column glossary: what the main output fields mean</h2>
+    <p class="lead">The pipeline now generates many CSVs. This glossary explains the most important columns so the outputs are interpretable and audit-ready.</p>
+    <table>
+      <thead><tr><th>Column</th><th>Generated by</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>baseline_reward_at_5</code></td><td>Scalable evaluator</td><td>Reward of semantic baseline top-5.</td></tr>
+        <tr><td><code>cortex_reward_at_5</code></td><td>Scalable evaluator</td><td>Reward of MVP 13.3.1 gated CORTEX top-5.</td></tr>
+        <tr><td><code>full_cortex_reward_at_5</code></td><td>Scalable evaluator</td><td>Reward of full CORTEX before final repair routing.</td></tr>
+        <tr><td><code>absolute_lift</code></td><td>Scalable evaluator</td><td><code>cortex_reward_at_5 - baseline_reward_at_5</code>.</td></tr>
+        <tr><td><code>gate_delta_vs_full_cortex</code></td><td>Scalable evaluator</td><td><code>cortex_reward_at_5 - full_cortex_reward_at_5</code>.</td></tr>
+        <tr><td><code>gate_baseline_confidence_score</code></td><td>Baseline gate</td><td>Aggregated confidence that the baseline top-k is strong.</td></tr>
+        <tr><td><code>gate_contract_alignment_score</code></td><td>Baseline gate</td><td>How well baseline top-k satisfies the LLM contract.</td></tr>
+        <tr><td><code>governance_route</code></td><td>Governance controller</td><td>Assigned route such as <code>critic_needed_route</code> or <code>full_cortex_route</code>.</td></tr>
+        <tr><td><code>critic_risk_score</code></td><td>Critic / verifier</td><td>0–1 heuristic risk score derived from failure modes.</td></tr>
+        <tr><td><code>critic_failure_modes</code></td><td>Critic / verifier</td><td>Semicolon-separated diagnoses such as <code>full_cortex_over_reranked</code>.</td></tr>
+        <tr><td><code>critic_repair_actions</code></td><td>Critic / verifier</td><td>Recommended repair actions such as <code>use_full_cortex_for_similar_queries</code>.</td></tr>
+        <tr><td><code>best_logged_policy</code></td><td>Repair router</td><td>The policy with highest observed logged reward: baseline, gated CORTEX, or full CORTEX.</td></tr>
+        <tr><td><code>predicted_policy</code></td><td>Learned router</td><td>The router’s predicted policy for the query.</td></tr>
+        <tr><td><code>predicted_policy_confidence</code></td><td>Learned router</td><td>Maximum class probability from the trained router.</td></tr>
+        <tr><td><code>prediction_matches_best_policy</code></td><td>Router validator</td><td>Whether predicted policy equals the logged oracle policy for that query.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="market">
+    <h2>6. Market context: current agentic commerce systems and how CORTEX differs</h2>
+    <p class="lead">Many companies are moving toward AI agents in commerce and enterprise workflows. CORTEX is different because it focuses on the ranking core: governed policy selection, slate-level reward, critic-guided repair, and reranking risk control.</p>
+    <table>
+      <thead><tr><th>Company/system</th><th>What it does publicly</th><th>How CORTEX differs</th></tr></thead>
+      <tbody>
+        <tr><td>Amazon Rufus</td><td>Amazon describes Rufus as a generative AI shopping assistant trained on catalog, reviews, community Q&A, and web information to answer shopping questions, compare products, and recommend items.</td><td>CORTEX is not only a conversational assistant. It is a ranking-policy engine that chooses between baseline, full rerank, and gated rerank using reward and critic signals.</td></tr>
+        <tr><td>Walmart Sparky</td><td>Walmart describes Sparky as a GenAI retail companion that synthesizes reviews, supports occasion-based recommendations, and is intended to expand toward text, image, audio, and video inputs.</td><td>CORTEX complements this class of experience by optimizing the underlying ranked slate, route choice, and repair policy rather than only the user-facing assistant layer.</td></tr>
+        <tr><td>Salesforce Agentforce</td><td>Salesforce positions Agentforce as a platform for building autonomous agents that answer questions, take actions, and support employees/customers 24/7.</td><td>CORTEX is domain-specific to search ranking and commerce relevance. Its autonomy is measured by ranking reward, policy selection, and slate outcomes.</td></tr>
+        <tr><td>Shopify Sidekick</td><td>Shopify describes Sidekick as an AI commerce assistant for merchants that provides guidance, generates content, builds apps, and completes tasks in store context.</td><td>CORTEX is buyer/search-ranking focused, not merchant-admin focused. It optimizes query-to-product slate decisions.</td></tr>
+      </tbody>
+    </table>
+    <div class="chartBox">
+      <h3>Why CORTEX matters</h3>
+      <p>Most visible market agents are user-facing assistants. CORTEX focuses on the invisible but decisive layer: which products appear, in what order, under what constraints, with what policy, and with what self-repair mechanism. That makes it closer to an autonomous search-control plane than a chatbot wrapper.</p>
+    </div>
+  </section>
+
+  <section id="efficiency">
+    <h2>7. Cost-efficient multi-agent ranking</h2>
+    <p class="lead">A serious multi-agent system cannot run every agent for every query. CORTEX introduces the basis for cost-aware routing: route cost proxies, reward-per-cost, agents-to-run/skip, and future latency-aware policy selection.</p>
+    <div class="three">
+      <div class="card"><h3>Run cheap agents first</h3><p>Retrieval confidence, gate signals, cached contracts, and critic risk scores are cheap compared with repeated LLM calls or multimodal reranking.</p></div>
+      <div class="card"><h3>Route by query risk</h3><p>Confident product queries can use full CORTEX or light rerank. Risky queries can activate critic/repair logic. Mission-like queries can later trigger decomposition.</p></div>
+      <div class="card"><h3>Optimize reward per cost</h3><p>The governance controller estimates <code>route_reward_per_cost</code> and <code>route_lift_per_cost</code>, creating the foundation for budget-aware agent activation.</p></div>
+    </div>
+    <pre><code>Future cost-aware objective:
+
+maximize   E[SlateReward@5]
+subject to latency_budget_ms ≤ B
+           llm_calls_per_query ≤ C
+           relevance_violation_rate ≤ ε
+
+or equivalently:
+
+AgentUtility = RewardLift / RouteCostProxy</code></pre>
+  </section>
+
+  <section id="roadmap">
+    <h2>8. Roadmap: what comes after the turning point</h2>
+    <div class="timeline">
+      <div class="milestone"><strong>MVP 14 — Router-integrated CORTEX Evaluator</strong><p>Integrate the learned router as a dry-run policy in the evaluator. Keep baseline, full, gated, router-selected, and oracle reward side by side.</p></div>
+      <div class="milestone"><strong>MVP 14.1 — Live dry-run in Streamlit</strong><p>Show the predicted policy and confidence in the app, but do not alter results until more validation is complete.</p></div>
+      <div class="milestone"><strong>MVP 15 — Mission-Based Shopping Agent</strong><p>Handle queries like “I am having a World Cup soccer watch party” by decomposing shopping missions into sub-needs and bundle-aware slates.</p></div>
+      <div class="milestone"><strong>MVP 16 — Behavior-Aware CORTEX</strong><p>Add click, add-to-cart, purchase, conversion, and revenue style reward signals, with position-bias and exposure-bias correction.</p></div>
+      <div class="milestone"><strong>MVP 17 — Multimodal CORTEX</strong><p>Add image/text consistency, visual relevance, visual diversity, and multimodal fusion agents for richer product understanding.</p></div>
+      <div class="milestone"><strong>MVP 18 — Counterfactual and off-policy RL layer</strong><p>Evaluate new policies using logged data before deployment using bias-aware methods and conservative policy improvement.</p></div>
+    </div>
+  </section>
+
+  <section id="sources">
+    <h2>9. Sources and market references</h2>
+    <p class="lead">The CORTEX results in this document come from local project outputs. Market examples are included to position CORTEX relative to current agentic commerce and enterprise AI systems.</p>
+    <ul class="sources">
+      <li>Amazon Rufus official announcement: <a href="https://www.aboutamazon.com/news/retail/amazon-rufus">https://www.aboutamazon.com/news/retail/amazon-rufus</a></li>
+      <li>Walmart Sparky official announcement: <a href="https://corporate.walmart.com/news/2025/06/06/walmart-the-future-of-shopping-is-agentic-meet-sparky">https://corporate.walmart.com/news/2025/06/06/walmart-the-future-of-shopping-is-agentic-meet-sparky</a></li>
+      <li>Salesforce Agentforce official page: <a href="https://www.salesforce.com/agentforce/">https://www.salesforce.com/agentforce/</a></li>
+      <li>Salesforce Agentforce announcement: <a href="https://www.salesforce.com/news/press-releases/2024/09/12/agentforce-announcement/">https://www.salesforce.com/news/press-releases/2024/09/12/agentforce-announcement/</a></li>
+      <li>Shopify Sidekick official help page: <a href="https://help.shopify.com/en/manual/shopify-admin/productivity-tools/sidekick">https://help.shopify.com/en/manual/shopify-admin/productivity-tools/sidekick</a></li>
+      <li>Shopify Magic / Sidekick official page: <a href="https://www.shopify.com/magic">https://www.shopify.com/magic</a></li>
+    </ul>
+    <p class="mini">Generated as a standalone technical HTML artifact for the PolicyRank-RL / CORTEX Engine project.</p>
+  </section>
+</div>
+</body>
+</html>

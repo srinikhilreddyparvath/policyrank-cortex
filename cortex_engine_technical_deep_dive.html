@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Technical Deep Dive of PolicyRank-RL: CORTEX Engine</title>
+  <style>
+    :root {
+      --ink:#111827; --muted:#64748b; --line:#e2e8f0; --paper:#ffffff;
+      --navy:#0f172a; --blue:#2563eb; --cyan:#0891b2; --green:#059669; --purple:#7c3aed;
+      --pink:#db2777; --orange:#ea580c; --red:#dc2626; --yellow:#ca8a04; --slate:#334155;
+      --bblue:#dbeafe; --bcyan:#cffafe; --bgreen:#d1fae5; --bpurple:#ede9fe; --bpink:#fce7f3;
+      --borange:#ffedd5; --bred:#fee2e2; --byellow:#fef3c7; --bslate:#f1f5f9;
+      --shadow:0 20px 55px rgba(15,23,42,.10); --mono:Consolas,Monaco,"Courier New",monospace;
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;color:var(--ink);line-height:1.62;background:radial-gradient(circle at 4% 0%,rgba(37,99,235,.18),transparent 32%),radial-gradient(circle at 92% 6%,rgba(219,39,119,.16),transparent 30%),radial-gradient(circle at 80% 45%,rgba(5,150,105,.10),transparent 28%),linear-gradient(135deg,#f8fafc 0,#eef2ff 45%,#ecfeff 100%)}
+    .page{max-width:1400px;margin:0 auto;padding:34px 22px 86px}.hero{position:relative;overflow:hidden;border-radius:34px;padding:58px;color:#fff;background:linear-gradient(135deg,#020617 0,#172554 30%,#581c87 64%,#134e4a 100%);box-shadow:var(--shadow)}
+    .hero:before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:32px 32px;opacity:.35}.hero:after{content:"";position:absolute;width:520px;height:520px;right:-160px;top:-190px;border-radius:50%;background:rgba(255,255,255,.12)}.hero>*{position:relative;z-index:2}
+    .eyebrow{display:inline-block;padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.14);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:900;margin-bottom:18px}h1{font-size:54px;line-height:1.04;letter-spacing:-1.8px;margin:0 0 14px}.subtitle{font-size:19px;color:#e5e7eb;max-width:1000px;margin:0}.expansion{margin-top:14px;color:#fef3c7;font-weight:900}.pillrow{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}.pill{padding:8px 13px;border-radius:999px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);font-size:13px;font-weight:800}
+    .section{margin-top:28px;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:30px;padding:32px;box-shadow:var(--shadow);backdrop-filter:blur(8px)}h2{font-size:32px;line-height:1.18;letter-spacing:-.7px;margin:0 0 14px}h3{font-size:22px;margin:26px 0 10px}.muted{color:var(--muted)}
+    .callout{border-left:7px solid var(--blue);background:#eff6ff;border-radius:18px;padding:17px 19px;margin:18px 0}.callout.green{border-left-color:var(--green);background:var(--bgreen)}.callout.purple{border-left-color:var(--purple);background:var(--bpurple)}.callout.orange{border-left-color:var(--orange);background:var(--borange)}.callout.red{border-left-color:var(--red);background:var(--bred)}.callout.yellow{border-left-color:var(--yellow);background:var(--byellow)}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}.grid.two{grid-template-columns:repeat(2,1fr)}.grid.four{grid-template-columns:repeat(4,1fr)}.grid.five{grid-template-columns:repeat(5,1fr)}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 8px 18px rgba(15,23,42,.045)}.card h3,.card h4{margin-top:0}.blue{background:var(--bblue);border-color:#bfdbfe}.cyan{background:var(--bcyan);border-color:#a5f3fc}.green{background:var(--bgreen);border-color:#a7f3d0}.purple{background:var(--bpurple);border-color:#ddd6fe}.pink{background:var(--bpink);border-color:#fbcfe8}.orange{background:var(--borange);border-color:#fed7aa}.red{background:var(--bred);border-color:#fecaca}.yellow{background:var(--byellow);border-color:#fde68a}.slate{background:var(--bslate);border-color:#cbd5e1}
+    .tag{display:inline-block;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.72);font-size:12px;font-weight:950;margin-bottom:10px}.tag.blue{color:var(--blue)}.tag.cyan{color:var(--cyan)}.tag.green{color:var(--green)}.tag.purple{color:var(--purple)}.tag.orange{color:var(--orange)}.tag.red{color:var(--red)}.tag.pink{color:var(--pink)}.tag.yellow{color:var(--yellow)}
+    table{width:100%;border-collapse:collapse;margin-top:16px;font-size:14px;overflow:hidden;border-radius:18px}th{background:#111827;color:#fff;padding:13px;text-align:left;vertical-align:top}td{padding:13px;border-bottom:1px solid var(--line);vertical-align:top}tr:nth-child(even) td{background:#f8fafc}a{color:#1d4ed8;font-weight:900;text-decoration:none}a:hover{text-decoration:underline}
+    .code{background:#0f172a;color:#e5e7eb;border-radius:20px;padding:18px;overflow:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;border:1px solid #1f2937;margin:14px 0}.formula{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:18px;padding:18px;text-align:center;font-family:Georgia,serif;font-size:18px;margin:16px 0}.smallformula{font-size:15px;text-align:left;font-family:var(--mono)}
+    .diagram{margin-top:18px;padding:24px;border-radius:28px;background:linear-gradient(135deg,#f8fafc,#eef2ff);border:1px solid #dbeafe;overflow:auto}.canvas{min-width:1200px}.lane-title{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:950;color:#334155;margin:20px 0 10px}.layer{display:grid;grid-template-columns:180px 1fr;gap:14px;margin-bottom:12px}.layer-label{border-radius:18px;padding:14px;background:#111827;color:#fff;font-weight:950;display:flex;align-items:center;justify-content:center;text-align:center}.layer-cells{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}.box{border:2px solid #bfdbfe;background:#fff;border-radius:18px;padding:14px;min-height:116px;box-shadow:0 7px 16px rgba(37,99,235,.08)}.box strong{display:block;margin-bottom:6px;color:#1e40af}.box small{display:block;color:var(--muted);line-height:1.35}.box.agent{border-color:#c4b5fd}.box.agent strong{color:var(--purple)}.box.rl{border-color:#86efac}.box.rl strong{color:var(--green)}.box.guard{border-color:#fca5a5}.box.guard strong{color:var(--red)}.box.reward{border-color:#fed7aa}.box.reward strong{color:var(--orange)}.box.data{border-color:#67e8f9}.box.data strong{color:var(--cyan)}.box.prod{border-color:#f9a8d4}.box.prod strong{color:var(--pink)}
+    .seq{min-width:1160px;display:grid;grid-template-columns:170px repeat(7,1fr);gap:8px;align-items:stretch}.actor{background:#0f172a;color:#fff;border-radius:14px;padding:12px;font-weight:900;text-align:center}.step{background:#fff;border:1px solid #cbd5e1;border-radius:14px;padding:10px;min-height:70px;font-size:13px}.step b{color:#1d4ed8}.empty{background:transparent;border:0}.arrowline{height:3px;background:linear-gradient(90deg,#2563eb,#7c3aed,#059669);margin:18px 0;border-radius:999px}
+    .svgwrap{background:#fff;border:1px solid var(--line);border-radius:24px;padding:18px;margin-top:16px;overflow:auto}.chart-title{font-weight:950;margin-bottom:10px}.barrow{display:grid;grid-template-columns:240px 1fr 80px;gap:12px;align-items:center;margin:10px 0}.bar{height:18px;border-radius:999px;background:#e5e7eb;overflow:hidden;border:1px solid #d1d5db}.fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#2563eb,#7c3aed,#db2777,#059669)}.score{font-weight:950}.heat{display:grid;grid-template-columns:210px repeat(5,1fr);gap:6px;margin-top:12px}.hcell{padding:10px;border-radius:12px;text-align:center;font-size:13px;font-weight:800}.hhead{background:#111827;color:#fff}.h1{background:#fee2e2}.h2{background:#ffedd5}.h3{background:#fef3c7}.h4{background:#d1fae5}.h5{background:#bfdbfe}
+    .mock{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px}.searchui{background:#fff;border:1px solid var(--line);border-radius:24px;padding:18px}.searchbar{border:1px solid #cbd5e1;border-radius:999px;background:#f8fafc;padding:12px 16px;font-weight:850;margin-bottom:14px}.result{border:1px solid #e5e7eb;border-radius:15px;background:#fbfdff;padding:12px;margin-bottom:10px}.rtitle{font-weight:950}.rmeta{font-size:13px;color:var(--muted)}.why{font-size:13px;font-weight:850;color:#065f46;margin-top:6px}.warn{font-size:13px;color:#991b1b;font-weight:850;margin-top:6px}.foot{text-align:center;color:var(--muted);margin-top:30px;font-size:14px}
+    @media(max-width:980px){h1{font-size:38px}.hero{padding:34px}.grid,.grid.two,.grid.four,.grid.five,.mock{grid-template-columns:1fr}.barrow{grid-template-columns:1fr}table{display:block;overflow-x:auto;white-space:nowrap}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <section class="hero">
+    <span class="eyebrow">High-Resolution Technical Architecture Whitepaper</span>
+    <h1>Technical Deep Dive of PolicyRank-RL: CORTEX Engine</h1>
+    <p class="subtitle">A contract-native, agentic, reinforcement-learning architecture for e-commerce product search. CORTEX transforms queries into executable search contracts, evaluates competing contract strategies, mutates policy rules through RL, compiles them into ranking functions, and constructs diversified product-result slates through cooperative rank-position agents.</p>
+    <p class="expansion">CORTEX = Contract-Oriented Reinforcement for Task-Executable Search</p>
+    <div class="pillrow"><span class="pill">Contract Arena</span><span class="pill">Mutation RL</span><span class="pill">Counterfactual Tournament</span><span class="pill">Slate Q-Learning</span><span class="pill">Multi-Agent Slate Workers</span><span class="pill">Auditable Ranking</span><span class="pill">ESCI Reward Grounding</span></div>
+  </section>
+
+  <section class="section">
+    <h2>1. Technical thesis</h2>
+    <p>CORTEX is a <strong>meta-ranking engine</strong>. A classic ranker learns a direct product score. CORTEX learns the higher-level control policy that decides <em>which ranking contract should be executed, how it should be repaired, how it should be mutated, and how the final product slate should be assembled</em>.</p>
+    <div class="callout green"><strong>Key technical claim:</strong> The central learnable object is not only the product ranking. The central learnable object is the <strong>contract-to-policy transformation</strong>: how natural-language intent becomes constrained, auditable, executable ranking behavior.</div>
+    <div class="grid four">
+      <div class="card blue"><span class="tag blue">Input</span><h3>Query</h3><p>A short, ambiguous shopping intent such as “cheap headphones” or “quiet bathroom fan”.</p></div>
+      <div class="card purple"><span class="tag purple">Plan</span><h3>Contract</h3><p>Structured objectives, constraints, guardrails, reward definitions, and ranking weights.</p></div>
+      <div class="card green"><span class="tag green">Learn</span><h3>RL Control</h3><p>Q-learning and mutation policies learn which contract operations improve slates.</p></div>
+      <div class="card orange"><span class="tag orange">Output</span><h3>Slate</h3><p>A ranked page of products with explanations, diversity, and reward traceability.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>2. Why existing systems do not fully solve this</h2>
+    <p>Modern product search systems are powerful but usually optimize relevance, personalization, or conversion through opaque ranking models. CORTEX adds a new abstraction layer: <strong>executable search contracts</strong>. This creates a controllable bridge between intent, business rules, compliance, ranking weights, and reinforcement learning.</p>
+    <table>
+      <thead><tr><th>Existing model family</th><th>Core method</th><th>What it does well</th><th>Technical gap</th><th>CORTEX technical delta</th></tr></thead>
+      <tbody>
+        <tr><td>BM25 / TF-IDF search</td><td>Term-frequency lexical matching.</td><td>Exact keyword match, fast retrieval.</td><td>Weak intent modeling; no policy learning.</td><td>Lexical score becomes one feature inside an adaptive contract compiler.</td></tr>
+        <tr><td>Embedding search</td><td>Dense semantic similarity.</td><td>Finds meaning-based candidates.</td><td>Can retrieve semantically related but constraint-violating products.</td><td>Contracts decide when semantic similarity is trusted, constrained, or down-weighted.</td></tr>
+        <tr><td>Learning-to-rank</td><td>Supervised model over item/query features.</td><td>Strong offline relevance and click optimization.</td><td>Often a black-box score; hard to expose controllable objective changes.</td><td>CORTEX externalizes objective selection into contract agents and RL mutations.</td></tr>
+        <tr><td>Bandit rankers</td><td>Explore/exploit among arms.</td><td>Online adaptation from rewards.</td><td>Usually selects fixed policies or items.</td><td>CORTEX actions include contract generation, repair, mutation, blending, and slate construction.</td></tr>
+        <tr><td>Slate RL</td><td>Optimize a set/list of recommendations.</td><td>Recognizes that users consume lists.</td><td>Typically not driven by explicit search contracts.</td><td>CORTEX uses contracts as the state and control interface for slate optimization.</td></tr>
+        <tr><td>LLM search agents</td><td>Plan, retrieve, summarize, answer.</td><td>Flexible reasoning.</td><td>Often produces text, not validated executable ranking logic.</td><td>CORTEX forces LLM/agent output into schema-valid, compiled, measurable ranking contracts.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>3. Architecture diagram: CORTEX as a layered intelligence stack</h2>
+    <p>This diagram is not just blocks connected by arrows. It shows <strong>control responsibility</strong>: which layer interprets, validates, retrieves, learns, compiles, constructs, evaluates, and deploys.</p>
+    <div class="diagram"><div class="canvas">
+      <div class="layer"><div class="layer-label">User + Context Layer</div><div class="layer-cells"><div class="box"><strong>Query</strong><small>Raw shopping intent, often short and underspecified.</small></div><div class="box"><strong>User Persona</strong><small>Budget, premium, brand-loyal, discovery-oriented, deal seeker.</small></div><div class="box"><strong>Session Signals</strong><small>Clicks, dwell, add-to-cart, filters, prior query refinements.</small></div><div class="box"><strong>Business Context</strong><small>Margin, inventory, compliance, merchandising constraints.</small></div><div class="box"><strong>Catalog Context</strong><small>Product text, brand, price, rating, category, availability.</small></div></div></div>
+      <div class="layer"><div class="layer-label">Agentic Contract Layer</div><div class="layer-cells"><div class="box agent"><strong>Intent Parser</strong><small>Converts query into category, product type, constraints, ambiguity.</small></div><div class="box agent"><strong>Contract Arena</strong><small>Multiple specialized agents propose competing executable contracts.</small></div><div class="box agent"><strong>Debate / Critique</strong><small>Agents challenge relevance, price, quality, diversity, and safety.</small></div><div class="box guard"><strong>Constitution</strong><small>Rejects contracts violating ranking guardrails.</small></div><div class="box agent"><strong>Repair Agent</strong><small>Edits invalid or weak contracts before evaluation.</small></div></div></div>
+      <div class="layer"><div class="layer-label">Retrieval + Feature Layer</div><div class="layer-cells"><div class="box data"><strong>Lexical Retrieval</strong><small>TF-IDF / BM25 candidate generation.</small></div><div class="box data"><strong>Semantic Retrieval</strong><small>Sentence Transformer embeddings; FAISS later.</small></div><div class="box data"><strong>ESCI Label Map</strong><small>Exact/Substitute/Complement/Irrelevant reward grounding.</small></div><div class="box data"><strong>Feature Builder</strong><small>Scores: lexical, semantic, relevance, price, quality, diversity.</small></div><div class="box data"><strong>Candidate Pool</strong><small>Top-N products prepared for tournament and ranking.</small></div></div></div>
+      <div class="layer"><div class="layer-label">RL Control Layer</div><div class="layer-cells"><div class="box rl"><strong>State Encoder</strong><small>Contract + context + diagnostics become RL state.</small></div><div class="box rl"><strong>Policy Tournament</strong><small>Counterfactually evaluates all candidate contracts offline.</small></div><div class="box rl"><strong>Mutation Q-Learner</strong><small>Learns contract edits that increase reward.</small></div><div class="box rl"><strong>Regret Learner</strong><small>Measures lost reward vs best counterfactual contract.</small></div><div class="box rl"><strong>Policy Selector</strong><small>Chooses contract, mutation, repair, blend, or exploration action.</small></div></div></div>
+      <div class="layer"><div class="layer-label">Execution Layer</div><div class="layer-cells"><div class="box"><strong>Policy Compiler</strong><small>Converts contract action into ranking weights and formula.</small></div><div class="box"><strong>PolicyRank Score</strong><small>Scores each product under compiled contract.</small></div><div class="box agent"><strong>Rank Workers</strong><small>Position agents construct diversified top-K slate.</small></div><div class="box reward"><strong>Reward Engine</strong><small>SlateReward, Diversity, Regret, Contract Satisfaction.</small></div><div class="box prod"><strong>API / Dashboard</strong><small>Returns ranked products, explanation, traces, and metrics.</small></div></div></div>
+    </div></div>
+  </section>
+
+  <section class="section">
+    <h2>4. End-to-end sequence diagram</h2>
+    <p>The online execution path looks like a micro-orchestrated decision process. The key nuance: the ranker is not a single model call; it is a controlled sequence of agentic planning, counterfactual testing, RL action selection, and slate assembly.</p>
+    <div class="diagram"><div class="seq">
+      <div class="actor">Actor</div><div class="actor">T1</div><div class="actor">T2</div><div class="actor">T3</div><div class="actor">T4</div><div class="actor">T5</div><div class="actor">T6</div><div class="actor">T7</div>
+      <div class="actor">User</div><div class="step"><b>Submit query</b><br>“cheap wireless headphones”</div><div class="step empty"></div><div class="step empty"></div><div class="step empty"></div><div class="step empty"></div><div class="step empty"></div><div class="step"><b>Receives slate</b><br>with explanations</div>
+      <div class="actor">Contract Arena</div><div class="step empty"></div><div class="step"><b>Generate contracts</b><br>price, relevance, diversity, quality, exploration</div><div class="step"><b>Validate</b><br>guardrail critic</div><div class="step empty"></div><div class="step empty"></div><div class="step empty"></div><div class="step empty"></div>
+      <div class="actor">Retriever</div><div class="step empty"></div><div class="step empty"></div><div class="step"><b>Retrieve</b><br>TF-IDF + semantic candidates</div><div class="step"><b>Build features</b><br>ESCI, score, price, diversity</div><div class="step empty"></div><div class="step empty"></div><div class="step empty"></div>
+      <div class="actor">RL Core</div><div class="step empty"></div><div class="step empty"></div><div class="step empty"></div><div class="step"><b>Tournament</b><br>evaluate contracts offline</div><div class="step"><b>Select/mutate</b><br>Q-learning action</div><div class="step empty"></div><div class="step"><b>Update</b><br>reward + regret</div>
+      <div class="actor">Slate Workers</div><div class="step empty"></div><div class="step empty"></div><div class="step empty"></div><div class="step empty"></div><div class="step"><b>Compile policy</b><br>ranking formula</div><div class="step"><b>Construct slate</b><br>rank-position agents</div><div class="step empty"></div>
+    </div></div>
+  </section>
+
+  <section class="section">
+    <h2>5. Search contract: the technical control object</h2>
+    <p>A contract is a normalized, executable representation of user intent and ranking behavior. It can be logged, compared, validated, versioned, mutated, and compiled. That makes it more powerful than a prompt, query embedding, or ranking feature vector.</p>
+    <div class="code">{
+  "contract_id": "ctx_cheap_headphones_price_relevance_v3",
+  "query": "cheap wireless headphones",
+  "source_agent": "price_relevance_agent",
+  "intent": {
+    "category": "electronics",
+    "product_type": "headphones",
+    "price_sensitivity": "high",
+    "quality_preference": "medium",
+    "ambiguity_level": "low",
+    "important_terms": ["cheap", "wireless", "headphones"]
+  },
+  "objectives": ["maximize_relevance", "respect_budget", "preserve_quality_floor"],
+  "constraints": {
+    "min_relevance_threshold": 0.55,
+    "max_irrelevant_in_top_5": 0,
+    "min_diversity_at_5": 0.62
+  },
+  "candidate_weight_prior": {
+    "lexical": 0.18,
+    "semantic": 0.27,
+    "esci_relevance": 0.25,
+    "price": 0.18,
+    "rating": 0.07,
+    "diversity": 0.05
+  },
+  "reward_definition": "slate_reward_minus_regret_with_irrelevant_penalty",
+  "explanation": "User wants affordable wireless headphones; price matters only after relevance is satisfied."
+}</div>
+    <div class="grid three">
+      <div class="card blue"><h3>Why it matters for ML</h3><p>The contract becomes a state-bearing feature object. It lets the RL layer condition policy decisions on intent, not just product features.</p></div>
+      <div class="card green"><h3>Why it matters for product</h3><p>Product teams can inspect or edit objectives and guardrails without directly editing model code.</p></div>
+      <div class="card purple"><h3>Why it matters for trust</h3><p>Every slate can be explained by the contract that produced it, the mutation applied, and the policy weights used.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>6. Contract Arena: multi-agent contract generation</h2>
+    <p>The Contract Arena creates several candidate contracts per query. Instead of trusting one planner, CORTEX asks specialized agents to propose competing hypotheses about what the user really wants.</p>
+    <table>
+      <thead><tr><th>Contract agent</th><th>Optimization bias</th><th>Failure it prevents</th><th>Example output</th></tr></thead>
+      <tbody>
+        <tr><td>Relevance Agent</td><td>Exact product match and semantic/lexical alignment.</td><td>Prevents over-personalized or cheap but irrelevant results.</td><td>Boost ESCI Exact and semantic score.</td></tr>
+        <tr><td>Price Agent</td><td>Affordability after relevance threshold.</td><td>Prevents expensive items dominating budget queries.</td><td>Add price score but require relevance floor.</td></tr>
+        <tr><td>Quality Agent</td><td>Ratings, premium signals, strong match confidence.</td><td>Prevents low-quality cheap products from ranking high.</td><td>Boost rating and exactness for “best” queries.</td></tr>
+        <tr><td>Diversity Agent</td><td>Subtopic and product-type spread.</td><td>Prevents top results from becoming near-duplicates.</td><td>Require diversity@5 above a threshold.</td></tr>
+        <tr><td>Exploration Agent</td><td>Substitutes, complements, low-confidence discovery.</td><td>Prevents search from getting stuck in known high-frequency products.</td><td>Allocate one controlled exploration slot.</td></tr>
+        <tr><td>Guardrail Critic</td><td>Safety and contract validity.</td><td>Prevents invalid ranking instructions and irrelevant top results.</td><td>Reject contract if Irrelevant@3 > 0 when exact candidates exist.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout purple"><strong>Technical nuance:</strong> This is not “multiple prompts for fun.” It creates a structured action set for RL. Each agent’s contract becomes a candidate policy that can be counterfactually evaluated and learned from.</div>
+  </section>
+
+  <section class="section">
+    <h2>7. RL architecture: from slate Q-learning to contract mutation</h2>
+    <h3>7.1 MDP formulation</h3>
+    <table>
+      <thead><tr><th>Component</th><th>CORTEX definition</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        <tr><td>State s</td><td>Encoded search contract + query context + retrieval confidence + slate diagnostics + user persona.</td><td>Lets the system learn different behavior for different query intents.</td></tr>
+        <tr><td>Action a</td><td>Select contract, mutate contract, repair contract, blend contracts, choose compiler strategy, or allocate exploration.</td><td>Makes RL operate at the policy-control level, not only item-ranking level.</td></tr>
+        <tr><td>Reward r</td><td>Composite slate reward using ESCI, clicks, diversity, contract satisfaction, and regret penalty.</td><td>Optimizes the whole search page instead of a single item.</td></tr>
+        <tr><td>Policy π</td><td>Mapping from contract state to a contract operation.</td><td>Defines how CORTEX chooses the best search strategy over time.</td></tr>
+        <tr><td>Transition</td><td>One-step in current MVP; session-level later with query refinements and user feedback loops.</td><td>Allows future extension to long-horizon search sessions.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>7.2 Core Q-learning</h3>
+    <div class="formula">Q(s,a) ← Q(s,a) + α [ r + γ max<sub>a′</sub>Q(s′,a′) − Q(s,a) ]</div>
+    <p>In the current MVP, Q-values are tabular and stored per contract state/action. This keeps the system explainable. In the full version, the Q-function can become a learned approximator using state embeddings and contract features.</p>
+
+    <h3>7.3 Contract mutation RL</h3>
+    <p>The most advanced version of CORTEX treats contract edits as RL actions. The model learns which edit improves a slate under which search context.</p>
+    <div class="formula">C′ = M(C, a<sub>mutation</sub>)</div>
+    <div class="formula">r<sub>mutation</sub> = Reward(Slate(C′)) − Reward(Slate(C))</div>
+    <div class="code">Mutation action examples:
+- increase_esci_weight(+0.10)
+- add_no_irrelevant_top3_guardrail()
+- increase_diversity_floor(0.60 → 0.72)
+- allocate_one_substitute_slot()
+- reduce_price_weight_if_relevance_low()
+- blend(price_agent, relevance_agent, ratio=0.35/0.65)</div>
+
+    <h3>7.4 Counterfactual tournament and regret</h3>
+    <p>Because ESCI labels exist offline, CORTEX can evaluate many contracts on the same query without needing to expose each version to a real user. This creates an offline policy improvement loop.</p>
+    <div class="formula">C* = argmax<sub>Cᵢ∈Arena</sub> Reward(Slate(Cᵢ))</div>
+    <div class="formula">Regret(C<sub>chosen</sub>) = Reward(C*) − Reward(C<sub>chosen</sub>)</div>
+    <p>Regret is important because a high reward alone does not show whether the selected policy was optimal. If the chosen contract gets 0.71 reward but another counterfactual contract gets 0.88, the system knows it left 0.17 reward on the table.</p>
+  </section>
+
+  <section class="section">
+    <h2>8. Policy compiler: where contracts become executable ranking</h2>
+    <p>The compiler is the boundary between symbolic/agentic planning and numeric ranking. It converts a validated contract into a scoring function that can rank actual products.</p>
+    <div class="formula">Score(p|q,C,a)=w<sub>lex</sub>L(p)+w<sub>sem</sub>S(p)+w<sub>esci</sub>E(p)+w<sub>price</sub>P(p)+w<sub>rating</sub>R(p)+w<sub>div</sub>D(p)+w<sub>exp</sub>X(p)</div>
+    <table>
+      <thead><tr><th>Feature</th><th>Source</th><th>Compiler role</th></tr></thead>
+      <tbody>
+        <tr><td>L(p)</td><td>TF-IDF/BM25</td><td>Ensures exact terms and product-type terms matter.</td></tr>
+        <tr><td>S(p)</td><td>Sentence Transformer / FAISS</td><td>Captures semantic match beyond exact words.</td></tr>
+        <tr><td>E(p)</td><td>ESCI label or relevance predictor</td><td>Grounds reward in product-search relevance.</td></tr>
+        <tr><td>P(p)</td><td>Price/affordability</td><td>Supports budget-sensitive queries.</td></tr>
+        <tr><td>R(p)</td><td>Rating/quality proxy</td><td>Supports quality-sensitive queries.</td></tr>
+        <tr><td>D(p)</td><td>Title/embedding diversity</td><td>Prevents repetitive result pages.</td></tr>
+        <tr><td>X(p)</td><td>Novelty/cold-start proxy</td><td>Supports controlled discovery.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout orange"><strong>Why this is important:</strong> The compiler lets the system remain auditable. A product did not rank high because “the model said so”; it ranked high because a contract selected a policy and that policy assigned explicit weights to interpretable signals.</div>
+  </section>
+
+  <section class="section">
+    <h2>9. Multi-agent slate workers</h2>
+    <p>The final page is built by rank-position agents. Each worker observes the remaining candidates and already selected slate prefix. It chooses one product for its rank position.</p>
+    <div class="formula">AgentScore(p,i)=λ<sub>rel,i</sub>Rel(p)+λ<sub>policy</sub>PolicyScore(p)+λ<sub>div,i</sub>Diversity(p,S<sub>&lt;i</sub>)+λ<sub>guard</sub>GuardrailScore(p)</div>
+    <div class="formula">Diversity(p,S<sub>&lt;i</sub>) = 1 − max<sub>s∈S<sub>&lt;i</sub></sub>Similarity(p,s)</div>
+    <div class="diagram"><div class="canvas">
+      <div class="layer"><div class="layer-label">Slate Prefix</div><div class="layer-cells"><div class="box agent"><strong>Rank 1 Worker</strong><small>Selects highest contract-satisfying exact result.</small></div><div class="box agent"><strong>Rank 2 Worker</strong><small>Selects high-relevance but avoids near-duplicate.</small></div><div class="box agent"><strong>Rank 3 Worker</strong><small>Adds comparison option or substitute if contract permits.</small></div><div class="box agent"><strong>Rank 4 Worker</strong><small>Balances quality and diversity.</small></div><div class="box agent"><strong>Rank 5 Worker</strong><small>Completes slate under guardrails and reward objective.</small></div></div></div>
+    </div></div>
+    <p>This is technically different from a simple sort. A simple sort assumes independent item scores. The multi-agent layer makes the slate context-aware: each selected item changes the value of the remaining items.</p>
+  </section>
+
+  <section class="section">
+    <h2>10. Reward architecture and evaluation metrics</h2>
+    <p>CORTEX uses reward decomposition because a single metric is too fragile. Clicks alone can reward clickbait; relevance alone can ignore diversity; diversity alone can hurt exactness. The final reward should be balanced.</p>
+    <div class="formula">ItemReward(p)=0.70·ESCI(p)+0.30·ClickReward(p)</div>
+    <div class="formula">SlateReward@K=\frac{Σ_{i=1}^{K} position_weight(i)·ItemReward(p_i)}{Σ_{i=1}^{K} position_weight(i)}</div>
+    <div class="formula">FinalReward=β₁·SlateReward + β₂·NDCG@K + β₃·Diversity@K + β₄·ContractSatisfaction − β₅·IrrelevantPenalty − β₆·Regret</div>
+    <table>
+      <thead><tr><th>Metric</th><th>Meaning</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        <tr><td>Precision@K</td><td>Relevant items in top K.</td><td>Measures top-page relevance.</td></tr>
+        <tr><td>NDCG@K</td><td>Discounted gain by rank.</td><td>Rewards relevant items near the top.</td></tr>
+        <tr><td>SlateReward@K</td><td>Position-weighted reward for the whole slate.</td><td>Primary RL feedback signal.</td></tr>
+        <tr><td>Diversity@K</td><td>Average dissimilarity across top-K products.</td><td>Prevents repetitive search pages.</td></tr>
+        <tr><td>Irrelevant@K</td><td>Count of irrelevant items in top-K.</td><td>Guardrail and quality diagnostic.</td></tr>
+        <tr><td>Regret@K</td><td>Best counterfactual reward minus chosen reward.</td><td>Shows how far the system is from optimal policy choice.</td></tr>
+        <tr><td>Contract Satisfaction</td><td>Weighted compliance with contract rules.</td><td>Ensures the ranker follows the user intent and constraints.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>11. Synthetic outcome simulations</h2>
+    <p>The numbers below are synthetic placeholders to illustrate what the dashboard could show after a full implementation. They are not claims of measured performance yet.</p>
+    <div class="grid two">
+      <div class="card">
+        <div class="chart-title">Synthetic offline metric lift on ESCI sample</div>
+        <div class="barrow"><strong>TF-IDF baseline NDCG@10</strong><div class="bar"><div class="fill" style="width:62%"></div></div><span class="score">0.62</span></div>
+        <div class="barrow"><strong>Semantic baseline NDCG@10</strong><div class="bar"><div class="fill" style="width:68%"></div></div><span class="score">0.68</span></div>
+        <div class="barrow"><strong>PolicyRank-RL NDCG@10</strong><div class="bar"><div class="fill" style="width:77%"></div></div><span class="score">0.77</span></div>
+        <div class="barrow"><strong>CORTEX Arena NDCG@10</strong><div class="bar"><div class="fill" style="width:84%"></div></div><span class="score">0.84</span></div>
+      </div>
+      <div class="card">
+        <div class="chart-title">Synthetic regret reduction over training episodes</div>
+        <svg width="100%" height="240" viewBox="0 0 600 240" role="img" aria-label="Synthetic regret curve">
+          <rect x="0" y="0" width="600" height="240" rx="18" fill="#f8fafc"/>
+          <line x1="50" y1="190" x2="560" y2="190" stroke="#94a3b8" stroke-width="2"/>
+          <line x1="50" y1="30" x2="50" y2="190" stroke="#94a3b8" stroke-width="2"/>
+          <polyline fill="none" stroke="#dc2626" stroke-width="4" points="50,70 110,88 170,105 230,120 290,138 350,150 410,160 470,169 530,176"/>
+          <polyline fill="none" stroke="#059669" stroke-width="4" points="50,172 110,158 170,145 230,132 290,118 350,103 410,92 470,82 530,72"/>
+          <text x="55" y="24" font-size="13" fill="#64748b">Reward ↑</text>
+          <text x="485" y="212" font-size="13" fill="#64748b">Episodes →</text>
+          <text x="370" y="66" font-size="13" fill="#059669" font-weight="800">Slate reward</text>
+          <text x="365" y="180" font-size="13" fill="#dc2626" font-weight="800">Regret</text>
+        </svg>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>System</th><th>NDCG@10</th><th>Reward@5</th><th>Diversity@5</th><th>Irrelevant@5</th><th>Regret@5</th></tr></thead>
+      <tbody>
+        <tr><td>TF-IDF baseline</td><td>0.62</td><td>0.58</td><td>0.41</td><td>1.2</td><td>0.21</td></tr>
+        <tr><td>Semantic retrieval</td><td>0.68</td><td>0.64</td><td>0.45</td><td>0.9</td><td>0.16</td></tr>
+        <tr><td>PolicyRank-RL current</td><td>0.77</td><td>0.73</td><td>0.58</td><td>0.4</td><td>0.09</td></tr>
+        <tr><td>CORTEX target</td><td>0.84</td><td>0.81</td><td>0.71</td><td>0.1</td><td>0.03</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>12. Novelty analysis: why this is not just another ranker</h2>
+    <p>The novelty is the system boundary. CORTEX treats ranking as a contract execution problem and RL as a contract-control policy. This creates a new layer between LLM planning and numerical ranking.</p>
+    <div class="barrow"><strong>Hybrid retrieval</strong><div class="bar"><div class="fill" style="width:35%"></div></div><span class="score">3.5/10</span></div>
+    <div class="barrow"><strong>Bandit ranker</strong><div class="bar"><div class="fill" style="width:45%"></div></div><span class="score">4.5/10</span></div>
+    <div class="barrow"><strong>Slate Q-learning</strong><div class="bar"><div class="fill" style="width:70%"></div></div><span class="score">7.0/10</span></div>
+    <div class="barrow"><strong>Multi-agent diversification</strong><div class="bar"><div class="fill" style="width:75%"></div></div><span class="score">7.5/10</span></div>
+    <div class="barrow"><strong>Executable search contracts</strong><div class="bar"><div class="fill" style="width:86%"></div></div><span class="score">8.6/10</span></div>
+    <div class="barrow"><strong>Contract mutation RL</strong><div class="bar"><div class="fill" style="width:92%"></div></div><span class="score">9.2/10</span></div>
+    <div class="barrow"><strong>CORTEX integrated architecture</strong><div class="bar"><div class="fill" style="width:95%"></div></div><span class="score">9.5/10</span></div>
+    <div class="heat">
+      <div class="hcell hhead">Capability</div><div class="hcell hhead">Algolia-like</div><div class="hcell hhead">LTR</div><div class="hcell hhead">Slate RL</div><div class="hcell hhead">LLM Agent</div><div class="hcell hhead">CORTEX</div>
+      <div class="hcell hhead">Semantic retrieval</div><div class="hcell h5">High</div><div class="hcell h3">Med</div><div class="hcell h2">Low</div><div class="hcell h4">Med+</div><div class="hcell h5">High</div>
+      <div class="hcell hhead">Executable contracts</div><div class="hcell h1">Low</div><div class="hcell h1">Low</div><div class="hcell h1">Low</div><div class="hcell h3">Med</div><div class="hcell h5">Very High</div>
+      <div class="hcell hhead">RL contract mutation</div><div class="hcell h1">Low</div><div class="hcell h1">Low</div><div class="hcell h2">Partial</div><div class="hcell h1">Low</div><div class="hcell h5">High</div>
+      <div class="hcell hhead">Counterfactual regret</div><div class="hcell h2">Partial</div><div class="hcell h3">Med</div><div class="hcell h4">Med+</div><div class="hcell h2">Partial</div><div class="hcell h5">High</div>
+      <div class="hcell hhead">Agent traceability</div><div class="hcell h2">Partial</div><div class="hcell h1">Low</div><div class="hcell h2">Partial</div><div class="hcell h4">High</div><div class="hcell h5">Very High</div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>13. References and competitive landscape</h2>
+    <p>This reference table summarizes relevant systems and research found in the web/reference check. The absence of a public system combining all CORTEX components is the key positioning point.</p>
+    <table>
+      <thead><tr><th>Source</th><th>Relevant contribution</th><th>Observed limitation vs CORTEX</th><th>Link</th></tr></thead>
+      <tbody>
+        <tr><td>Amazon ESCI Shopping Queries</td><td>Public product-search relevance dataset with up to 40 results per query and ESCI labels.</td><td>Dataset/benchmark, not a contract-mutating RL engine.</td><td><a target="_blank" href="https://github.com/amazon-science/esci-data">Amazon ESCI</a></td></tr>
+        <tr><td>Alibaba RL-to-Rank</td><td>Frames e-commerce search as a search-session MDP and optimizes accumulated reward.</td><td>RL ranks/search sessions directly; does not use executable search contracts as a policy-control layer.</td><td><a target="_blank" href="https://arxiv.org/abs/1803.00710">arXiv</a></td></tr>
+        <tr><td>Airbnb real-time personalization</td><td>Uses user/listing embeddings for search ranking personalization.</td><td>Strong embedding personalization, but not contract-generation + mutation RL.</td><td><a target="_blank" href="https://www.kdd.org/kdd2018/accepted-papers/view/real-time-personalization-using-embeddings-for-search-ranking-at-airbnb">KDD 2018</a></td></tr>
+        <tr><td>Pinterest LLM search relevance</td><td>Fine-tunes LLMs to predict fine-grained query-Pin relevance.</td><td>LLM relevance model, not a full executable contract/RL policy compiler.</td><td><a target="_blank" href="https://medium.com/pinterest-engineering/improving-pinterest-search-relevance-using-large-language-models-4cd938d4e892">Pinterest Engineering</a></td></tr>
+        <tr><td>Google / YouTube DNN recommendations</td><td>Candidate generation and ranking architecture at large scale.</td><td>Two-stage recommender pipeline; not contract-native search governance.</td><td><a target="_blank" href="https://research.google.com/pubs/archive/45530.pdf">Google Research PDF</a></td></tr>
+        <tr><td>Google SlateQ</td><td>Tractable Q-learning decomposition for slate-based recommendation.</td><td>Slate value decomposition; not tied to natural-language search contracts and contract mutation.</td><td><a target="_blank" href="https://arxiv.org/abs/1905.12767">SlateQ</a></td></tr>
+        <tr><td>Netflix RL recommendations</td><td>Uses RL to construct recommendation lists under a finite user-time budget.</td><td>Recommendation list optimization; not e-commerce query-contract execution.</td><td><a target="_blank" href="https://netflixtechblog.com/reinforcement-learning-for-budget-constrained-recommendations-6cbc5263a32a">Netflix Tech Blog</a></td></tr>
+        <tr><td>MA4DIV</td><td>Models search result diversification as a cooperative multi-agent RL task.</td><td>Diversification-focused; CORTEX embeds multi-agent diversification inside a broader contract/RL engine.</td><td><a target="_blank" href="https://arxiv.org/abs/2403.17421">MA4DIV</a></td></tr>
+        <tr><td>Algolia AI Search</td><td>Semantic search, vector search, personalization, dynamic re-ranking.</td><td>Commercial AI search; public docs do not present RL contract mutation as the control layer.</td><td><a target="_blank" href="https://www.algolia.com/products/ai-search">Algolia</a></td></tr>
+        <tr><td>Constructor.io</td><td>AI-native e-commerce search and personalization optimized for KPIs.</td><td>Strong product discovery platform; contract execution and mutation RL are not the public abstraction.</td><td><a target="_blank" href="https://constructor.com/solutions/search">Constructor</a></td></tr>
+        <tr><td>Bloomreach Discovery / Loomi AI</td><td>AI personalization and product discovery across commerce channels.</td><td>Enterprise personalization suite; CORTEX differs as an auditable contract-native RL layer.</td><td><a target="_blank" href="https://www.bloomreach.com/en">Bloomreach</a></td></tr>
+        <tr><td>Coveo AI Relevance</td><td>AI search, recommendations, generative search across enterprise experiences.</td><td>Enterprise relevance platform; CORTEX focuses on contract-oriented RL execution for product search.</td><td><a target="_blank" href="https://www.coveo.com/en">Coveo</a></td></tr>
+        <tr><td>LinkedIn Recruiter Search</td><td>Uses ML ranking, GBDT, and personalization for talent search.</td><td>Highly optimized ranking; not contract-arena RL over executable search rules.</td><td><a target="_blank" href="https://www.linkedin.com/blog/engineering/recommendations/ai-behind-linkedin-recruiter-search-and-recommendation-systems">LinkedIn Engineering</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>14. Implementation blueprint: from current MVP to launch-grade system</h2>
+    <table>
+      <thead><tr><th>Stage</th><th>Modules to build</th><th>Technical output</th><th>Validation</th></tr></thead>
+      <tbody>
+        <tr><td>Current MVP</td><td>retrieval.py, semantic_retrieval.py, contracts.py, slate_q_learning.py, policy_compiler.py, multi_agent_diversifier.py</td><td>Local Streamlit demo with ESCI sample and Q-table learning.</td><td>Manual tests across ESCI queries.</td></tr>
+        <tr><td>MVP 12</td><td>contract_arena.py</td><td>Five contract agents generate competing contracts per query.</td><td>Tournament table shows contract-specific slate rewards.</td></tr>
+        <tr><td>MVP 13</td><td>policy_tournament.py</td><td>Counterfactual evaluation of every contract/action.</td><td>Regret@K and best-counterfactual policy shown.</td></tr>
+        <tr><td>MVP 14</td><td>contract_mutation_rl.py</td><td>Q-learning actions become contract edits.</td><td>Reward delta after mutation is logged.</td></tr>
+        <tr><td>MVP 15</td><td>contract_constitution.py</td><td>Guardrail validation and repair loop.</td><td>Violations detected and repaired before ranking.</td></tr>
+        <tr><td>MVP 16</td><td>llm_contract_agent.py</td><td>LLM-generated contracts with schema validation.</td><td>Rule-based fallback and contract quality audit.</td></tr>
+        <tr><td>MVP 17</td><td>faiss_index.py</td><td>Scalable vector search over larger product catalog.</td><td>Latency and recall comparison vs brute-force embeddings.</td></tr>
+        <tr><td>MVP 18</td><td>evaluation.py</td><td>NDCG@K, Precision@K, Reward@K, Diversity@K, Regret@K.</td><td>Offline benchmark report.</td></tr>
+        <tr><td>MVP 19</td><td>api_server.py, dashboard.py</td><td>Hosted API + SaaS-style dashboard.</td><td>Demo query returns ranked slate and explanations.</td></tr>
+      </tbody>
+    </table>
+    <div class="code">Recommended repository structure:
+
+policyrank-rl/
+  app.py
+  data/
+    esci_sample_products.csv
+  models/
+    product_embeddings.pkl
+    faiss_index.bin
+  storage/
+    feedback_log.csv
+    q_table.json
+    mutation_q_table.json
+  src/
+    retrieval.py
+    semantic_retrieval.py
+    faiss_index.py
+    contracts.py
+    contract_arena.py
+    contract_constitution.py
+    policy_tournament.py
+    contract_mutation_rl.py
+    slate_q_learning.py
+    policy_compiler.py
+    multi_agent_diversifier.py
+    slate_reward.py
+    evaluation.py
+    feedback.py
+    logger.py
+    api_server.py</div>
+  </section>
+
+  <section class="section">
+    <h2>15. Code architecture explanation</h2>
+    <table>
+      <thead><tr><th>File</th><th>Responsibility</th><th>Why it is important</th></tr></thead>
+      <tbody>
+        <tr><td>app.py</td><td>Streamlit orchestration layer.</td><td>Connects UI, retrieval, contracts, RL, feedback, and dashboard.</td></tr>
+        <tr><td>retrieval.py</td><td>TF-IDF candidate search.</td><td>Provides lexical baseline and interpretable retrieval scores.</td></tr>
+        <tr><td>semantic_retrieval.py</td><td>Sentence Transformer semantic search.</td><td>Allows meaning-based retrieval beyond exact keywords.</td></tr>
+        <tr><td>contracts.py</td><td>Current rule-based search contract generation.</td><td>Creates the first explicit contract layer.</td></tr>
+        <tr><td>slate_q_learning.py</td><td>Contract-conditioned Q-table and action selection.</td><td>Implements the first RL control loop.</td></tr>
+        <tr><td>policy_compiler.py</td><td>Action weights to ranking score.</td><td>Transforms RL decision into executable ranking logic.</td></tr>
+        <tr><td>multi_agent_diversifier.py</td><td>Rank-position slate workers.</td><td>Builds result pages with relevance and diversity.</td></tr>
+        <tr><td>slate_reward.py</td><td>Slate-level reward calculation.</td><td>Defines what the RL loop optimizes.</td></tr>
+        <tr><td>feedback.py</td><td>Simulated clicks and reward from ESCI labels.</td><td>Provides interaction data before real users.</td></tr>
+        <tr><td>logger.py</td><td>Persistent CSV/SQLite logs.</td><td>Enables learning across interactions.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="section">
+    <h2>16. Search experience after launch</h2>
+    <div class="mock">
+      <div class="searchui">
+        <h3>Typical search today</h3><div class="searchbar">best bathroom fan</div>
+        <div class="result"><div class="rtitle">Bathroom Exhaust Fan 80 CFM</div><div class="rmeta">Rank source: relevance score</div></div>
+        <div class="result"><div class="rtitle">Ceiling Fan with Light</div><div class="rmeta">Rank source unclear</div><div class="warn">Potential issue: semantically fan-related but not bathroom exhaust intent.</div></div>
+        <div class="result"><div class="rtitle">Bathroom Light Fixture</div><div class="rmeta">Related accessory</div><div class="warn">Potential issue: complement ranked too high.</div></div>
+      </div>
+      <div class="searchui">
+        <h3>CORTEX-powered search</h3><div class="searchbar">best bathroom fan</div>
+        <div class="result"><div class="rtitle">Quiet Bathroom Exhaust Fan 80 CFM</div><div class="rmeta">Contract: quality + exactness | RL Action: quality_relevance_blend</div><div class="why">Why ranked: exact bathroom fan, high semantic match, quality contract satisfied.</div></div>
+        <div class="result"><div class="rtitle">Homewerks Bathroom Fan with LED</div><div class="rmeta">Rank Worker 2: diversified exact option</div><div class="why">Why ranked: exact match, different feature profile, avoids duplicate slate.</div></div>
+        <div class="result"><div class="rtitle">Panasonic WhisperCeiling Ventilation Fan</div><div class="rmeta">Rank Worker 3: premium quality option</div><div class="why">Why ranked: high-quality product, relevant ventilation intent, contract compliant.</div></div>
+      </div>
+    </div>
+    <p>Post-launch, CORTEX should expose not just results, but the reasoning trace: selected contract, mutation actions, ranking weights, rank-position worker decisions, and reward diagnostics.</p>
+  </section>
+
+  <section class="section">
+    <h2>17. Product packaging after launch</h2>
+    <div class="grid four">
+      <div class="card blue"><h3>Website demo</h3><p>Interactive ESCI-powered demo showing baseline vs CORTEX, contracts, agent trace, and rewards.</p></div>
+      <div class="card green"><h3>Ranking API</h3><p>Retailers send query/catalog context and receive ranked slates plus explanations.</p></div>
+      <div class="card purple"><h3>SaaS dashboard</h3><p>Search audits, regret reports, query clusters, contract performance, and policy learning curves.</p></div>
+      <div class="card orange"><h3>SDK / layer</h3><p>Deployable intelligence layer on top of Elasticsearch, OpenSearch, Solr, Algolia, or custom search stacks.</p></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>18. Final technical positioning</h2>
+    <p>CORTEX should be framed as a <strong>contract-native RL control plane for e-commerce search</strong>. It is not trying to replace every search engine immediately. It can sit above existing retrieval/ranking infrastructure and provide the missing layer: auditable intent contracts, RL-based contract optimization, multi-agent slate construction, and reward/regret analytics.</p>
+    <div class="callout green"><strong>Final one-liner:</strong> PolicyRank-RL: CORTEX Engine learns how to transform user intent into executable ranking contracts, optimize those contracts through reinforcement learning, and assemble better e-commerce search pages through cooperative multi-agent slate workers.</div>
+  </section>
+
+  <div class="foot">Technical Deep Dive of PolicyRank-RL: CORTEX Engine · Contract-Oriented Reinforcement for Task-Executable Search</div>
+</main>
+</body>
+</html>
