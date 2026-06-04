@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import re
 import time
@@ -17,6 +18,7 @@ import urllib.error
 import urllib.request
 from collections import Counter
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
@@ -29,8 +31,10 @@ from src.query_understanding_agent import (
 
 
 DEFAULT_OUTPUT_DIR = Path("outputs/ollama_query_understanding")
+DEFAULT_CACHE_DIR = DEFAULT_OUTPUT_DIR / "cache"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 DEFAULT_MODEL = "qwen3:8b"
+ADVISOR_VERSION = "mvp24.2"
 
 ALLOWED_QUERY_TYPES = {
     "narrow_product",
@@ -66,9 +70,16 @@ ALLOWED_BIASES = {
 RESULT_FIELDS = [
     "query",
     "model",
+    "advisor_version",
+    "cache_hit",
+    "ollama_called",
+    "llm_policy",
+    "llm_policy_reason",
     "ollama_available",
     "llm_success",
     "llm_error",
+    "llm_runtime_seconds",
+    "cached_llm_runtime_seconds",
     "normalized_query",
     "llm_query_type",
     "hard_constraints",
@@ -114,6 +125,25 @@ ROUTE_STRICTNESS = {
     "REJECT_REPAIR_NARROW_QUERY": 3,
     "CRITIC_REVIEW": 4,
 }
+
+LLM_POLICY_QUERY_TYPES = {
+    "noisy_query",
+    "broad_discovery",
+    "mission_query",
+    "setup_or_kit",
+    "gift_or_party",
+    "compatibility_query",
+    "negation_constraint",
+}
+
+LLM_POLICY_BIASES = {
+    "allow_mission_repair",
+    "allow_behavior_aware",
+    "strict_guardrails",
+    "send_to_critic",
+}
+
+LLM_AUDIT_HIGH_RISK_TYPES = {"compatibility_query", "negation_constraint", "noisy_query"}
 
 
 def clean_text(value: object) -> str:
@@ -161,6 +191,82 @@ def clamp_confidence(value: object) -> float:
     if confidence > 1.0 and confidence <= 100.0:
         confidence = confidence / 100.0
     return round(max(0.0, min(confidence, 1.0)), 4)
+
+
+def now_utc_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def normalized_cache_query(query: str) -> str:
+    return re.sub(r"\s+", " ", clean_text(query).lower())
+
+
+def cache_key(query: str, model: str) -> str:
+    key_text = f"{ADVISOR_VERSION}|{model}|{normalized_cache_query(query)}"
+    return hashlib.sha256(key_text.encode("utf-8")).hexdigest()
+
+
+def cache_path(cache_dir: Path, query: str, model: str) -> Path:
+    return cache_dir / f"{cache_key(query, model)}.json"
+
+
+def read_cache(cache_dir: Path, query: str, model: str) -> Dict[str, object]:
+    path = cache_path(cache_dir, query, model)
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    if payload.get("advisor_version") != ADVISOR_VERSION:
+        return {}
+    if clean_text(payload.get("model")) != model:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def write_cache(cache_dir: Path, query: str, model: str, payload: Dict[str, object]) -> None:
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_payload = {
+        "query": query,
+        "model": model,
+        "advisor_version": ADVISOR_VERSION,
+        "created_at": now_utc_iso(),
+        "llm_success": safe_int(payload.get("llm_success")),
+        "llm_error": clean_text(payload.get("llm_error")),
+        "raw_response_excerpt": clean_text(payload.get("raw_response_excerpt")),
+        "runtime_seconds": safe_float(payload.get("llm_runtime_seconds")),
+        "ollama_available": safe_int(payload.get("ollama_available")),
+        "normalized_query": clean_text(payload.get("normalized_query")),
+        "llm_query_type": clean_text(payload.get("llm_query_type")),
+        "hard_constraints": clean_text(payload.get("hard_constraints")),
+        "soft_preferences": clean_text(payload.get("soft_preferences")),
+        "mission_sub_intents": clean_text(payload.get("mission_sub_intents")),
+        "recommended_route": clean_text(payload.get("recommended_route")),
+        "recommended_governance_bias": clean_text(payload.get("recommended_governance_bias")),
+        "risk_level": clean_text(payload.get("risk_level")),
+        "confidence": safe_float(payload.get("confidence")),
+        "reason": clean_text(payload.get("reason")),
+    }
+    cache_path(cache_dir, query, model).write_text(
+        json.dumps(cache_payload, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+
+
+def llm_from_cache(payload: Dict[str, object]) -> Dict[str, object]:
+    return {
+        "normalized_query": clean_text(payload.get("normalized_query")),
+        "llm_query_type": clean_text(payload.get("llm_query_type")),
+        "hard_constraints": clean_text(payload.get("hard_constraints")),
+        "soft_preferences": clean_text(payload.get("soft_preferences")),
+        "mission_sub_intents": clean_text(payload.get("mission_sub_intents")),
+        "recommended_route": clean_text(payload.get("recommended_route")),
+        "recommended_governance_bias": clean_text(payload.get("recommended_governance_bias")),
+        "risk_level": clean_text(payload.get("risk_level")),
+        "confidence": safe_float(payload.get("confidence")),
+        "reason": clean_text(payload.get("reason")),
+    }
 
 
 def build_prompt(query: str) -> str:
@@ -312,6 +418,70 @@ def validate_llm_payload(payload: Dict[str, object]) -> Tuple[Dict[str, object],
     }, ""
 
 
+def should_call_llm(
+    query: str,
+    rule_understanding: object,
+    policy: str,
+    selective_llm: bool,
+    query_position: int = 0,
+    audit_sample_rate: float = 0.1,
+) -> Dict[str, object]:
+    del query
+    normalized_policy = "conservative" if policy == "default" else clean_text(policy).lower()
+    rule_type = clean_text(getattr(rule_understanding, "query_type", ""))
+    rule_bias = clean_text(getattr(rule_understanding, "recommended_governance_bias", ""))
+
+    if not selective_llm:
+        return {
+            "should_call": True,
+            "policy": normalized_policy,
+            "reason": "selective LLM disabled; calling Ollama for all queries",
+        }
+    if normalized_policy == "all":
+        return {
+            "should_call": True,
+            "policy": normalized_policy,
+            "reason": "all policy calls Ollama for every query",
+        }
+    if normalized_policy == "audit":
+        if rule_type in LLM_AUDIT_HIGH_RISK_TYPES:
+            return {
+                "should_call": True,
+                "policy": normalized_policy,
+                "reason": f"audit policy calls high-risk query_type={rule_type}",
+            }
+        rate = max(0.0, min(float(audit_sample_rate), 1.0))
+        stride = max(int(round(1.0 / rate)), 1) if rate > 0 else 0
+        sampled = bool(stride and query_position % stride == 0)
+        return {
+            "should_call": sampled,
+            "policy": normalized_policy,
+            "reason": (
+                f"audit policy sampled every {stride} queries"
+                if sampled
+                else f"audit policy skipped non-high-risk query_type={rule_type}"
+            ),
+        }
+
+    if rule_type in LLM_POLICY_QUERY_TYPES:
+        return {
+            "should_call": True,
+            "policy": normalized_policy,
+            "reason": f"conservative policy calls query_type={rule_type}",
+        }
+    if rule_bias in LLM_POLICY_BIASES:
+        return {
+            "should_call": True,
+            "policy": normalized_policy,
+            "reason": f"conservative policy calls governance_bias={rule_bias}",
+        }
+    return {
+        "should_call": False,
+        "policy": normalized_policy,
+        "reason": f"selective policy skipped low-risk rule={rule_type}/{rule_bias}",
+    }
+
+
 def call_ollama(
     query: str,
     model: str,
@@ -435,9 +605,24 @@ def analyze_query(
     num_predict: int,
     temperature: float,
     think: bool,
+    use_cache: bool,
+    refresh_cache: bool,
+    cache_dir: Path,
+    selective_llm: bool,
+    llm_policy: str,
+    audit_sample_rate: float,
+    query_position: int = 0,
 ) -> Dict[str, object]:
     rule = understand_query(query)
     rule_route = BIAS_TO_ROUTE.get(rule.recommended_governance_bias, "BASELINE_ONLY")
+    policy_result = should_call_llm(
+        query=query,
+        rule_understanding=rule,
+        policy=llm_policy,
+        selective_llm=selective_llm,
+        query_position=query_position,
+        audit_sample_rate=audit_sample_rate,
+    )
 
     if no_ollama:
         ollama_available = False
@@ -445,16 +630,63 @@ def analyze_query(
         llm_error = "--no-ollama enabled"
         llm = {}
         raw_excerpt = ""
+        cache_hit = 0
+        ollama_called = 0
+        llm_runtime_seconds = 0.0
+        cached_llm_runtime_seconds = 0.0
+    elif not policy_result["should_call"]:
+        ollama_available = True
+        llm_success = False
+        llm_error = "selective policy skipped LLM; rule understanding used"
+        llm = {}
+        raw_excerpt = ""
+        cache_hit = 0
+        ollama_called = 0
+        llm_runtime_seconds = 0.0
+        cached_llm_runtime_seconds = 0.0
     else:
-        ollama_available, llm_success, llm_error, llm, raw_excerpt = call_ollama(
-            query=query,
-            model=model,
-            timeout=timeout,
-            ollama_url=ollama_url,
-            num_predict=num_predict,
-            temperature=temperature,
-            think=think,
-        )
+        cache_payload = {}
+        if use_cache and not refresh_cache:
+            cache_payload = read_cache(cache_dir=cache_dir, query=query, model=model)
+        if cache_payload:
+            ollama_available = bool(safe_int(cache_payload.get("ollama_available")))
+            llm_success = bool(safe_int(cache_payload.get("llm_success")))
+            llm_error = clean_text(cache_payload.get("llm_error"))
+            llm = llm_from_cache(cache_payload)
+            raw_excerpt = clean_text(cache_payload.get("raw_response_excerpt"))
+            cache_hit = 1
+            ollama_called = 0
+            llm_runtime_seconds = 0.0
+            cached_llm_runtime_seconds = safe_float(cache_payload.get("runtime_seconds"))
+        else:
+            call_start = time.perf_counter()
+            ollama_available, llm_success, llm_error, llm, raw_excerpt = call_ollama(
+                query=query,
+                model=model,
+                timeout=timeout,
+                ollama_url=ollama_url,
+                num_predict=num_predict,
+                temperature=temperature,
+                think=think,
+            )
+            llm_runtime_seconds = time.perf_counter() - call_start
+            cached_llm_runtime_seconds = 0.0
+            cache_hit = 0
+            ollama_called = 1
+            if use_cache:
+                write_cache(
+                    cache_dir=cache_dir,
+                    query=query,
+                    model=model,
+                    payload={
+                        "ollama_available": int(ollama_available),
+                        "llm_success": int(llm_success),
+                        "llm_error": llm_error,
+                        "raw_response_excerpt": raw_excerpt,
+                        "llm_runtime_seconds": llm_runtime_seconds,
+                        **llm,
+                    },
+                )
 
     llm_query_type = clean_text(llm.get("llm_query_type"))
     llm_bias = clean_text(llm.get("recommended_governance_bias"))
@@ -470,6 +702,8 @@ def analyze_query(
         llm_bias=llm_bias,
         llm_route=llm_route,
     )
+    if (not no_ollama) and (not policy_result["should_call"]):
+        status = "llm_skipped_rule_confident"
     unsafe_strict_disagreement = llm_success and is_unsafe_strict_constraint_disagreement(
         rule_query_type=rule.query_type,
         rule_route=rule_route,
@@ -481,15 +715,26 @@ def analyze_query(
         (not llm_success)
         or (not ollama_available)
         or unsafe_strict_disagreement
-        or status in {"llm_failed_rule_fallback", "llm_unavailable_rule_fallback"}
+        or status in {
+            "llm_failed_rule_fallback",
+            "llm_unavailable_rule_fallback",
+            "llm_skipped_rule_confident",
+        }
     )
 
     return {
         "query": query,
         "model": model,
+        "advisor_version": ADVISOR_VERSION,
+        "cache_hit": cache_hit,
+        "ollama_called": ollama_called,
+        "llm_policy": policy_result["policy"],
+        "llm_policy_reason": policy_result["reason"],
         "ollama_available": int(ollama_available),
         "llm_success": int(llm_success),
         "llm_error": llm_error,
+        "llm_runtime_seconds": round(llm_runtime_seconds, 4),
+        "cached_llm_runtime_seconds": round(cached_llm_runtime_seconds, 4),
         "normalized_query": clean_text(llm.get("normalized_query")) if llm_success else rule.normalized_query,
         "llm_query_type": llm_query_type,
         "hard_constraints": clean_text(llm.get("hard_constraints")),
@@ -516,6 +761,9 @@ def summarize(rows: List[Dict[str, object]], runtime_seconds: float) -> Dict[str
     total = len(rows)
     llm_success_count = sum(safe_int(row.get("llm_success")) for row in rows)
     unavailable_count = sum(1 for row in rows if safe_int(row.get("ollama_available")) == 0)
+    cache_hit_count = sum(safe_int(row.get("cache_hit")) for row in rows)
+    ollama_called_count = sum(safe_int(row.get("ollama_called")) for row in rows)
+    skipped_count = sum(1 for row in rows if clean_text(row.get("final_advisor_status")) == "llm_skipped_rule_confident")
     query_type_matches = sum(safe_int(row.get("llm_rule_query_type_match")) for row in rows)
     bias_matches = sum(safe_int(row.get("llm_rule_bias_match")) for row in rows)
     needs_review_count = sum(1 for row in rows if clean_text(row.get("final_advisor_status")) == "llm_disagrees_needs_review")
@@ -523,6 +771,9 @@ def summarize(rows: List[Dict[str, object]], runtime_seconds: float) -> Dict[str
     fallback_count = sum(safe_int(row.get("fallback_to_rule")) for row in rows)
     success_rows = [row for row in rows if safe_int(row.get("llm_success")) == 1]
     avg_conf = sum(safe_float(row.get("confidence")) for row in success_rows) / max(len(success_rows), 1)
+    actual_llm_runtime = sum(safe_float(row.get("llm_runtime_seconds")) for row in rows)
+    cached_runtime = sum(safe_float(row.get("cached_llm_runtime_seconds")) for row in rows)
+    estimated_uncached_runtime = actual_llm_runtime + cached_runtime
 
     return {
         "total_queries": total,
@@ -530,6 +781,16 @@ def summarize(rows: List[Dict[str, object]], runtime_seconds: float) -> Dict[str
         "llm_failure_count": total - llm_success_count,
         "ollama_unavailable_count": unavailable_count,
         "llm_success_rate": round(llm_success_count / max(total, 1), 6),
+        "cache_hit_count": cache_hit_count,
+        "cache_hit_rate": round(cache_hit_count / max(total, 1), 6),
+        "ollama_called_count": ollama_called_count,
+        "ollama_call_rate": round(ollama_called_count / max(total, 1), 6),
+        "llm_skipped_count": skipped_count,
+        "llm_skipped_rate": round(skipped_count / max(total, 1), 6),
+        "avg_llm_runtime_seconds": round(actual_llm_runtime / max(ollama_called_count, 1), 6),
+        "total_runtime_seconds": round(runtime_seconds, 4),
+        "estimated_uncached_runtime_seconds": round(estimated_uncached_runtime, 4),
+        "estimated_cache_savings_seconds": round(cached_runtime, 4),
         "rule_match_query_type_rate": round(query_type_matches / max(llm_success_count, 1), 6),
         "rule_match_bias_rate": round(bias_matches / max(llm_success_count, 1), 6),
         "needs_review_count": needs_review_count,
@@ -605,6 +866,11 @@ def print_single(row: Dict[str, object], summary: Dict[str, object]) -> None:
     print(f"recommended_route: {row['rule_recommended_route']}")
 
     print("\nLLM understanding")
+    print(f"advisor_version: {row['advisor_version']}")
+    print(f"llm_policy: {row['llm_policy']}")
+    print(f"llm_policy_reason: {row['llm_policy_reason']}")
+    print(f"cache_hit: {row['cache_hit']}")
+    print(f"ollama_called: {row['ollama_called']}")
     print(f"ollama_available: {row['ollama_available']}")
     print(f"llm_success: {row['llm_success']}")
     print(f"llm_query_type: {row['llm_query_type']}")
@@ -655,6 +921,13 @@ def run_single(args: argparse.Namespace) -> None:
         num_predict=args.num_predict,
         temperature=args.temperature,
         think=args.think,
+        use_cache=args.use_cache,
+        refresh_cache=args.refresh_cache,
+        cache_dir=Path(args.cache_dir),
+        selective_llm=args.selective_llm,
+        llm_policy=args.llm_policy,
+        audit_sample_rate=args.audit_sample_rate,
+        query_position=0,
     )
     runtime = time.perf_counter() - start
     summary = write_outputs([row], Path(args.output_dir), runtime_seconds=runtime)
@@ -677,6 +950,11 @@ def run_batch(args: argparse.Namespace) -> None:
     print(f"selected_query_count: {len(selected)}")
     print(f"model: {args.model}")
     print(f"no_ollama: {args.no_ollama}")
+    print(f"use_cache: {args.use_cache}")
+    print(f"refresh_cache: {args.refresh_cache}")
+    print(f"cache_dir: {args.cache_dir}")
+    print(f"selective_llm: {args.selective_llm}")
+    print(f"llm_policy: {args.llm_policy}")
 
     rows = []
     start = time.perf_counter()
@@ -690,13 +968,21 @@ def run_batch(args: argparse.Namespace) -> None:
             num_predict=args.num_predict,
             temperature=args.temperature,
             think=args.think,
+            use_cache=args.use_cache,
+            refresh_cache=args.refresh_cache,
+            cache_dir=Path(args.cache_dir),
+            selective_llm=args.selective_llm,
+            llm_policy=args.llm_policy,
+            audit_sample_rate=args.audit_sample_rate,
+            query_position=index - 1,
         )
         rows.append(row)
         if index <= 10 or index % 100 == 0 or index == len(selected):
             print(
                 f"[{index}/{len(selected)}] {console_text(query)} -> "
                 f"rule={row['rule_query_type']}/{row['rule_recommended_governance_bias']} "
-                f"llm={row['llm_query_type'] or 'fallback'} status={row['final_advisor_status']}"
+                f"llm={row['llm_query_type'] or 'fallback'} status={row['final_advisor_status']} "
+                f"cache_hit={row['cache_hit']} ollama_called={row['ollama_called']}"
             )
 
     runtime = time.perf_counter() - start
@@ -723,6 +1009,22 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--think", action="store_true", help="Allow model thinking if the local model supports it.")
     parser.add_argument("--ollama-url", default=DEFAULT_OLLAMA_URL, help="Ollama generate API URL.")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Output directory.")
+    parser.add_argument("--cache-dir", default=str(DEFAULT_CACHE_DIR), help="LLM cache directory.")
+    parser.add_argument(
+        "--use-cache",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Use the local LLM result cache.",
+    )
+    parser.add_argument("--refresh-cache", action="store_true", help="Refresh cache entries by calling Ollama.")
+    parser.add_argument("--selective-llm", action="store_true", help="Only call LLM when the policy selects a query.")
+    parser.add_argument(
+        "--llm-policy",
+        choices=["conservative", "default", "all", "audit"],
+        default="conservative",
+        help="Selective LLM invocation policy.",
+    )
+    parser.add_argument("--audit-sample-rate", type=float, default=0.1, help="Audit policy random-equivalent sample rate.")
     parser.add_argument("--no-ollama", action="store_true", help="Do not call Ollama; force rule fallback.")
     return parser.parse_args()
 
