@@ -287,8 +287,10 @@ def normalize_full_esci_rows(
     sub_intent: str = "",
     strict_constraint_type: str = "",
     route_reason: str = "",
+    extra_fields: Optional[Dict[str, object]] = None,
 ) -> List[Dict[str, object]]:
     output: List[Dict[str, object]] = []
+    extra_fields = extra_fields or {}
     for index, row in enumerate(rows):
         if len(output) >= max_items:
             break
@@ -311,6 +313,7 @@ def normalize_full_esci_rows(
             "sub_intent": sub_intent or clean_text(row.get("sub_intent")),
             "strict_constraint_type": strict_constraint_type or clean_text(row.get("strict_constraint_type")),
         }
+        normalized.update(extra_fields)
         output.append(normalized)
     return output
 
@@ -450,6 +453,50 @@ def execute_full_esci_behavior(query: str, max_items: int, index_dir: Path) -> T
         "behavior-aware full ESCI reranker not implemented; used full ESCI lexical retrieval.",
         f"full_esci_behavior_aware_fallback:{len(rows)}",
     )
+
+
+def critic_review_priority(query_type: str) -> str:
+    query_type = clean_text(query_type)
+    if query_type in {"noisy_query", "negation_constraint", "compatibility_query"}:
+        return "high"
+    if query_type in {"broad_discovery", "ambiguous", "unknown"}:
+        return "medium"
+    return "low"
+
+
+def critic_review_reason(query_type: str, bias: str) -> str:
+    if query_type or bias:
+        return (
+            "Full ESCI retrieval is materialized for critic review because query understanding "
+            f"classified the query as {query_type or 'unknown'} with governance bias {bias or 'unknown'}."
+        )
+    return "Full ESCI retrieval is materialized for critic review pending human or LLM critique."
+
+
+def execute_full_esci_critic(
+    query: str,
+    max_items: int,
+    index_dir: Path,
+    query_type: str = "",
+    bias: str = "",
+) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+    reason = critic_review_reason(query_type=query_type, bias=bias)
+    rows = normalize_full_esci_rows(
+        query=query,
+        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        execution_source="full_esci_critic_review",
+        calibrated_route="CRITIC_REVIEW",
+        max_items=max_items,
+        route_reason=reason,
+        extra_fields={
+            "critic_review_flag": 1,
+            "critic_review_reason": reason,
+            "needs_human_or_llm_review": 1,
+            "critic_review_stage": "retrieval_ready_pending_critic",
+            "review_priority": critic_review_priority(query_type),
+        },
+    )
+    return rows, "full_esci_critic_review", False, "", f"full_esci_critic_review:pending_critic:{len(rows)}"
 
 
 def extract_numeric_model_tokens(query: str) -> List[str]:
@@ -1513,13 +1560,13 @@ def execute_calibrated_route(
             elif route == "BEHAVIOR_AWARE_RERANK":
                 rows, source, fallback, reason, trace = execute_full_esci_behavior(query, max_items=max_items, index_dir=index_path)
             elif route == "CRITIC_REVIEW":
-                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path)
-                source = "full_esci_critic_review_fallback"
-                for row in rows:
-                    row["execution_source"] = source
-                fallback = True
-                reason = "Critic review full ESCI path not implemented; used full ESCI lexical retrieval."
-                trace = f"full_esci_critic_review_fallback:{len(rows)}"
+                rows, source, fallback, reason, trace = execute_full_esci_critic(
+                    query=query,
+                    max_items=max_items,
+                    index_dir=index_path,
+                    query_type=query_type,
+                    bias=bias,
+                )
             elif route == "REJECT_REPAIR_NARROW_QUERY":
                 rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path)
                 source = "full_esci_narrow_query_baseline_preserved"

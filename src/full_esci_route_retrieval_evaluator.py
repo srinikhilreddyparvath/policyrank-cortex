@@ -45,6 +45,8 @@ RESULT_FIELDS = [
     "unique_sub_intents",
     "fallback_used",
     "fallback_reason",
+    "critic_review_stage",
+    "review_priority",
     "calibrated_adapter_trace",
     "retrieved_count",
     "labeled_retrieved_count",
@@ -71,6 +73,8 @@ QUERY_EVAL_FIELDS = [
     "score",
     "sub_intent",
     "esci_label",
+    "critic_review_stage",
+    "review_priority",
 ]
 
 
@@ -221,12 +225,20 @@ def evaluate_slate(
     query_key = normalized_query(query)
     evaluated_rows = []
     labels = []
+    critic_review_stages = []
+    review_priorities = []
 
     for index, row in enumerate(slate_rows, start=1):
         product_id = clean_text(row.get("product_id") or row.get("item_id"))
         label = normalize_label(row.get("esci_label")) or label_lookup.get((query_key, product_id), "")
         if label:
             labels.append(label)
+        critic_review_stage = clean_text(row.get("critic_review_stage"))
+        review_priority = clean_text(row.get("review_priority"))
+        if critic_review_stage:
+            critic_review_stages.append(critic_review_stage)
+        if review_priority:
+            review_priorities.append(review_priority)
         evaluated_rows.append(
             {
                 "query": query,
@@ -238,6 +250,8 @@ def evaluate_slate(
                 "score": row.get("score", ""),
                 "sub_intent": clean_text(row.get("sub_intent")),
                 "esci_label": label,
+                "critic_review_stage": critic_review_stage,
+                "review_priority": review_priority,
             }
         )
 
@@ -262,6 +276,8 @@ def evaluate_slate(
             "label_coverage_rate": round(labeled_count / max(retrieved_count, 1), 6),
             "exact_rate_in_retrieved": round(exact_count / max(retrieved_count, 1), 6),
             "exact_or_substitute_rate_in_retrieved": round(exact_or_substitute / max(retrieved_count, 1), 6),
+            "critic_review_stage": top_counter_value(critic_review_stages),
+            "review_priority": top_counter_value(review_priorities),
         },
         evaluated_rows,
     )
@@ -315,6 +331,8 @@ def run_query(
         "unique_sub_intents": safe_int(adapter_result.get("unique_sub_intents")),
         "fallback_used": int(bool(adapter_result.get("fallback_used"))),
         "fallback_reason": clean_text(adapter_result.get("fallback_reason")),
+        "critic_review_stage": eval_metrics.get("critic_review_stage", ""),
+        "review_priority": eval_metrics.get("review_priority", ""),
         "calibrated_adapter_trace": clean_text(adapter_result.get("adapter_trace")),
         **eval_metrics,
         "error_message": "",
@@ -352,6 +370,11 @@ def top_value(rows: List[Dict[str, object]], field: str) -> str:
     return counts.most_common(1)[0][0] if counts else ""
 
 
+def top_counter_value(values: Iterable[str]) -> str:
+    counts = Counter(clean_text(value) for value in values if clean_text(value))
+    return counts.most_common(1)[0][0] if counts else ""
+
+
 def grouped_summary(rows: List[Dict[str, object]], group_fields: List[str]) -> List[Dict[str, object]]:
     groups: Dict[Tuple[str, ...], List[Dict[str, object]]] = defaultdict(list)
     for row in rows:
@@ -375,6 +398,8 @@ def grouped_summary(rows: List[Dict[str, object]], group_fields: List[str]) -> L
         for field, value in zip(group_fields, key):
             route_summary[field] = value
         route_summary["top_route"] = top_value(group, "calibrated_governance_route")
+        route_summary["top_critic_review_stage"] = top_value(group, "critic_review_stage")
+        route_summary["top_review_priority"] = top_value(group, "review_priority")
         route_summary["top_quality_issue"] = top_issue(route_summary)
         output.append(route_summary)
     return output
@@ -397,6 +422,11 @@ def query_type_summary(rows: List[Dict[str, object]]) -> List[Dict[str, object]]
 
 
 def top_issue(summary: Dict[str, object]) -> str:
+    if (
+        clean_text(summary.get("calibrated_governance_route")) == "CRITIC_REVIEW"
+        and clean_text(summary.get("top_critic_review_stage")) == "retrieval_ready_pending_critic"
+    ):
+        return "critic_review_pending_llm"
     if safe_float(summary.get("fallback_rate")) > 0.5:
         return "high_fallback_rate"
     if safe_float(summary.get("top_k_has_exact_rate")) < 0.25:
@@ -426,6 +456,11 @@ def issue_rows(route_summaries: List[Dict[str, object]]) -> List[Dict[str, objec
                 and safe_float(row.get("avg_unique_sub_intents")) < 3,
             ),
             ("behavior_aware_fallback", "behavior_aware_fallback" in clean_text(row.get("execution_source"))),
+            (
+                "critic_review_pending_llm",
+                clean_text(row.get("calibrated_governance_route")) == "CRITIC_REVIEW"
+                and clean_text(row.get("top_critic_review_stage")) == "retrieval_ready_pending_critic",
+            ),
         ]
         for issue_type, triggered in checks:
             if triggered:
