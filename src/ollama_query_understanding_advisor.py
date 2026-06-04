@@ -1,0 +1,743 @@
+"""
+MVP 24: Ollama LLM Query Understanding Advisor
+
+Local LLM advisory layer for query understanding. The LLM does not choose
+products, does not mutate governance, and always falls back to deterministic
+rule-based query understanding when unavailable or invalid.
+"""
+
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import re
+import time
+import urllib.error
+import urllib.request
+from collections import Counter
+from dataclasses import asdict
+from pathlib import Path
+from typing import Dict, Iterable, List, Tuple
+
+from src.query_understanding_agent import (
+    console_text,
+    load_all_queries,
+    select_queries,
+    understand_query,
+)
+
+
+DEFAULT_OUTPUT_DIR = Path("outputs/ollama_query_understanding")
+DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
+DEFAULT_MODEL = "qwen3:8b"
+
+ALLOWED_QUERY_TYPES = {
+    "narrow_product",
+    "numeric_model",
+    "mission_query",
+    "setup_or_kit",
+    "gift_or_party",
+    "compatibility_query",
+    "negation_constraint",
+    "noisy_query",
+    "broad_discovery",
+    "general_retail",
+}
+
+ALLOWED_ROUTES = {
+    "BASELINE_ONLY",
+    "MISSION_REPAIR",
+    "STRICT_REPAIR",
+    "BEHAVIOR_AWARE_RERANK",
+    "REJECT_REPAIR_NARROW_QUERY",
+    "CRITIC_REVIEW",
+}
+
+ALLOWED_BIASES = {
+    "preserve_baseline",
+    "allow_mission_repair",
+    "allow_behavior_aware",
+    "strict_guardrails",
+    "reject_aggressive_repair",
+    "send_to_critic",
+}
+
+RESULT_FIELDS = [
+    "query",
+    "model",
+    "ollama_available",
+    "llm_success",
+    "llm_error",
+    "normalized_query",
+    "llm_query_type",
+    "hard_constraints",
+    "soft_preferences",
+    "mission_sub_intents",
+    "recommended_route",
+    "recommended_governance_bias",
+    "risk_level",
+    "confidence",
+    "reason",
+    "raw_response_excerpt",
+    "rule_query_type",
+    "rule_recommended_governance_bias",
+    "rule_recommended_route",
+    "llm_rule_query_type_match",
+    "llm_rule_bias_match",
+    "llm_rule_route_conflict",
+    "fallback_to_rule",
+    "final_advisor_status",
+]
+
+REQUIRED_LLM_FIELDS = [
+    "normalized_query",
+    "llm_query_type",
+    "recommended_route",
+    "recommended_governance_bias",
+]
+
+BIAS_TO_ROUTE = {
+    "preserve_baseline": "BASELINE_ONLY",
+    "allow_mission_repair": "MISSION_REPAIR",
+    "allow_behavior_aware": "BEHAVIOR_AWARE_RERANK",
+    "strict_guardrails": "STRICT_REPAIR",
+    "reject_aggressive_repair": "REJECT_REPAIR_NARROW_QUERY",
+    "send_to_critic": "CRITIC_REVIEW",
+}
+
+ROUTE_STRICTNESS = {
+    "BASELINE_ONLY": 0,
+    "MISSION_REPAIR": 1,
+    "BEHAVIOR_AWARE_RERANK": 2,
+    "STRICT_REPAIR": 3,
+    "REJECT_REPAIR_NARROW_QUERY": 3,
+    "CRITIC_REVIEW": 4,
+}
+
+
+def clean_text(value: object) -> str:
+    return str(value or "").strip()
+
+
+def safe_float(value: object, default: float = 0.0) -> float:
+    try:
+        if value is None or value == "":
+            return default
+        return float(value)
+    except Exception:
+        return default
+
+
+def safe_int(value: object, default: int = 0) -> int:
+    try:
+        if value is None or value == "":
+            return default
+        return int(float(value))
+    except Exception:
+        return default
+
+
+def ensure_output_dir(output_dir: Path) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+
+def write_csv(path: Path, rows: List[Dict[str, object]], fieldnames: List[str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def list_text(value: object) -> str:
+    if isinstance(value, list):
+        return "|".join(clean_text(item) for item in value if clean_text(item))
+    return clean_text(value)
+
+
+def clamp_confidence(value: object) -> float:
+    confidence = safe_float(value)
+    if confidence > 1.0 and confidence <= 100.0:
+        confidence = confidence / 100.0
+    return round(max(0.0, min(confidence, 1.0)), 4)
+
+
+def build_prompt(query: str) -> str:
+    return f"""
+/no_think
+
+You are a query understanding advisor for a retail search governance system.
+Return exactly one compact JSON object.
+Do not include markdown.
+Do not include explanation.
+Do not include reasoning.
+Do not include thinking text.
+Do not choose products. Do not rank products.
+
+Allowed query_type values:
+{sorted(ALLOWED_QUERY_TYPES)}
+
+Allowed recommended_route values:
+{sorted(ALLOWED_ROUTES)}
+
+Allowed recommended_governance_bias values:
+{sorted(ALLOWED_BIASES)}
+
+JSON schema:
+{{
+  "normalized_query": "lowercase normalized query",
+  "llm_query_type": "one allowed query_type",
+  "hard_constraints": ["constraints that must be preserved; use [] if none"],
+  "soft_preferences": ["preferences that may help but are not hard constraints; use [] if none"],
+  "mission_sub_intents": ["sub-intents if this is a mission/setup/gift query; use [] if none"],
+  "recommended_route": "one allowed recommended_route",
+  "recommended_governance_bias": "one allowed recommended_governance_bias",
+  "risk_level": "low|medium|high|unknown",
+  "confidence": 0.0,
+  "reason": "short plain English reason"
+}}
+
+Classify this query:
+{query}
+""".strip()
+
+
+def extract_json_object(text: str) -> str:
+    text = clean_text(text)
+    if not text:
+        raise ValueError("empty response")
+
+    try:
+        json.loads(text)
+        return text
+    except Exception:
+        pass
+
+    start = text.find("{")
+    if start < 0:
+        raise ValueError("no JSON object found")
+
+    depth = 0
+    in_string = False
+    escape = False
+    for index in range(start, len(text)):
+        char = text[index]
+        if in_string:
+            if escape:
+                escape = False
+            elif char == "\\":
+                escape = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start : index + 1]
+
+    raise ValueError("unterminated JSON object")
+
+
+def repair_json_text(text: str) -> str:
+    repaired = text.strip()
+    repaired = re.sub(r",\s*([}\]])", r"\1", repaired)
+    if '"' not in repaired and "'" in repaired:
+        repaired = repaired.replace("'", '"')
+    return repaired
+
+
+def parse_llm_json(raw_text: str) -> Dict[str, object]:
+    json_text = extract_json_object(raw_text)
+    try:
+        parsed = json.loads(json_text)
+    except Exception:
+        parsed = json.loads(repair_json_text(json_text))
+    if not isinstance(parsed, dict):
+        raise ValueError("LLM JSON was not an object")
+    return parsed
+
+
+def validate_llm_payload(payload: Dict[str, object]) -> Tuple[Dict[str, object], str]:
+    payload = dict(payload)
+    if "llm_query_type" not in payload and "query_type" in payload:
+        payload["llm_query_type"] = payload.get("query_type")
+    if "recommended_governance_bias" not in payload and "governance_bias" in payload:
+        payload["recommended_governance_bias"] = payload.get("governance_bias")
+    if "recommended_route" not in payload and "route" in payload:
+        payload["recommended_route"] = payload.get("route")
+    payload.setdefault("hard_constraints", [])
+    payload.setdefault("soft_preferences", [])
+    payload.setdefault("mission_sub_intents", [])
+    payload.setdefault("reason", "")
+    payload.setdefault("confidence", 0.0)
+    payload.setdefault("risk_level", "unknown")
+
+    missing = [field for field in REQUIRED_LLM_FIELDS if field not in payload]
+    if missing:
+        return {}, f"missing required fields: {', '.join(missing)}"
+
+    query_type = clean_text(payload.get("llm_query_type"))
+    route = clean_text(payload.get("recommended_route")).upper()
+    bias = clean_text(payload.get("recommended_governance_bias"))
+    risk = clean_text(payload.get("risk_level")).lower()
+
+    errors = []
+    if query_type not in ALLOWED_QUERY_TYPES:
+        errors.append(f"invalid query_type={query_type}")
+    if route not in ALLOWED_ROUTES:
+        errors.append(f"invalid recommended_route={route}")
+    if bias not in ALLOWED_BIASES:
+        errors.append(f"invalid recommended_governance_bias={bias}")
+    if risk not in {"low", "medium", "high", "unknown"}:
+        errors.append(f"invalid risk_level={risk}")
+    if errors:
+        return {}, "; ".join(errors)
+
+    return {
+        "normalized_query": clean_text(payload.get("normalized_query")),
+        "llm_query_type": query_type,
+        "hard_constraints": list_text(payload.get("hard_constraints")),
+        "soft_preferences": list_text(payload.get("soft_preferences")),
+        "mission_sub_intents": list_text(payload.get("mission_sub_intents")),
+        "recommended_route": route,
+        "recommended_governance_bias": bias,
+        "risk_level": risk,
+        "confidence": clamp_confidence(payload.get("confidence")),
+        "reason": clean_text(payload.get("reason")),
+    }, ""
+
+
+def call_ollama(
+    query: str,
+    model: str,
+    timeout: int,
+    ollama_url: str,
+    num_predict: int,
+    temperature: float,
+    think: bool,
+) -> Tuple[bool, bool, str, Dict[str, object], str]:
+    prompt = build_prompt(query)
+    body = json.dumps(
+        {
+            "model": model,
+            "prompt": prompt,
+            "format": "json",
+            "stream": False,
+            "think": bool(think),
+            "options": {
+                "temperature": temperature,
+                "top_p": 0.9,
+                "num_predict": num_predict,
+            },
+        }
+    ).encode("utf-8")
+    request = urllib.request.Request(
+        ollama_url,
+        data=body,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            response_text = response.read().decode("utf-8", errors="replace")
+    except urllib.error.URLError as exc:
+        return False, False, f"ollama unavailable: {exc}", {}, ""
+    except TimeoutError as exc:
+        return True, False, f"ollama timeout: {exc}", {}, ""
+    except Exception as exc:
+        return False, False, f"ollama call failed: {exc}", {}, ""
+
+    try:
+        envelope = json.loads(response_text)
+    except Exception as exc:
+        return True, False, f"bad Ollama envelope JSON: {exc}", {}, response_text[:1000]
+
+    raw_response = clean_text(envelope.get("response"))
+    if not raw_response:
+        return True, False, "empty Ollama response field", {}, response_text[:1000]
+
+    try:
+        parsed = parse_llm_json(raw_response)
+        validated, error = validate_llm_payload(parsed)
+        if error:
+            return True, False, error, {}, raw_response[:1000]
+        return True, True, "", validated, raw_response[:1000]
+    except Exception as exc:
+        return True, False, f"LLM JSON parse failed: {exc}", {}, raw_response[:1000]
+
+
+def status_for_comparison(
+    llm_success: bool,
+    ollama_available: bool,
+    rule_query_type: str,
+    rule_bias: str,
+    rule_route: str,
+    llm_query_type: str,
+    llm_bias: str,
+    llm_route: str,
+) -> str:
+    if not ollama_available:
+        return "llm_unavailable_rule_fallback"
+    if not llm_success:
+        return "llm_failed_rule_fallback"
+    if llm_query_type == rule_query_type and llm_bias == rule_bias:
+        return "llm_agrees_with_rule"
+
+    rule_strictness = ROUTE_STRICTNESS.get(rule_route, 0)
+    llm_strictness = ROUTE_STRICTNESS.get(llm_route, 0)
+
+    if is_unsafe_strict_constraint_disagreement(
+        rule_query_type=rule_query_type,
+        rule_route=rule_route,
+        llm_route=llm_route,
+        llm_bias=llm_bias,
+    ):
+        return "llm_disagrees_needs_review"
+    if rule_query_type in {"narrow_product", "numeric_model"} and llm_route in {
+        "MISSION_REPAIR",
+        "BEHAVIOR_AWARE_RERANK",
+    }:
+        return "llm_disagrees_needs_review"
+    if llm_strictness >= rule_strictness:
+        return "llm_disagrees_safe"
+    return "llm_disagrees_needs_review"
+
+
+def is_unsafe_strict_constraint_disagreement(
+    rule_query_type: str,
+    rule_route: str,
+    llm_route: str,
+    llm_bias: str,
+) -> bool:
+    if rule_query_type not in {"negation_constraint", "compatibility_query"}:
+        return False
+    if rule_route != "STRICT_REPAIR":
+        return False
+    if llm_route in {"BASELINE_ONLY", "MISSION_REPAIR", "BEHAVIOR_AWARE_RERANK"}:
+        return True
+    if llm_bias == "preserve_baseline":
+        return True
+    return False
+
+
+def analyze_query(
+    query: str,
+    model: str,
+    timeout: int,
+    no_ollama: bool,
+    ollama_url: str,
+    num_predict: int,
+    temperature: float,
+    think: bool,
+) -> Dict[str, object]:
+    rule = understand_query(query)
+    rule_route = BIAS_TO_ROUTE.get(rule.recommended_governance_bias, "BASELINE_ONLY")
+
+    if no_ollama:
+        ollama_available = False
+        llm_success = False
+        llm_error = "--no-ollama enabled"
+        llm = {}
+        raw_excerpt = ""
+    else:
+        ollama_available, llm_success, llm_error, llm, raw_excerpt = call_ollama(
+            query=query,
+            model=model,
+            timeout=timeout,
+            ollama_url=ollama_url,
+            num_predict=num_predict,
+            temperature=temperature,
+            think=think,
+        )
+
+    llm_query_type = clean_text(llm.get("llm_query_type"))
+    llm_bias = clean_text(llm.get("recommended_governance_bias"))
+    llm_route = clean_text(llm.get("recommended_route"))
+
+    status = status_for_comparison(
+        llm_success=llm_success,
+        ollama_available=ollama_available,
+        rule_query_type=rule.query_type,
+        rule_bias=rule.recommended_governance_bias,
+        rule_route=rule_route,
+        llm_query_type=llm_query_type,
+        llm_bias=llm_bias,
+        llm_route=llm_route,
+    )
+    unsafe_strict_disagreement = llm_success and is_unsafe_strict_constraint_disagreement(
+        rule_query_type=rule.query_type,
+        rule_route=rule_route,
+        llm_route=llm_route,
+        llm_bias=llm_bias,
+    )
+    route_conflict = int(llm_success and (llm_route != rule_route or unsafe_strict_disagreement))
+    fallback_to_rule = int(
+        (not llm_success)
+        or (not ollama_available)
+        or unsafe_strict_disagreement
+        or status in {"llm_failed_rule_fallback", "llm_unavailable_rule_fallback"}
+    )
+
+    return {
+        "query": query,
+        "model": model,
+        "ollama_available": int(ollama_available),
+        "llm_success": int(llm_success),
+        "llm_error": llm_error,
+        "normalized_query": clean_text(llm.get("normalized_query")) if llm_success else rule.normalized_query,
+        "llm_query_type": llm_query_type,
+        "hard_constraints": clean_text(llm.get("hard_constraints")),
+        "soft_preferences": clean_text(llm.get("soft_preferences")),
+        "mission_sub_intents": clean_text(llm.get("mission_sub_intents")),
+        "recommended_route": llm_route,
+        "recommended_governance_bias": llm_bias,
+        "risk_level": clean_text(llm.get("risk_level")),
+        "confidence": safe_float(llm.get("confidence")),
+        "reason": clean_text(llm.get("reason")),
+        "raw_response_excerpt": raw_excerpt,
+        "rule_query_type": rule.query_type,
+        "rule_recommended_governance_bias": rule.recommended_governance_bias,
+        "rule_recommended_route": rule_route,
+        "llm_rule_query_type_match": int(llm_success and llm_query_type == rule.query_type),
+        "llm_rule_bias_match": int(llm_success and llm_bias == rule.recommended_governance_bias),
+        "llm_rule_route_conflict": route_conflict,
+        "fallback_to_rule": fallback_to_rule,
+        "final_advisor_status": status,
+    }
+
+
+def summarize(rows: List[Dict[str, object]], runtime_seconds: float) -> Dict[str, object]:
+    total = len(rows)
+    llm_success_count = sum(safe_int(row.get("llm_success")) for row in rows)
+    unavailable_count = sum(1 for row in rows if safe_int(row.get("ollama_available")) == 0)
+    query_type_matches = sum(safe_int(row.get("llm_rule_query_type_match")) for row in rows)
+    bias_matches = sum(safe_int(row.get("llm_rule_bias_match")) for row in rows)
+    needs_review_count = sum(1 for row in rows if clean_text(row.get("final_advisor_status")) == "llm_disagrees_needs_review")
+    safe_disagreement_count = sum(1 for row in rows if clean_text(row.get("final_advisor_status")) == "llm_disagrees_safe")
+    fallback_count = sum(safe_int(row.get("fallback_to_rule")) for row in rows)
+    success_rows = [row for row in rows if safe_int(row.get("llm_success")) == 1]
+    avg_conf = sum(safe_float(row.get("confidence")) for row in success_rows) / max(len(success_rows), 1)
+
+    return {
+        "total_queries": total,
+        "llm_success_count": llm_success_count,
+        "llm_failure_count": total - llm_success_count,
+        "ollama_unavailable_count": unavailable_count,
+        "llm_success_rate": round(llm_success_count / max(total, 1), 6),
+        "rule_match_query_type_rate": round(query_type_matches / max(llm_success_count, 1), 6),
+        "rule_match_bias_rate": round(bias_matches / max(llm_success_count, 1), 6),
+        "needs_review_count": needs_review_count,
+        "safe_disagreement_count": safe_disagreement_count,
+        "fallback_to_rule_count": fallback_count,
+        "top_llm_query_type": top_value(success_rows, "llm_query_type"),
+        "top_llm_recommended_route": top_value(success_rows, "recommended_route"),
+        "top_final_advisor_status": top_value(rows, "final_advisor_status"),
+        "avg_confidence": round(avg_conf, 6),
+        "runtime_seconds": round(runtime_seconds, 4),
+    }
+
+
+def top_value(rows: List[Dict[str, object]], field: str) -> str:
+    counts = Counter(clean_text(row.get(field)) for row in rows if clean_text(row.get(field)))
+    return counts.most_common(1)[0][0] if counts else ""
+
+
+def conflict_rows(rows: List[Dict[str, object]]) -> List[Dict[str, object]]:
+    statuses = {"llm_disagrees_needs_review", "llm_disagrees_safe"}
+    return [
+        row
+        for row in rows
+        if clean_text(row.get("final_advisor_status")) in statuses
+        or safe_int(row.get("llm_rule_route_conflict")) == 1
+    ]
+
+
+def report_markdown(rows: List[Dict[str, object]], summary: Dict[str, object]) -> str:
+    lines = [
+        "# MVP 24 Ollama LLM Query Understanding Advisor",
+        "",
+        "## Summary",
+    ]
+    for key, value in summary.items():
+        lines.append(f"- {key}: {value}")
+
+    lines.extend(["", "## Status Distribution"])
+    for status, count in Counter(clean_text(row.get("final_advisor_status")) for row in rows).most_common():
+        lines.append(f"- {status}: {count}")
+
+    lines.extend(["", "## Conflicts And Review Items"])
+    for row in conflict_rows(rows)[:20]:
+        lines.append(
+            f"- {row['query']}: rule={row['rule_query_type']}/{row['rule_recommended_governance_bias']} "
+            f"llm={row['llm_query_type']}/{row['recommended_governance_bias']} "
+            f"status={row['final_advisor_status']}"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def write_outputs(rows: List[Dict[str, object]], output_dir: Path, runtime_seconds: float) -> Dict[str, object]:
+    ensure_output_dir(output_dir)
+    summary = summarize(rows, runtime_seconds=runtime_seconds)
+    conflicts = conflict_rows(rows)
+
+    write_csv(output_dir / "ollama_query_understanding_results.csv", rows, RESULT_FIELDS)
+    write_csv(output_dir / "ollama_query_understanding_summary.csv", [summary], list(summary.keys()))
+    write_csv(output_dir / "ollama_query_understanding_conflicts.csv", conflicts, RESULT_FIELDS)
+    (output_dir / "ollama_query_understanding_report.md").write_text(
+        report_markdown(rows, summary),
+        encoding="utf-8",
+    )
+    return summary
+
+
+def print_single(row: Dict[str, object], summary: Dict[str, object]) -> None:
+    print("\nMVP 24 Ollama LLM Query Understanding Advisor")
+    print("-" * 100)
+    print("Rule understanding")
+    print(f"query_type: {row['rule_query_type']}")
+    print(f"recommended_governance_bias: {row['rule_recommended_governance_bias']}")
+    print(f"recommended_route: {row['rule_recommended_route']}")
+
+    print("\nLLM understanding")
+    print(f"ollama_available: {row['ollama_available']}")
+    print(f"llm_success: {row['llm_success']}")
+    print(f"llm_query_type: {row['llm_query_type']}")
+    print(f"recommended_governance_bias: {row['recommended_governance_bias']}")
+    print(f"recommended_route: {row['recommended_route']}")
+    print(f"confidence: {row['confidence']}")
+    print(f"reason: {console_text(row['reason'])}")
+    if row["llm_error"]:
+        print(f"llm_error: {console_text(row['llm_error'])}")
+
+    print("\nComparison")
+    print(f"llm_rule_query_type_match: {row['llm_rule_query_type_match']}")
+    print(f"llm_rule_bias_match: {row['llm_rule_bias_match']}")
+    print(f"llm_rule_route_conflict: {row['llm_rule_route_conflict']}")
+    print(f"final_advisor_status: {row['final_advisor_status']}")
+
+    print("\nRaw response excerpt")
+    print("-" * 100)
+    print(console_text(row["raw_response_excerpt"]))
+
+    print("\nSummary")
+    print("-" * 100)
+    for key, value in summary.items():
+        print(f"{key}: {value}")
+
+
+def print_batch_summary(summary: Dict[str, object], output_dir: Path) -> None:
+    print("\nSummary")
+    print("-" * 100)
+    for key, value in summary.items():
+        print(f"{key}: {value}")
+    print("\nOutput files")
+    print("-" * 100)
+    print(output_dir / "ollama_query_understanding_results.csv")
+    print(output_dir / "ollama_query_understanding_summary.csv")
+    print(output_dir / "ollama_query_understanding_conflicts.csv")
+    print(output_dir / "ollama_query_understanding_report.md")
+
+
+def run_single(args: argparse.Namespace) -> None:
+    start = time.perf_counter()
+    row = analyze_query(
+        query=args.query,
+        model=args.model,
+        timeout=args.timeout,
+        no_ollama=args.no_ollama,
+        ollama_url=args.ollama_url,
+        num_predict=args.num_predict,
+        temperature=args.temperature,
+        think=args.think,
+    )
+    runtime = time.perf_counter() - start
+    summary = write_outputs([row], Path(args.output_dir), runtime_seconds=runtime)
+    print_single(row, summary)
+
+
+def run_batch(args: argparse.Namespace) -> None:
+    all_queries, source = load_all_queries(args.query_mode)
+    selected = select_queries(
+        queries=all_queries,
+        query_mode=args.query_mode,
+        sample_size=args.sample_size,
+        start_index=args.start_index,
+    )
+
+    print("\nMVP 24 Ollama LLM Query Understanding Advisor")
+    print("-" * 100)
+    print(f"query_mode: {args.query_mode}")
+    print(f"source: {source}")
+    print(f"selected_query_count: {len(selected)}")
+    print(f"model: {args.model}")
+    print(f"no_ollama: {args.no_ollama}")
+
+    rows = []
+    start = time.perf_counter()
+    for index, (_query_index, query) in enumerate(selected, start=1):
+        row = analyze_query(
+            query=query,
+            model=args.model,
+            timeout=args.timeout,
+            no_ollama=args.no_ollama,
+            ollama_url=args.ollama_url,
+            num_predict=args.num_predict,
+            temperature=args.temperature,
+            think=args.think,
+        )
+        rows.append(row)
+        if index <= 10 or index % 100 == 0 or index == len(selected):
+            print(
+                f"[{index}/{len(selected)}] {console_text(query)} -> "
+                f"rule={row['rule_query_type']}/{row['rule_recommended_governance_bias']} "
+                f"llm={row['llm_query_type'] or 'fallback'} status={row['final_advisor_status']}"
+            )
+
+    runtime = time.perf_counter() - start
+    output_dir = Path(args.output_dir)
+    summary = write_outputs(rows, output_dir, runtime_seconds=runtime)
+    print_batch_summary(summary, output_dir)
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="MVP 24 Ollama LLM Query Understanding Advisor")
+    parser.add_argument("--query", default="", help="Single query to advise.")
+    parser.add_argument("--sample-size", type=int, default=100, help="Batch sample size.")
+    parser.add_argument(
+        "--query-mode",
+        choices=["smoke", "esci", "stratified_esci"],
+        default="smoke",
+        help="Batch query source mode.",
+    )
+    parser.add_argument("--start-index", type=int, default=0, help="Batch start offset.")
+    parser.add_argument("--model", default=DEFAULT_MODEL, help="Ollama model.")
+    parser.add_argument("--timeout", type=int, default=20, help="Ollama timeout seconds.")
+    parser.add_argument("--num-predict", type=int, default=256, help="Ollama num_predict generation limit.")
+    parser.add_argument("--temperature", type=float, default=0.0, help="Ollama temperature.")
+    parser.add_argument("--think", action="store_true", help="Allow model thinking if the local model supports it.")
+    parser.add_argument("--ollama-url", default=DEFAULT_OLLAMA_URL, help="Ollama generate API URL.")
+    parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Output directory.")
+    parser.add_argument("--no-ollama", action="store_true", help="Do not call Ollama; force rule fallback.")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    if args.query:
+        run_single(args)
+        return
+    if args.sample_size <= 0:
+        raise ValueError("--sample-size must be positive")
+    if args.start_index < 0:
+        raise ValueError("--start-index must be non-negative")
+    run_batch(args)
+
+
+if __name__ == "__main__":
+    main()
