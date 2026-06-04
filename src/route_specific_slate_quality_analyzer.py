@@ -392,9 +392,9 @@ def report_markdown(
 
 def recommended_next_mvp(issues: List[Dict[str, object]]) -> str:
     if any(clean_text(row.get("calibrated_governance_route")) == "STRICT_REPAIR" for row in issues[:10]):
-        return "MVP 23F should improve strict repair adapter materialization and sub-intent tagging."
+        return "MVP 23G should further harden strict repair materialization and sub-intent tagging."
     if any(clean_text(row.get("calibrated_governance_route")) == "MISSION_REPAIR" for row in issues[:10]):
-        return "MVP 23F should improve mission slate builder integration for calibrated repair routes."
+        return "MVP 23G should improve mission slate builder integration for calibrated repair routes."
     return "No major route execution change is needed; continue monitoring calibrated route quality."
 
 
