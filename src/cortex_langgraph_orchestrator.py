@@ -299,7 +299,10 @@ def execution_node(state: CortexGraphState) -> CortexGraphState:
                 "recommended_governance_bias": clean_text(state.get("rule_recommended_governance_bias")),
                 "recommended_route": clean_text(state.get("rule_recommended_route")),
             },
-            max_items=12,
+            max_items=safe_int(getattr(state["args"], "top_k", 12), 12),
+            retrieval_mode=getattr(state["args"], "retrieval_mode", "sample"),
+            index_dir=getattr(state["args"], "index_dir", "data/esci_index"),
+            top_k=safe_int(getattr(state["args"], "top_k", 12), 12),
         )
         state["execution_source"] = clean_text(result.get("execution_source"))
         state["final_slate_size"] = safe_int(result.get("final_slate_size"))
@@ -555,6 +558,14 @@ def parse_args() -> argparse.Namespace:
         help="Advisor LLM cache directory.",
     )
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Output directory.")
+    parser.add_argument(
+        "--retrieval-mode",
+        choices=["sample", "full_esci"],
+        default="sample",
+        help="Route execution retrieval mode.",
+    )
+    parser.add_argument("--index-dir", default="data/esci_index", help="Full ESCI index directory.")
+    parser.add_argument("--top-k", type=int, default=12, help="Maximum slate size / retrieval top-k.")
     return parser.parse_args()
 
 
@@ -564,6 +575,8 @@ def main() -> None:
         raise ValueError("--sample-size must be positive")
     if args.start_index < 0:
         raise ValueError("--start-index must be non-negative")
+    if args.top_k <= 0:
+        raise ValueError("--top-k must be positive")
 
     graph = build_graph()
     langgraph_message(graph)

@@ -24,6 +24,8 @@ DEFAULT_PRODUCT_CANDIDATE_FILES = [
     Path("data/products.csv"),
 ]
 
+DEFAULT_ESCI_INDEX_DIR = Path("data/esci_index")
+
 NEGATION_TERMS = {
     "without",
     "no",
@@ -268,6 +270,186 @@ def count_unique_sub_intents(rows: Iterable[Dict[str, object]]) -> int:
         if value:
             intents.add(value.lower())
     return len(intents)
+
+
+def full_esci_retrieve(query: str, top_k: int, index_dir: Path) -> List[Dict[str, object]]:
+    from src.full_esci_retrieval_engine import retrieve_products
+
+    return retrieve_products(query=query, top_k=top_k, index_dir=index_dir)
+
+
+def normalize_full_esci_rows(
+    query: str,
+    rows: Iterable[Dict[str, object]],
+    execution_source: str,
+    calibrated_route: str,
+    max_items: int,
+    sub_intent: str = "",
+    strict_constraint_type: str = "",
+    route_reason: str = "",
+) -> List[Dict[str, object]]:
+    output: List[Dict[str, object]] = []
+    for index, row in enumerate(rows):
+        if len(output) >= max_items:
+            break
+        normalized = {
+            "query": query,
+            "item_id": clean_text(row.get("product_id")) or clean_text(row.get("item_id")) or f"full_esci_{index + 1}",
+            "product_id": clean_text(row.get("product_id")) or clean_text(row.get("item_id")),
+            "title": clean_text(row.get("product_title") or row.get("title")),
+            "product_title": clean_text(row.get("product_title") or row.get("title")),
+            "product_brand": clean_text(row.get("product_brand")),
+            "product_color": clean_text(row.get("product_color")),
+            "score": row.get("score", ""),
+            "rank": row.get("rank", index + 1),
+            "esci_label": clean_text(row.get("esci_label")),
+            "retrieval_source": clean_text(row.get("retrieval_source")) or "full_esci_lexical",
+            "execution_source": execution_source,
+            "calibrated_route": calibrated_route,
+            "route_reason": route_reason,
+            "policy_reason": route_reason,
+            "sub_intent": sub_intent or clean_text(row.get("sub_intent")),
+            "strict_constraint_type": strict_constraint_type or clean_text(row.get("strict_constraint_type")),
+        }
+        output.append(normalized)
+    return output
+
+
+def strict_constraint_type_from_query(query: str) -> str:
+    constraints = extract_strict_constraints(query)
+    types = [clean_text(value) for value in constraints.get("constraint_types", []) if clean_text(value)]
+    if "negation" in types:
+        return "negation"
+    if "compatibility" in types:
+        return "compatibility"
+    if "numeric_model" in types:
+        return "model_numeric"
+    return types[0] if types else "unknown"
+
+
+def execute_full_esci_baseline(query: str, route: str, max_items: int, index_dir: Path) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+    rows = normalize_full_esci_rows(
+        query=query,
+        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        execution_source="full_esci_baseline_retrieval",
+        calibrated_route=route,
+        max_items=max_items,
+        route_reason="Full ESCI lexical baseline retrieval.",
+    )
+    return rows, "full_esci_baseline_retrieval", False, "", f"full_esci_baseline_retrieval:{len(rows)}"
+
+
+def execute_full_esci_strict(query: str, max_items: int, index_dir: Path) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+    constraint_type = strict_constraint_type_from_query(query)
+    rows = normalize_full_esci_rows(
+        query=query,
+        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        execution_source="full_esci_strict_repair",
+        calibrated_route="STRICT_REPAIR",
+        max_items=max_items,
+        strict_constraint_type=constraint_type,
+        route_reason="Full ESCI lexical retrieval with strict route metadata.",
+    )
+    for row in rows:
+        row["strict_constraint_applied"] = 1
+        row["strict_repair_flag"] = "full_esci_strict_metadata"
+        row["constraint_preservation_note"] = (
+            "Strict route metadata applied; deep constraint filtering is not implemented in MVP 26.1."
+        )
+    return rows, "full_esci_strict_repair", False, "", f"full_esci_strict_repair:{constraint_type}:{len(rows)}"
+
+
+def execute_full_esci_mission(query: str, max_items: int, index_dir: Path) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+    mission = extract_mission_sub_intents(query)
+    sub_intents = [clean_text(value) for value in mission.get("sub_intents", []) if clean_text(value)]
+    selected: List[Dict[str, object]] = []
+    seen_product_ids = set()
+
+    if sub_intents:
+        per_intent_k = max_items
+        candidates_by_intent: Dict[str, List[Dict[str, object]]] = {}
+        for sub_intent in sub_intents:
+            retrieval_query = f"{query} {sub_intent.replace('_', ' ')}"
+            rows = normalize_full_esci_rows(
+                query=query,
+                rows=full_esci_retrieve(retrieval_query, top_k=per_intent_k, index_dir=index_dir),
+                execution_source="full_esci_mission_repair",
+                calibrated_route="MISSION_REPAIR",
+                max_items=per_intent_k,
+                sub_intent=sub_intent,
+                route_reason="Full ESCI lexical retrieval per mission sub-intent.",
+            )
+            candidates_by_intent[sub_intent] = rows
+
+        for candidate_index in range(max_items):
+            for sub_intent in sub_intents:
+                rows = candidates_by_intent.get(sub_intent, [])
+                if candidate_index >= len(rows):
+                    continue
+                row = rows[candidate_index]
+                product_id = clean_text(row.get("product_id") or row.get("item_id"))
+                if product_id in seen_product_ids:
+                    continue
+                seen_product_ids.add(product_id)
+                selected.append(row)
+                if len(selected) >= max_items:
+                    break
+            if len(selected) >= max_items:
+                break
+
+        if len(selected) < max_items:
+            direct_rows = normalize_full_esci_rows(
+                query=query,
+                rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+                execution_source="full_esci_mission_repair",
+                calibrated_route="MISSION_REPAIR",
+                max_items=max_items,
+                route_reason="Full ESCI lexical retrieval direct fill after mission sub-intent retrieval.",
+            )
+            for row in direct_rows:
+                product_id = clean_text(row.get("product_id") or row.get("item_id"))
+                if product_id in seen_product_ids:
+                    continue
+                seen_product_ids.add(product_id)
+                selected.append(row)
+                if len(selected) >= max_items:
+                    break
+        trace = f"full_esci_mission_repair:intents={','.join(sub_intents)}:{len(selected)}"
+        return selected[:max_items], "full_esci_mission_repair", False, "", trace
+
+    rows = normalize_full_esci_rows(
+        query=query,
+        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        execution_source="full_esci_mission_repair",
+        calibrated_route="MISSION_REPAIR",
+        max_items=max_items,
+        route_reason="No mission sub-intents detected; used direct full ESCI lexical retrieval.",
+    )
+    return (
+        rows,
+        "full_esci_mission_repair",
+        True,
+        "Mission sub-intents unavailable; used direct full ESCI lexical retrieval.",
+        f"full_esci_mission_direct_fallback:{len(rows)}",
+    )
+
+
+def execute_full_esci_behavior(query: str, max_items: int, index_dir: Path) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+    rows = normalize_full_esci_rows(
+        query=query,
+        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        execution_source="full_esci_behavior_aware_fallback",
+        calibrated_route="BEHAVIOR_AWARE_RERANK",
+        max_items=max_items,
+        route_reason="Behavior-aware full ESCI reranker not implemented; used lexical retrieval.",
+    )
+    return (
+        rows,
+        "full_esci_behavior_aware_fallback",
+        True,
+        "behavior-aware full ESCI reranker not implemented; used full ESCI lexical retrieval.",
+        f"full_esci_behavior_aware_fallback:{len(rows)}",
+    )
 
 
 def extract_numeric_model_tokens(query: str) -> List[str]:
@@ -1304,9 +1486,15 @@ def execute_calibrated_route(
     calibrated_route: str,
     query_understanding: Optional[Dict[str, object]] = None,
     max_items: int = 12,
+    retrieval_mode: str = "sample",
+    index_dir: Path | str = DEFAULT_ESCI_INDEX_DIR,
+    top_k: Optional[int] = None,
 ) -> Dict[str, object]:
     query_understanding = query_understanding or {}
     route = clean_text(calibrated_route).upper() or "BASELINE_ONLY"
+    retrieval_mode = lower_text(retrieval_mode) or "sample"
+    index_path = Path(index_dir)
+    max_items = safe_int(top_k, max_items) if top_k is not None else max_items
     query_type = clean_text(query_understanding.get("query_type"))
     bias = clean_text(query_understanding.get("recommended_governance_bias"))
 
@@ -1317,7 +1505,32 @@ def execute_calibrated_route(
     ]
 
     try:
-        if route == "STRICT_REPAIR":
+        if retrieval_mode == "full_esci":
+            if route == "STRICT_REPAIR":
+                rows, source, fallback, reason, trace = execute_full_esci_strict(query, max_items=max_items, index_dir=index_path)
+            elif route == "MISSION_REPAIR":
+                rows, source, fallback, reason, trace = execute_full_esci_mission(query, max_items=max_items, index_dir=index_path)
+            elif route == "BEHAVIOR_AWARE_RERANK":
+                rows, source, fallback, reason, trace = execute_full_esci_behavior(query, max_items=max_items, index_dir=index_path)
+            elif route == "CRITIC_REVIEW":
+                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path)
+                source = "full_esci_critic_review_fallback"
+                for row in rows:
+                    row["execution_source"] = source
+                fallback = True
+                reason = "Critic review full ESCI path not implemented; used full ESCI lexical retrieval."
+                trace = f"full_esci_critic_review_fallback:{len(rows)}"
+            elif route == "REJECT_REPAIR_NARROW_QUERY":
+                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path)
+                source = "full_esci_narrow_query_baseline_preserved"
+                for row in rows:
+                    row["execution_source"] = source
+                fallback = False
+                reason = ""
+                trace = f"full_esci_reject_repair_preserve_baseline:{len(rows)}"
+            else:
+                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path)
+        elif route == "STRICT_REPAIR":
             rows, source, fallback, reason, trace = execute_strict_repair(query, max_items=max_items)
         elif route == "MISSION_REPAIR":
             rows, source, fallback, reason, trace = execute_mission_repair(query, max_items=max_items)
@@ -1342,6 +1555,7 @@ def execute_calibrated_route(
             row.setdefault("execution_source", source)
 
         adapter_trace_parts.append(trace)
+        adapter_trace_parts.append(f"retrieval_mode={retrieval_mode}")
 
         return {
             "query": query,

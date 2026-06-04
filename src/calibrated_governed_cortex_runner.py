@@ -285,7 +285,13 @@ def slate_metrics(rows: List[Dict[str, object]], source: str) -> Dict[str, objec
     }
 
 
-def execute_query(query: str, output_dir: Path) -> Dict[str, object]:
+def execute_query(
+    query: str,
+    output_dir: Path,
+    retrieval_mode: str = "sample",
+    index_dir: Path | str = "data/esci_index",
+    top_k: int = 12,
+) -> Dict[str, object]:
     try:
         calibration = calibrate_query(query=query, output_dir=output_dir)
         query_type = clean_text(calibration.get("query_type"))
@@ -311,7 +317,10 @@ def execute_query(query: str, output_dir: Path) -> Dict[str, object]:
                 "confidence_score": calibration.get("query_understanding_confidence"),
                 "risk_score": calibration.get("query_understanding_risk"),
             },
-            max_items=12,
+            max_items=top_k,
+            retrieval_mode=retrieval_mode,
+            index_dir=index_dir,
+            top_k=top_k,
         )
         current_metrics = slate_metrics(current_rows, current_source)
         calibrated_rows = adapter_result.get("final_slate", [])
@@ -539,12 +548,18 @@ def print_summary(summary: Dict[str, object]) -> None:
         print(f"{key}: {value}")
 
 
-def run_single_query(query: str, output_dir: Path) -> None:
+def run_single_query(query: str, output_dir: Path, retrieval_mode: str, index_dir: Path, top_k: int) -> None:
     print("\nMVP 23C Calibrated Governed CORTEX Runner")
     print("-" * 100)
     print(f"query: {console_text(query)}")
 
-    row = execute_query(query=query, output_dir=output_dir)
+    row = execute_query(
+        query=query,
+        output_dir=output_dir,
+        retrieval_mode=retrieval_mode,
+        index_dir=index_dir,
+        top_k=top_k,
+    )
     summary = write_outputs([row], output_dir=output_dir)
 
     print("\nCalibrated governed result")
@@ -555,7 +570,15 @@ def run_single_query(query: str, output_dir: Path) -> None:
     print("\nFiles written under", output_dir)
 
 
-def run_batch(sample_size: int, query_mode: str, start_index: int, output_dir: Path) -> None:
+def run_batch(
+    sample_size: int,
+    query_mode: str,
+    start_index: int,
+    output_dir: Path,
+    retrieval_mode: str,
+    index_dir: Path,
+    top_k: int,
+) -> None:
     all_queries, source = load_all_queries(query_mode)
     selected = select_queries(
         queries=all_queries,
@@ -573,11 +596,20 @@ def run_batch(sample_size: int, query_mode: str, start_index: int, output_dir: P
     print(f"sample_size: {sample_size}")
     print(f"selected_query_count: {len(selected)}")
     print(f"output_dir: {output_dir}")
+    print(f"retrieval_mode: {retrieval_mode}")
+    print(f"index_dir: {index_dir}")
+    print(f"top_k: {top_k}")
 
     rows = []
     start = time.perf_counter()
     for index, (_query_index, query) in enumerate(selected, start=1):
-        row = execute_query(query=query, output_dir=output_dir)
+        row = execute_query(
+            query=query,
+            output_dir=output_dir,
+            retrieval_mode=retrieval_mode,
+            index_dir=index_dir,
+            top_k=top_k,
+        )
         rows.append(row)
         if index <= 10 or index % 100 == 0 or index == len(selected):
             print(
@@ -606,6 +638,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--start-index", type=int, default=0, help="Start offset for query selection.")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Output directory.")
+    parser.add_argument(
+        "--retrieval-mode",
+        choices=["sample", "full_esci"],
+        default="sample",
+        help="Route execution retrieval mode.",
+    )
+    parser.add_argument("--index-dir", default="data/esci_index", help="Full ESCI index directory.")
+    parser.add_argument("--top-k", type=int, default=12, help="Maximum slate size / retrieval top-k.")
     return parser.parse_args()
 
 
@@ -614,19 +654,30 @@ def main() -> None:
     output_dir = Path(args.output_dir)
 
     if args.query:
-        run_single_query(query=args.query, output_dir=output_dir)
+        run_single_query(
+            query=args.query,
+            output_dir=output_dir,
+            retrieval_mode=args.retrieval_mode,
+            index_dir=Path(args.index_dir),
+            top_k=args.top_k,
+        )
         return
 
     if args.sample_size <= 0:
         raise ValueError("--sample-size must be positive.")
     if args.start_index < 0:
         raise ValueError("--start-index must be non-negative.")
+    if args.top_k <= 0:
+        raise ValueError("--top-k must be positive.")
 
     run_batch(
         sample_size=args.sample_size,
         query_mode=args.query_mode,
         start_index=args.start_index,
         output_dir=output_dir,
+        retrieval_mode=args.retrieval_mode,
+        index_dir=Path(args.index_dir),
+        top_k=args.top_k,
     )
 
 

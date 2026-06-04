@@ -20,6 +20,7 @@ from typing import Dict, Iterable, List, Tuple
 
 DEFAULT_INDEX_DIR = Path("data/esci_index")
 DEFAULT_OUTPUT_DIR = Path("outputs/full_esci_retrieval")
+_ENGINE_CACHE: Dict[str, "FullEsciRetrievalEngine"] = {}
 
 STOPWORDS = {
     "a",
@@ -333,6 +334,22 @@ class FullEsciRetrievalEngine:
         evaluation = evaluate_results(query=query, results=rows, labels_for_query=labels_for_query)
         evaluation["retrieval_time_seconds"] = round(elapsed, 6)
         return rows, evaluation
+
+
+def get_engine(index_dir: Path = DEFAULT_INDEX_DIR) -> FullEsciRetrievalEngine:
+    key = str(index_dir.resolve())
+    engine = _ENGINE_CACHE.get(key)
+    if engine is None:
+        engine = FullEsciRetrievalEngine(index_dir)
+        engine.load()
+        _ENGINE_CACHE[key] = engine
+    return engine
+
+
+def retrieve_products(query: str, top_k: int = 12, index_dir: Path = DEFAULT_INDEX_DIR) -> List[Dict[str, object]]:
+    engine = get_engine(index_dir)
+    rows, _evaluation = engine.retrieve(query, top_k=top_k)
+    return rows
 
 
 def evaluate_results(query: str, results: List[Dict[str, object]], labels_for_query: Dict[str, str]) -> Dict[str, object]:
