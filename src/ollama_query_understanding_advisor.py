@@ -28,13 +28,18 @@ from src.query_understanding_agent import (
     select_queries,
     understand_query,
 )
+from src.query_normalization_agent import (
+    RESULT_FIELDS as NORMALIZATION_RESULT_FIELDS,
+    normalize_query as normalize_raw_query,
+    write_outputs as write_normalization_outputs,
+)
 
 
 DEFAULT_OUTPUT_DIR = Path("outputs/ollama_query_understanding")
 DEFAULT_CACHE_DIR = DEFAULT_OUTPUT_DIR / "cache"
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
 DEFAULT_MODEL = "qwen3:8b"
-ADVISOR_VERSION = "mvp24.2"
+ADVISOR_VERSION = "mvp24.3"
 
 ALLOWED_QUERY_TYPES = {
     "narrow_product",
@@ -69,6 +74,7 @@ ALLOWED_BIASES = {
 
 RESULT_FIELDS = [
     "query",
+    "raw_query",
     "model",
     "advisor_version",
     "cache_hit",
@@ -81,6 +87,15 @@ RESULT_FIELDS = [
     "llm_runtime_seconds",
     "cached_llm_runtime_seconds",
     "normalized_query",
+    "correction_applied",
+    "correction_count",
+    "protected_tokens",
+    "protected_token_count",
+    "query_noise_score",
+    "normalization_confidence",
+    "normalization_risk",
+    "normalization_status",
+    "normalization_trace",
     "llm_query_type",
     "hard_constraints",
     "soft_preferences",
@@ -611,12 +626,21 @@ def analyze_query(
     selective_llm: bool,
     llm_policy: str,
     audit_sample_rate: float,
+    normalize_query_enabled: bool = False,
     query_position: int = 0,
 ) -> Dict[str, object]:
-    rule = understand_query(query)
+    raw_query = query
+    if normalize_query_enabled:
+        normalization = normalize_raw_query(raw_query)
+        effective_query = normalization.normalized_query or raw_query
+    else:
+        normalization = None
+        effective_query = raw_query
+
+    rule = understand_query(effective_query)
     rule_route = BIAS_TO_ROUTE.get(rule.recommended_governance_bias, "BASELINE_ONLY")
     policy_result = should_call_llm(
-        query=query,
+        query=effective_query,
         rule_understanding=rule,
         policy=llm_policy,
         selective_llm=selective_llm,
@@ -647,7 +671,7 @@ def analyze_query(
     else:
         cache_payload = {}
         if use_cache and not refresh_cache:
-            cache_payload = read_cache(cache_dir=cache_dir, query=query, model=model)
+            cache_payload = read_cache(cache_dir=cache_dir, query=effective_query, model=model)
         if cache_payload:
             ollama_available = bool(safe_int(cache_payload.get("ollama_available")))
             llm_success = bool(safe_int(cache_payload.get("llm_success")))
@@ -661,7 +685,7 @@ def analyze_query(
         else:
             call_start = time.perf_counter()
             ollama_available, llm_success, llm_error, llm, raw_excerpt = call_ollama(
-                query=query,
+                query=effective_query,
                 model=model,
                 timeout=timeout,
                 ollama_url=ollama_url,
@@ -676,7 +700,7 @@ def analyze_query(
             if use_cache:
                 write_cache(
                     cache_dir=cache_dir,
-                    query=query,
+                    query=effective_query,
                     model=model,
                     payload={
                         "ollama_available": int(ollama_available),
@@ -721,9 +745,33 @@ def analyze_query(
             "llm_skipped_rule_confident",
         }
     )
+    normalization_fields = {
+        "correction_applied": "",
+        "correction_count": "",
+        "protected_tokens": "",
+        "protected_token_count": "",
+        "query_noise_score": "",
+        "normalization_confidence": "",
+        "normalization_risk": "",
+        "normalization_status": "",
+        "normalization_trace": "",
+    }
+    if normalization is not None:
+        normalization_fields = {
+            "correction_applied": int(normalization.correction_applied),
+            "correction_count": normalization.correction_count,
+            "protected_tokens": normalization.protected_tokens,
+            "protected_token_count": normalization.protected_token_count,
+            "query_noise_score": normalization.query_noise_score,
+            "normalization_confidence": normalization.normalization_confidence,
+            "normalization_risk": normalization.normalization_risk,
+            "normalization_status": normalization.normalization_status,
+            "normalization_trace": normalization.normalization_trace,
+        }
 
     return {
-        "query": query,
+        "query": effective_query,
+        "raw_query": raw_query,
         "model": model,
         "advisor_version": ADVISOR_VERSION,
         "cache_hit": cache_hit,
@@ -736,6 +784,7 @@ def analyze_query(
         "llm_runtime_seconds": round(llm_runtime_seconds, 4),
         "cached_llm_runtime_seconds": round(cached_llm_runtime_seconds, 4),
         "normalized_query": clean_text(llm.get("normalized_query")) if llm_success else rule.normalized_query,
+        **normalization_fields,
         "llm_query_type": llm_query_type,
         "hard_constraints": clean_text(llm.get("hard_constraints")),
         "soft_preferences": clean_text(llm.get("soft_preferences")),
@@ -819,6 +868,23 @@ def conflict_rows(rows: List[Dict[str, object]]) -> List[Dict[str, object]]:
     ]
 
 
+def normalization_row(row: Dict[str, object]) -> Dict[str, object]:
+    return {
+        "raw_query": row.get("raw_query", row.get("query", "")),
+        "normalized_query": row.get("query", ""),
+        "correction_applied": bool(safe_int(row.get("correction_applied"))),
+        "correction_count": row.get("correction_count", 0),
+        "protected_tokens": row.get("protected_tokens", ""),
+        "protected_token_count": row.get("protected_token_count", 0),
+        "normalized_tokens": "|".join(re.findall(r"[a-z0-9]+(?:-[a-z0-9]+)?", clean_text(row.get("query")).lower())),
+        "query_noise_score": row.get("query_noise_score", 0.0),
+        "normalization_confidence": row.get("normalization_confidence", 0.0),
+        "normalization_risk": row.get("normalization_risk", ""),
+        "normalization_status": row.get("normalization_status", ""),
+        "normalization_trace": row.get("normalization_trace", ""),
+    }
+
+
 def report_markdown(rows: List[Dict[str, object]], summary: Dict[str, object]) -> str:
     lines = [
         "# MVP 24 Ollama LLM Query Understanding Advisor",
@@ -860,6 +926,19 @@ def write_outputs(rows: List[Dict[str, object]], output_dir: Path, runtime_secon
 def print_single(row: Dict[str, object], summary: Dict[str, object]) -> None:
     print("\nMVP 24 Ollama LLM Query Understanding Advisor")
     print("-" * 100)
+    if clean_text(row.get("normalization_status")):
+        print("Query normalization")
+        print(f"raw_query: {console_text(row['raw_query'])}")
+        print(f"normalized_query: {console_text(row['query'])}")
+        print(f"correction_applied: {row['correction_applied']}")
+        print(f"correction_count: {row['correction_count']}")
+        print(f"protected_tokens: {console_text(row['protected_tokens'])}")
+        print(f"query_noise_score: {row['query_noise_score']}")
+        print(f"normalization_confidence: {row['normalization_confidence']}")
+        print(f"normalization_risk: {row['normalization_risk']}")
+        print(f"normalization_status: {row['normalization_status']}")
+        print(f"normalization_trace: {console_text(row['normalization_trace'])}")
+        print("")
     print("Rule understanding")
     print(f"query_type: {row['rule_query_type']}")
     print(f"recommended_governance_bias: {row['rule_recommended_governance_bias']}")
@@ -927,10 +1006,17 @@ def run_single(args: argparse.Namespace) -> None:
         selective_llm=args.selective_llm,
         llm_policy=args.llm_policy,
         audit_sample_rate=args.audit_sample_rate,
+        normalize_query_enabled=args.normalize_query,
         query_position=0,
     )
     runtime = time.perf_counter() - start
     summary = write_outputs([row], Path(args.output_dir), runtime_seconds=runtime)
+    if args.normalization_output_dir and args.normalize_query:
+        write_normalization_outputs(
+            [normalization_row(row)],
+            Path(args.normalization_output_dir),
+            runtime_seconds=runtime,
+        )
     print_single(row, summary)
 
 
@@ -955,8 +1041,10 @@ def run_batch(args: argparse.Namespace) -> None:
     print(f"cache_dir: {args.cache_dir}")
     print(f"selective_llm: {args.selective_llm}")
     print(f"llm_policy: {args.llm_policy}")
+    print(f"normalize_query: {args.normalize_query}")
 
     rows = []
+    normalization_rows = []
     start = time.perf_counter()
     for index, (_query_index, query) in enumerate(selected, start=1):
         row = analyze_query(
@@ -974,12 +1062,15 @@ def run_batch(args: argparse.Namespace) -> None:
             selective_llm=args.selective_llm,
             llm_policy=args.llm_policy,
             audit_sample_rate=args.audit_sample_rate,
+            normalize_query_enabled=args.normalize_query,
             query_position=index - 1,
         )
         rows.append(row)
+        if args.normalize_query:
+            normalization_rows.append(normalization_row(row))
         if index <= 10 or index % 100 == 0 or index == len(selected):
             print(
-                f"[{index}/{len(selected)}] {console_text(query)} -> "
+                f"[{index}/{len(selected)}] {console_text(row['raw_query'])} -> {console_text(row['query'])} "
                 f"rule={row['rule_query_type']}/{row['rule_recommended_governance_bias']} "
                 f"llm={row['llm_query_type'] or 'fallback'} status={row['final_advisor_status']} "
                 f"cache_hit={row['cache_hit']} ollama_called={row['ollama_called']}"
@@ -988,6 +1079,12 @@ def run_batch(args: argparse.Namespace) -> None:
     runtime = time.perf_counter() - start
     output_dir = Path(args.output_dir)
     summary = write_outputs(rows, output_dir, runtime_seconds=runtime)
+    if args.normalization_output_dir and normalization_rows:
+        write_normalization_outputs(
+            normalization_rows,
+            Path(args.normalization_output_dir),
+            runtime_seconds=runtime,
+        )
     print_batch_summary(summary, output_dir)
 
 
@@ -1025,6 +1122,16 @@ def parse_args() -> argparse.Namespace:
         help="Selective LLM invocation policy.",
     )
     parser.add_argument("--audit-sample-rate", type=float, default=0.1, help="Audit policy random-equivalent sample rate.")
+    parser.add_argument(
+        "--normalize-query",
+        action="store_true",
+        help="Normalize the raw query before rule understanding and LLM advisory.",
+    )
+    parser.add_argument(
+        "--normalization-output-dir",
+        default="",
+        help="Optional directory for standalone normalization outputs.",
+    )
     parser.add_argument("--no-ollama", action="store_true", help="Do not call Ollama; force rule fallback.")
     return parser.parse_args()
 
