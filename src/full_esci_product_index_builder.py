@@ -63,6 +63,7 @@ PRODUCT_FIELDS = [
     "product_id",
     "product_title",
     "product_description",
+    "product_bullet_point",
     "product_brand",
     "product_color",
     "product_locale",
@@ -73,8 +74,26 @@ QUERY_FIELDS = ["query_id", "query", "query_length", "normalized_query_basic"]
 
 LABEL_FIELDS = ["query_id", "query", "product_id", "esci_label", "split", "source_file"]
 
+FULL_PARQUET_EXAMPLES = Path(
+    "external_data/esci-data/shopping_queries_dataset/shopping_queries_dataset_examples.parquet"
+)
+FULL_PARQUET_PRODUCTS = Path(
+    "external_data/esci-data/shopping_queries_dataset/shopping_queries_dataset_products.parquet"
+)
+FALLBACK_FULL_PARQUET_EXAMPLES = Path(
+    "esci-data/shopping_queries_dataset/shopping_queries_dataset_examples.parquet"
+)
+FALLBACK_FULL_PARQUET_PRODUCTS = Path(
+    "esci-data/shopping_queries_dataset/shopping_queries_dataset_products.parquet"
+)
+
 
 def clean_text(value: object) -> str:
+    try:
+        if pd.isna(value):
+            return ""
+    except Exception:
+        pass
     return str(value or "").strip()
 
 
@@ -295,6 +314,7 @@ def product_text(product: Dict[str, object]) -> str:
                 clean_text(product.get("product_title")),
                 clean_text(product.get("product_brand")),
                 clean_text(product.get("product_description")),
+                clean_text(product.get("product_bullet_point")),
                 clean_text(product.get("product_color")),
             ]
         )
@@ -342,15 +362,237 @@ def product_text_rows(products: Iterable[Dict[str, object]]) -> Iterator[Dict[st
         }
 
 
+def resolve_source_files(source: str) -> List[Path]:
+    if source == "sample_csv":
+        return [Path("data/esci_sample_products.csv")]
+    if source == "balanced_csv":
+        return [Path("data/esci_balanced_sample.csv")]
+    if source == "full_parquet":
+        examples = FULL_PARQUET_EXAMPLES if FULL_PARQUET_EXAMPLES.exists() else FALLBACK_FULL_PARQUET_EXAMPLES
+        products = FULL_PARQUET_PRODUCTS if FULL_PARQUET_PRODUCTS.exists() else FALLBACK_FULL_PARQUET_PRODUCTS
+        return [examples, products]
+    return detect_candidate_files()
+
+
+def output_paths(output_dir: Path, report_dir: Path) -> Dict[str, Path]:
+    return {
+        "products": output_dir / "products.csv",
+        "queries": output_dir / "queries.csv",
+        "query_product_labels": output_dir / "query_product_labels.csv",
+        "product_text_index": output_dir / "product_text_index.jsonl",
+        "index_summary": output_dir / "index_summary.json",
+        "report": report_dir / "full_esci_product_index_report.md",
+    }
+
+
+def finalize_outputs(
+    output_dir: Path,
+    report_dir: Path,
+    products: Dict[str, Dict[str, object]],
+    queries: Dict[str, Dict[str, object]],
+    labels: List[Dict[str, object]],
+    summary: Dict[str, object],
+) -> Dict[str, object]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    report_dir.mkdir(parents=True, exist_ok=True)
+    paths = output_paths(output_dir, report_dir)
+    product_rows = sorted(products.values(), key=lambda row: clean_text(row.get("product_id")))
+    query_rows = sorted(queries.values(), key=lambda row: clean_text(row.get("query_id")))
+
+    write_csv(paths["products"], product_rows, PRODUCT_FIELDS)
+    write_csv(paths["queries"], query_rows, QUERY_FIELDS)
+    write_csv(paths["query_product_labels"], labels, LABEL_FIELDS)
+    write_jsonl(paths["product_text_index"], product_text_rows(product_rows))
+
+    summary["output_files"] = {name: str(path) for name, path in paths.items()}
+    paths["index_summary"].write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    paths["report"].write_text(report_markdown(summary), encoding="utf-8")
+    return summary
+
+
+def read_examples_parquet(examples_file: Path, max_rows: Optional[int]) -> pd.DataFrame:
+    columns = ["query", "query_id", "product_id", "product_locale", "esci_label", "split"]
+    if PYARROW_AVAILABLE and pq is not None:
+        parquet_file = pq.ParquetFile(examples_file)
+        frames = []
+        loaded = 0
+        for batch in parquet_file.iter_batches(batch_size=50000, columns=columns):
+            frame = batch.to_pandas()
+            if max_rows is not None:
+                frame = frame.head(max_rows - loaded)
+            frames.append(frame)
+            loaded += len(frame)
+            if max_rows is not None and loaded >= max_rows:
+                break
+        return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=columns)
+    df = pd.read_parquet(examples_file, columns=columns)
+    return df.head(max_rows) if max_rows is not None else df
+
+
+def read_matching_products_parquet(products_file: Path, product_ids: set[str]) -> pd.DataFrame:
+    columns = [
+        "product_id",
+        "product_title",
+        "product_description",
+        "product_bullet_point",
+        "product_brand",
+        "product_color",
+        "product_locale",
+    ]
+    if not product_ids:
+        return pd.DataFrame(columns=columns)
+
+    if PYARROW_AVAILABLE and pq is not None:
+        parquet_file = pq.ParquetFile(products_file)
+        frames = []
+        remaining = set(product_ids)
+        for batch in parquet_file.iter_batches(batch_size=50000, columns=columns):
+            frame = batch.to_pandas()
+            matched = frame[frame["product_id"].astype(str).isin(remaining)]
+            if not matched.empty:
+                frames.append(matched)
+                remaining.difference_update(set(matched["product_id"].astype(str).tolist()))
+                if not remaining:
+                    break
+        return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=columns)
+
+    df = pd.read_parquet(products_file, columns=columns)
+    return df[df["product_id"].astype(str).isin(product_ids)]
+
+
+def build_full_parquet_index(
+    output_dir: Path,
+    report_dir: Path,
+    max_rows: Optional[int],
+    full: bool,
+) -> Dict[str, object]:
+    start = time.perf_counter()
+    examples_file, products_file = resolve_source_files("full_parquet")
+    warnings: List[str] = []
+    if not examples_file.exists():
+        raise FileNotFoundError(f"Full ESCI examples parquet not found: {examples_file}")
+    if not products_file.exists():
+        raise FileNotFoundError(f"Full ESCI products parquet not found: {products_file}")
+
+    example_limit = None if full else max_rows
+    examples_df = read_examples_parquet(examples_file, max_rows=example_limit)
+    examples_df["product_id"] = examples_df["product_id"].astype(str)
+    product_ids = set(examples_df["product_id"].dropna().astype(str).tolist())
+    products_df = read_matching_products_parquet(products_file, product_ids=product_ids)
+    products_df["product_id"] = products_df["product_id"].astype(str)
+
+    product_lookup = {
+        clean_text(row.get("product_id")): row
+        for row in products_df.to_dict(orient="records")
+        if clean_text(row.get("product_id"))
+    }
+
+    products: Dict[str, Dict[str, object]] = {}
+    queries: Dict[str, Dict[str, object]] = {}
+    labels: List[Dict[str, object]] = []
+    query_id_by_normalized: Dict[str, str] = {}
+
+    for row in examples_df.to_dict(orient="records"):
+        query = clean_text(row.get("query"))
+        norm_query = normalized_basic(query)
+        query_id = ""
+        if norm_query:
+            query_id = query_id_by_normalized.get(norm_query, "")
+            if not query_id:
+                raw_query_id = clean_text(row.get("query_id"))
+                query_id = raw_query_id or f"q_{len(query_id_by_normalized) + 1:08d}"
+                if query_id in queries:
+                    query_id = f"q_{len(query_id_by_normalized) + 1:08d}"
+                query_id_by_normalized[norm_query] = query_id
+                queries[query_id] = {
+                    "query_id": query_id,
+                    "query": query,
+                    "query_length": len(query),
+                    "normalized_query_basic": norm_query,
+                }
+
+        product_id = clean_text(row.get("product_id"))
+        product_row = product_lookup.get(product_id, {})
+        product = {
+            "product_id": product_id,
+            "product_title": clean_text(product_row.get("product_title")),
+            "product_description": clean_text(product_row.get("product_description"))
+            or clean_text(product_row.get("product_bullet_point")),
+            "product_bullet_point": clean_text(product_row.get("product_bullet_point")),
+            "product_brand": clean_text(product_row.get("product_brand")),
+            "product_color": clean_text(product_row.get("product_color")),
+            "product_locale": clean_text(product_row.get("product_locale")) or clean_text(row.get("product_locale")),
+            "source_file": str(products_file),
+        }
+        products[product_id] = merge_product(products.get(product_id, {}), product)
+
+        if query_id and product_id:
+            labels.append(
+                {
+                    "query_id": query_id,
+                    "query": query,
+                    "product_id": product_id,
+                    "esci_label": clean_text(row.get("esci_label")),
+                    "split": clean_text(row.get("split")),
+                    "source_file": str(examples_file),
+                }
+            )
+
+    missing_products = len(product_ids) - len(product_lookup)
+    if missing_products > 0:
+        warnings.append(f"{missing_products} example product_ids were not found in products parquet.")
+
+    runtime_seconds = time.perf_counter() - start
+    summary = {
+        "source": "full_parquet",
+        "examples_file": str(examples_file),
+        "products_file": str(products_file),
+        "full_parquet_join_used": True,
+        "total_example_rows_loaded": len(examples_df),
+        "total_product_rows_loaded": len(products_df),
+        "total_joined_rows": len(labels),
+        "input_files_detected": [str(path) for path in detect_candidate_files()],
+        "input_files_used": [str(examples_file), str(products_file)],
+        "total_raw_rows": len(examples_df),
+        "total_products": len(products),
+        "total_queries": len(queries),
+        "total_query_product_pairs": len(labels),
+        "columns_detected": {
+            str(examples_file): detect_schema(examples_df.columns),
+            str(products_file): detect_schema(products_df.columns),
+        },
+        "max_rows": max_rows if not full else "full",
+        "runtime_seconds": round(runtime_seconds, 4),
+        "warnings": warnings,
+    }
+    return finalize_outputs(
+        output_dir=output_dir,
+        report_dir=report_dir,
+        products=products,
+        queries=queries,
+        labels=labels,
+        summary=summary,
+    )
+
+
 def build_index(
     output_dir: Path,
     report_dir: Path,
     max_rows: Optional[int],
     full: bool,
     chunk_size: int,
+    source: str,
 ) -> Dict[str, object]:
+    if source == "full_parquet":
+        return build_full_parquet_index(
+            output_dir=output_dir,
+            report_dir=report_dir,
+            max_rows=max_rows,
+            full=full,
+        )
+
     start = time.perf_counter()
-    candidates = detect_candidate_files()
+    candidates = resolve_source_files(source)
     warnings: List[str] = []
     products: Dict[str, Dict[str, object]] = {}
     queries: Dict[str, Dict[str, object]] = {}
@@ -424,26 +666,15 @@ def build_index(
         except Exception as exc:
             warnings.append(f"Failed reading {path}: {type(exc).__name__}: {exc}")
 
-    output_dir.mkdir(parents=True, exist_ok=True)
-    report_dir.mkdir(parents=True, exist_ok=True)
-
-    products_path = output_dir / "products.csv"
-    queries_path = output_dir / "queries.csv"
-    labels_path = output_dir / "query_product_labels.csv"
-    text_index_path = output_dir / "product_text_index.jsonl"
-    summary_path = output_dir / "index_summary.json"
-    report_path = report_dir / "full_esci_product_index_report.md"
-
-    product_rows = sorted(products.values(), key=lambda row: clean_text(row.get("product_id")))
-    query_rows = sorted(queries.values(), key=lambda row: clean_text(row.get("query_id")))
-
-    write_csv(products_path, product_rows, PRODUCT_FIELDS)
-    write_csv(queries_path, query_rows, QUERY_FIELDS)
-    write_csv(labels_path, labels, LABEL_FIELDS)
-    write_jsonl(text_index_path, product_text_rows(product_rows))
-
     runtime_seconds = time.perf_counter() - start
     summary = {
+        "source": source,
+        "examples_file": "",
+        "products_file": "",
+        "full_parquet_join_used": False,
+        "total_example_rows_loaded": 0,
+        "total_product_rows_loaded": 0,
+        "total_joined_rows": 0,
         "input_files_detected": [str(path) for path in candidates],
         "input_files_used": input_files_used,
         "total_raw_rows": total_raw_rows,
@@ -451,21 +682,18 @@ def build_index(
         "total_queries": len(queries),
         "total_query_product_pairs": len(labels),
         "columns_detected": columns_detected,
-        "output_files": {
-            "products": str(products_path),
-            "queries": str(queries_path),
-            "query_product_labels": str(labels_path),
-            "product_text_index": str(text_index_path),
-            "index_summary": str(summary_path),
-            "report": str(report_path),
-        },
         "max_rows": max_rows if not full else "full",
         "runtime_seconds": round(runtime_seconds, 4),
         "warnings": warnings,
     }
-    summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
-    report_path.write_text(report_markdown(summary), encoding="utf-8")
-    return summary
+    return finalize_outputs(
+        output_dir=output_dir,
+        report_dir=report_dir,
+        products=products,
+        queries=queries,
+        labels=labels,
+        summary=summary,
+    )
 
 
 def report_markdown(summary: Dict[str, object]) -> str:
@@ -534,6 +762,13 @@ def print_build_summary(summary: Dict[str, object]) -> None:
     print("\nMVP 25 Full ESCI Product Index Builder")
     print("-" * 100)
     print("Build complete")
+    print(f"source: {summary.get('source')}")
+    if summary.get("source") == "full_parquet":
+        print(f"examples_file: {summary.get('examples_file')}")
+        print(f"products_file: {summary.get('products_file')}")
+        print(f"examples_loaded: {summary.get('total_example_rows_loaded')}")
+        print(f"products_loaded: {summary.get('total_product_rows_loaded')}")
+        print(f"joined_rows: {summary.get('total_joined_rows')}")
     print(f"input_files_used: {summary.get('input_files_used')}")
     print(f"total_raw_rows: {summary.get('total_raw_rows')}")
     print(f"total_products: {summary.get('total_products')}")
@@ -553,6 +788,12 @@ def print_build_summary(summary: Dict[str, object]) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="MVP 25 Full ESCI Product Index Builder")
     parser.add_argument("--inspect", action="store_true", help="Inspect detected ESCI files and schemas.")
+    parser.add_argument(
+        "--source",
+        choices=["auto", "balanced_csv", "sample_csv", "full_parquet"],
+        default="auto",
+        help="Input source selection.",
+    )
     parser.add_argument("--max-rows", type=int, default=1000, help="Maximum total rows to process.")
     parser.add_argument("--full", action="store_true", help="Process all detected rows.")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Index output directory.")
@@ -578,6 +819,7 @@ def main() -> None:
         max_rows=args.max_rows,
         full=bool(args.full),
         chunk_size=args.chunk_size,
+        source=args.source,
     )
     print_build_summary(summary)
 
