@@ -34,3 +34,7 @@ outputs/ollama_query_understanding/
 outputs/ollama_query_understanding/
 outputs/query_normalization/
 outputs/langgraph_orchestration/
+data/esci_index/
+outputs/full_esci_product_index/
+data/esci_index/
+outputs/full_esci_product_index/
