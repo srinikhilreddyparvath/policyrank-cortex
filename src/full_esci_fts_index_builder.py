@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import sqlite3
 import time
 from pathlib import Path
@@ -22,6 +23,15 @@ SQLITE_NAME = "esci_products_fts.sqlite"
 
 def clean_text(value: object) -> str:
     return str(value or "").strip()
+
+
+def safe_int(value: object, default: int = 0) -> int:
+    try:
+        if value is None or value == "":
+            return default
+        return int(float(str(value)))
+    except Exception:
+        return default
 
 
 def read_csv_by_id(path: Path) -> Dict[str, Dict[str, str]]:
@@ -42,6 +52,13 @@ def iter_product_text_rows(path: Path) -> Iterable[Dict[str, object]]:
                 continue
             if isinstance(row, dict) and clean_text(row.get("product_id")):
                 yield row
+
+
+def safe_fts_query(query: str) -> str:
+    tokens = [token for token in re.findall(r"[a-zA-Z0-9]+", query.lower()) if token]
+    if not tokens:
+        return ""
+    return " OR ".join(f'"{token}"' for token in tokens[:12])
 
 
 def connect(path: Path) -> sqlite3.Connection:
@@ -85,6 +102,13 @@ def create_schema(conn: sqlite3.Connection) -> None:
     )
 
 
+def fts_table_exists(conn: sqlite3.Connection) -> bool:
+    row = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='products_fts'"
+    ).fetchone()
+    return row is not None
+
+
 def batch_insert(conn: sqlite3.Connection, rows: List[Dict[str, object]]) -> None:
     metadata_rows = [
         (
@@ -106,7 +130,39 @@ def batch_insert(conn: sqlite3.Connection, rows: List[Dict[str, object]]) -> Non
     )
 
 
-def build_index(index_dir: Path, rebuild: bool) -> None:
+def sample_query_retrieval_count(sqlite_path: Path, query: str, top_k: int) -> int:
+    if not sqlite_path.exists():
+        return 0
+    match_query = safe_fts_query(query)
+    if not match_query:
+        return 0
+    conn = sqlite3.connect(sqlite_path)
+    try:
+        count = len(
+            list(
+                conn.execute(
+                    """
+                    SELECT product_id
+                    FROM products_fts
+                    WHERE products_fts MATCH ?
+                    LIMIT ?
+                    """,
+                    (match_query, top_k),
+                )
+            )
+        )
+    finally:
+        conn.close()
+    return count
+
+
+def build_index(
+    index_dir: Path,
+    rebuild: bool,
+    max_products: int | None = None,
+    validate_query: str = "wireless mouse",
+    validate_top_k: int = 10,
+) -> None:
     products_csv = index_dir / "products.csv"
     product_text_jsonl = index_dir / "product_text_index.jsonl"
     sqlite_path = index_dir / SQLITE_NAME
@@ -135,6 +191,8 @@ def build_index(index_dir: Path, rebuild: bool) -> None:
     count = 0
     batch: List[Dict[str, object]] = []
     for text_row in iter_product_text_rows(product_text_jsonl):
+        if max_products is not None and count + len(batch) >= max_products:
+            break
         product_id = clean_text(text_row.get("product_id"))
         product = dict(products_by_id.get(product_id, {}))
         product["product_id"] = product_id
@@ -157,18 +215,24 @@ def build_index(index_dir: Path, rebuild: bool) -> None:
 
     conn.execute("INSERT INTO products_fts(products_fts) VALUES('optimize')")
     conn.commit()
+    table_exists = fts_table_exists(conn)
     conn.close()
 
     runtime = time.perf_counter() - start
+    sample_count = sample_query_retrieval_count(sqlite_path, validate_query, validate_top_k)
     print("\nMVP 26.5 SQLite FTS Index Builder")
     print("-" * 80)
     print(f"index_dir: {index_dir}")
     print(f"sqlite_path: {sqlite_path}")
+    print(f"requested_product_limit: {max_products if max_products is not None else 'all'}")
     print(f"products_indexed: {count}")
+    print(f"fts_table_exists: {int(table_exists)}")
+    print(f"sample_query: {validate_query}")
+    print(f"sample_query_retrieval_count: {sample_count}")
     print(f"runtime_seconds: {runtime:.4f}")
 
 
-def inspect_index(index_dir: Path) -> None:
+def inspect_index(index_dir: Path, validate_query: str = "wireless mouse", validate_top_k: int = 10) -> None:
     sqlite_path = index_dir / SQLITE_NAME
     print("\nMVP 26.5 SQLite FTS Index Inspect")
     print("-" * 80)
@@ -178,6 +242,8 @@ def inspect_index(index_dir: Path) -> None:
         return
 
     conn = sqlite3.connect(sqlite_path)
+    exists = fts_table_exists(conn)
+    print(f"fts_table_exists: {int(exists)}")
     for table in ["products", "products_fts"]:
         count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         print(f"{table}_count: {count}")
@@ -187,6 +253,8 @@ def inspect_index(index_dir: Path) -> None:
     ):
         print(f"- id={row[0]} brand={row[2]} title={row[1]}")
     conn.close()
+    print(f"\nsample_query: {validate_query}")
+    print(f"sample_query_retrieval_count: {sample_query_retrieval_count(sqlite_path, validate_query, validate_top_k)}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -194,16 +262,35 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--index-dir", default=str(DEFAULT_INDEX_DIR), help="ESCI index directory.")
     parser.add_argument("--rebuild", action="store_true", help="Recreate the SQLite FTS index.")
     parser.add_argument("--inspect", action="store_true", help="Inspect existing SQLite FTS index.")
+    parser.add_argument(
+        "--max-products",
+        type=int,
+        default=0,
+        help="Optional maximum products to insert into FTS. Use 500000 for a capped 500k build; 0 means all products in the index.",
+    )
+    parser.add_argument("--validate-query", default="wireless mouse", help="Sample query for post-build/inspect validation.")
+    parser.add_argument("--validate-top-k", type=int, default=10, help="Sample validation retrieval limit.")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     index_dir = Path(args.index_dir)
+    max_products = safe_int(args.max_products)
+    if max_products < 0:
+        raise ValueError("--max-products must be non-negative")
+    if args.validate_top_k <= 0:
+        raise ValueError("--validate-top-k must be positive")
     if args.inspect:
-        inspect_index(index_dir)
+        inspect_index(index_dir, validate_query=args.validate_query, validate_top_k=args.validate_top_k)
         return
-    build_index(index_dir=index_dir, rebuild=args.rebuild)
+    build_index(
+        index_dir=index_dir,
+        rebuild=args.rebuild,
+        max_products=max_products or None,
+        validate_query=args.validate_query,
+        validate_top_k=args.validate_top_k,
+    )
 
 
 if __name__ == "__main__":
