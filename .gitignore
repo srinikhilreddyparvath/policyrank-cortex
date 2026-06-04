@@ -20,3 +20,4 @@ Thumbs.db
 .vscode/
 .idea/
 .ipynb_checkpoints/
+outputs/full_esci_eval/
