@@ -289,6 +289,7 @@ def execute_query(
     query: str,
     output_dir: Path,
     retrieval_mode: str = "sample",
+    retrieval_backend: str = "lexical",
     index_dir: Path | str = "data/esci_index",
     top_k: int = 12,
 ) -> Dict[str, object]:
@@ -319,6 +320,7 @@ def execute_query(
             },
             max_items=top_k,
             retrieval_mode=retrieval_mode,
+            retrieval_backend=retrieval_backend,
             index_dir=index_dir,
             top_k=top_k,
         )
@@ -548,7 +550,7 @@ def print_summary(summary: Dict[str, object]) -> None:
         print(f"{key}: {value}")
 
 
-def run_single_query(query: str, output_dir: Path, retrieval_mode: str, index_dir: Path, top_k: int) -> None:
+def run_single_query(query: str, output_dir: Path, retrieval_mode: str, retrieval_backend: str, index_dir: Path, top_k: int) -> None:
     print("\nMVP 23C Calibrated Governed CORTEX Runner")
     print("-" * 100)
     print(f"query: {console_text(query)}")
@@ -557,6 +559,7 @@ def run_single_query(query: str, output_dir: Path, retrieval_mode: str, index_di
         query=query,
         output_dir=output_dir,
         retrieval_mode=retrieval_mode,
+        retrieval_backend=retrieval_backend,
         index_dir=index_dir,
         top_k=top_k,
     )
@@ -576,6 +579,7 @@ def run_batch(
     start_index: int,
     output_dir: Path,
     retrieval_mode: str,
+    retrieval_backend: str,
     index_dir: Path,
     top_k: int,
 ) -> None:
@@ -597,6 +601,7 @@ def run_batch(
     print(f"selected_query_count: {len(selected)}")
     print(f"output_dir: {output_dir}")
     print(f"retrieval_mode: {retrieval_mode}")
+    print(f"retrieval_backend: {retrieval_backend}")
     print(f"index_dir: {index_dir}")
     print(f"top_k: {top_k}")
 
@@ -607,6 +612,7 @@ def run_batch(
             query=query,
             output_dir=output_dir,
             retrieval_mode=retrieval_mode,
+            retrieval_backend=retrieval_backend,
             index_dir=index_dir,
             top_k=top_k,
         )
@@ -646,6 +652,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--index-dir", default="data/esci_index", help="Full ESCI index directory.")
     parser.add_argument("--top-k", type=int, default=12, help="Maximum slate size / retrieval top-k.")
+    parser.add_argument(
+        "--retrieval-backend",
+        choices=["lexical", "fts"],
+        default="lexical",
+        help="Full ESCI retrieval backend.",
+    )
     return parser.parse_args()
 
 
@@ -658,6 +670,7 @@ def main() -> None:
             query=args.query,
             output_dir=output_dir,
             retrieval_mode=args.retrieval_mode,
+            retrieval_backend=args.retrieval_backend,
             index_dir=Path(args.index_dir),
             top_k=args.top_k,
         )
@@ -676,6 +689,7 @@ def main() -> None:
         start_index=args.start_index,
         output_dir=output_dir,
         retrieval_mode=args.retrieval_mode,
+        retrieval_backend=args.retrieval_backend,
         index_dir=Path(args.index_dir),
         top_k=args.top_k,
     )

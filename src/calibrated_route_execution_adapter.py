@@ -272,10 +272,15 @@ def count_unique_sub_intents(rows: Iterable[Dict[str, object]]) -> int:
     return len(intents)
 
 
-def full_esci_retrieve(query: str, top_k: int, index_dir: Path) -> List[Dict[str, object]]:
+def full_esci_retrieve(
+    query: str,
+    top_k: int,
+    index_dir: Path,
+    backend: str = "lexical",
+) -> List[Dict[str, object]]:
     from src.full_esci_retrieval_engine import retrieve_products
 
-    return retrieve_products(query=query, top_k=top_k, index_dir=index_dir)
+    return retrieve_products(query=query, top_k=top_k, index_dir=index_dir, backend=backend)
 
 
 def normalize_full_esci_rows(
@@ -302,6 +307,7 @@ def normalize_full_esci_rows(
             "product_title": clean_text(row.get("product_title") or row.get("title")),
             "product_brand": clean_text(row.get("product_brand")),
             "product_color": clean_text(row.get("product_color")),
+            "product_text": clean_text(row.get("product_text") or row.get("search_text")),
             "score": row.get("score", ""),
             "rank": row.get("rank", index + 1),
             "esci_label": clean_text(row.get("esci_label")),
@@ -312,6 +318,8 @@ def normalize_full_esci_rows(
             "policy_reason": route_reason,
             "sub_intent": sub_intent or clean_text(row.get("sub_intent")),
             "strict_constraint_type": strict_constraint_type or clean_text(row.get("strict_constraint_type")),
+            "strict_constraint_violation": safe_int(row.get("strict_constraint_violation")),
+            "strict_constraint_penalty_applied": safe_int(row.get("strict_constraint_penalty_applied")),
         }
         normalized.update(extra_fields)
         output.append(normalized)
@@ -330,10 +338,105 @@ def strict_constraint_type_from_query(query: str) -> str:
     return types[0] if types else "unknown"
 
 
-def execute_full_esci_baseline(query: str, route: str, max_items: int, index_dir: Path) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+def detect_strict_constraint_type(query: str) -> str:
+    return strict_constraint_type_from_query(query)
+
+
+def expand_negative_term(term: str) -> List[str]:
+    term = lower_text(term)
+    expanded = [term]
+    if term in {"lace", "laces", "shoelace", "shoelaces", "shoe lace", "shoe laces"}:
+        expanded.extend(["lace", "laces", "shoelace", "shoelaces", "shoe lace", "shoe laces"])
+    if term.endswith("s") and len(term) > 3:
+        expanded.append(term[:-1])
+    elif term and not term.endswith("s"):
+        expanded.append(term + "s")
+    for token in tokenize(term):
+        if len(token) > 2:
+            expanded.append(token)
+    return unique_preserve_order(expanded)
+
+
+def extract_negative_terms(query: str) -> List[str]:
+    terms: List[str] = []
+    for constraint in extract_negation_constraints(query):
+        cleaned = lower_text(constraint)
+        if not cleaned:
+            continue
+        terms.append(cleaned)
+        terms.extend(expand_negative_term(cleaned))
+    return unique_preserve_order(terms)
+
+
+def text_has_forbidden_term(text: str, terms: Sequence[str]) -> bool:
+    text_l = lower_text(text)
+    for term in terms:
+        term_l = lower_text(term)
+        if not term_l:
+            continue
+        if " " in term_l:
+            if re.search(rf"(?<![a-z0-9]){re.escape(term_l)}(?![a-z0-9])", text_l):
+                return True
+            continue
+        if re.search(rf"(?<![a-z0-9]){re.escape(term_l)}(?![a-z0-9])", text_l):
+            return True
+    return False
+
+
+def apply_strict_constraint_filter(
+    query: str,
+    rows: List[Dict[str, object]],
+    strict_constraint_type: str,
+    target_count: Optional[int] = None,
+) -> Tuple[List[Dict[str, object]], Dict[str, object]]:
+    target_count = target_count or len(rows)
+    negative_terms = extract_negative_terms(query) if strict_constraint_type == "negation" else []
+    metadata = {
+        "strict_negative_terms": "|".join(negative_terms),
+        "strict_filtered_count": 0,
+        "strict_demoted_count": 0,
+    }
+
+    if strict_constraint_type != "negation" or not negative_terms:
+        for row in rows:
+            row["strict_constraint_violation"] = 0
+            row["strict_constraint_penalty_applied"] = 0
+        return rows, metadata
+
+    clean_rows: List[Dict[str, object]] = []
+    violating_rows: List[Dict[str, object]] = []
+    for row in rows:
+        searchable = " ".join(
+            [
+                clean_text(row.get("product_title") or row.get("title")),
+                clean_text(row.get("product_brand")),
+                clean_text(row.get("product_text") or row.get("search_text")),
+            ]
+        )
+        if text_has_forbidden_term(searchable, negative_terms):
+            row["strict_constraint_violation"] = 1
+            row["strict_constraint_penalty_applied"] = 1
+            row["score"] = round(safe_float(row.get("score")) - 1000.0, 6)
+            violating_rows.append(row)
+        else:
+            row["strict_constraint_violation"] = 0
+            row["strict_constraint_penalty_applied"] = 0
+            clean_rows.append(row)
+
+    metadata["strict_filtered_count"] = len(violating_rows)
+    if len(clean_rows) >= max(target_count // 2, 1):
+        filtered = clean_rows
+    else:
+        filtered = clean_rows + violating_rows
+        metadata["strict_demoted_count"] = len(violating_rows)
+
+    return filtered, metadata
+
+
+def execute_full_esci_baseline(query: str, route: str, max_items: int, index_dir: Path, backend: str = "lexical") -> Tuple[List[Dict[str, object]], str, bool, str, str]:
     rows = normalize_full_esci_rows(
         query=query,
-        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
         execution_source="full_esci_baseline_retrieval",
         calibrated_route=route,
         max_items=max_items,
@@ -342,27 +445,78 @@ def execute_full_esci_baseline(query: str, route: str, max_items: int, index_dir
     return rows, "full_esci_baseline_retrieval", False, "", f"full_esci_baseline_retrieval:{len(rows)}"
 
 
-def execute_full_esci_strict(query: str, max_items: int, index_dir: Path) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
-    constraint_type = strict_constraint_type_from_query(query)
+def execute_full_esci_strict(query: str, max_items: int, index_dir: Path, backend: str = "lexical") -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+    constraint_type = detect_strict_constraint_type(query)
+    candidate_k = max(max_items * 5, 50)
+    candidates = full_esci_retrieve(query, top_k=candidate_k, index_dir=index_dir, backend=backend)
+    filtered_candidates, strict_metadata = apply_strict_constraint_filter(
+        query=query,
+        rows=[dict(row) for row in candidates],
+        strict_constraint_type=constraint_type,
+        target_count=max_items,
+    )
     rows = normalize_full_esci_rows(
         query=query,
-        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        rows=filtered_candidates,
         execution_source="full_esci_strict_repair",
         calibrated_route="STRICT_REPAIR",
         max_items=max_items,
         strict_constraint_type=constraint_type,
-        route_reason="Full ESCI lexical retrieval with strict route metadata.",
+        route_reason="Full ESCI retrieval with strict constraint filtering metadata.",
     )
+    filtered_count = safe_int(strict_metadata.get("strict_filtered_count"))
+    demoted_count = safe_int(strict_metadata.get("strict_demoted_count"))
+    negative_terms = clean_text(strict_metadata.get("strict_negative_terms"))
     for row in rows:
         row["strict_constraint_applied"] = 1
         row["strict_repair_flag"] = "full_esci_strict_metadata"
-        row["constraint_preservation_note"] = (
-            "Strict route metadata applied; deep constraint filtering is not implemented in MVP 26.1."
+        row["strict_negative_terms"] = negative_terms
+        row["strict_filtered_count"] = filtered_count
+        row["strict_demoted_count"] = demoted_count
+        row.setdefault("strict_constraint_violation", 0)
+        row.setdefault("strict_constraint_penalty_applied", 0)
+        if constraint_type == "compatibility":
+            row["constraint_preservation_note"] = (
+                "compatibility constraint tracked; filtering not aggressive yet."
+            )
+        elif constraint_type == "negation":
+            row["constraint_preservation_note"] = (
+                "negative constraint terms filtered first; violating rows demoted only if needed to preserve slate size."
+            )
+        else:
+            row["constraint_preservation_note"] = (
+                "Strict route metadata applied; aggressive filtering is only enabled for negation constraints in MVP 26.6."
+            )
+    if not rows and candidates:
+        fallback_rows = normalize_full_esci_rows(
+            query=query,
+            rows=candidates,
+            execution_source="full_esci_strict_repair",
+            calibrated_route="STRICT_REPAIR",
+            max_items=max_items,
+            strict_constraint_type=constraint_type,
+            route_reason="Strict filter produced no rows; returned unfiltered candidates with violation metadata.",
         )
-    return rows, "full_esci_strict_repair", False, "", f"full_esci_strict_repair:{constraint_type}:{len(rows)}"
+        for row in fallback_rows:
+            row["strict_constraint_applied"] = 1
+            row["strict_negative_terms"] = negative_terms
+            row["strict_filtered_count"] = filtered_count
+            row["strict_demoted_count"] = len(fallback_rows)
+            row["strict_constraint_violation"] = 1
+            row["strict_constraint_penalty_applied"] = 1
+            row["constraint_preservation_note"] = "Strict filter produced no clean rows; returned demoted candidates."
+        rows = fallback_rows
+    return (
+        rows,
+        "full_esci_strict_repair",
+        False,
+        "",
+        f"full_esci_strict_repair:{constraint_type}:candidate_k={candidate_k}:"
+        f"strict_filtered_count={filtered_count}:strict_demoted_count={demoted_count}:rows={len(rows)}",
+    )
 
 
-def execute_full_esci_mission(query: str, max_items: int, index_dir: Path) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+def execute_full_esci_mission(query: str, max_items: int, index_dir: Path, backend: str = "lexical") -> Tuple[List[Dict[str, object]], str, bool, str, str]:
     mission = extract_mission_sub_intents(query)
     sub_intents = [clean_text(value) for value in mission.get("sub_intents", []) if clean_text(value)]
     selected: List[Dict[str, object]] = []
@@ -375,7 +529,7 @@ def execute_full_esci_mission(query: str, max_items: int, index_dir: Path) -> Tu
             retrieval_query = f"{query} {sub_intent.replace('_', ' ')}"
             rows = normalize_full_esci_rows(
                 query=query,
-                rows=full_esci_retrieve(retrieval_query, top_k=per_intent_k, index_dir=index_dir),
+                rows=full_esci_retrieve(retrieval_query, top_k=per_intent_k, index_dir=index_dir, backend=backend),
                 execution_source="full_esci_mission_repair",
                 calibrated_route="MISSION_REPAIR",
                 max_items=per_intent_k,
@@ -403,7 +557,7 @@ def execute_full_esci_mission(query: str, max_items: int, index_dir: Path) -> Tu
         if len(selected) < max_items:
             direct_rows = normalize_full_esci_rows(
                 query=query,
-                rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+                rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
                 execution_source="full_esci_mission_repair",
                 calibrated_route="MISSION_REPAIR",
                 max_items=max_items,
@@ -422,7 +576,7 @@ def execute_full_esci_mission(query: str, max_items: int, index_dir: Path) -> Tu
 
     rows = normalize_full_esci_rows(
         query=query,
-        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
         execution_source="full_esci_mission_repair",
         calibrated_route="MISSION_REPAIR",
         max_items=max_items,
@@ -437,10 +591,10 @@ def execute_full_esci_mission(query: str, max_items: int, index_dir: Path) -> Tu
     )
 
 
-def execute_full_esci_behavior(query: str, max_items: int, index_dir: Path) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+def execute_full_esci_behavior(query: str, max_items: int, index_dir: Path, backend: str = "lexical") -> Tuple[List[Dict[str, object]], str, bool, str, str]:
     rows = normalize_full_esci_rows(
         query=query,
-        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
         execution_source="full_esci_behavior_aware_fallback",
         calibrated_route="BEHAVIOR_AWARE_RERANK",
         max_items=max_items,
@@ -479,11 +633,12 @@ def execute_full_esci_critic(
     index_dir: Path,
     query_type: str = "",
     bias: str = "",
+    backend: str = "lexical",
 ) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
     reason = critic_review_reason(query_type=query_type, bias=bias)
     rows = normalize_full_esci_rows(
         query=query,
-        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir),
+        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
         execution_source="full_esci_critic_review",
         calibrated_route="CRITIC_REVIEW",
         max_items=max_items,
@@ -1534,12 +1689,14 @@ def execute_calibrated_route(
     query_understanding: Optional[Dict[str, object]] = None,
     max_items: int = 12,
     retrieval_mode: str = "sample",
+    retrieval_backend: str = "lexical",
     index_dir: Path | str = DEFAULT_ESCI_INDEX_DIR,
     top_k: Optional[int] = None,
 ) -> Dict[str, object]:
     query_understanding = query_understanding or {}
     route = clean_text(calibrated_route).upper() or "BASELINE_ONLY"
     retrieval_mode = lower_text(retrieval_mode) or "sample"
+    retrieval_backend = lower_text(retrieval_backend) or "lexical"
     index_path = Path(index_dir)
     max_items = safe_int(top_k, max_items) if top_k is not None else max_items
     query_type = clean_text(query_understanding.get("query_type"))
@@ -1554,11 +1711,11 @@ def execute_calibrated_route(
     try:
         if retrieval_mode == "full_esci":
             if route == "STRICT_REPAIR":
-                rows, source, fallback, reason, trace = execute_full_esci_strict(query, max_items=max_items, index_dir=index_path)
+                rows, source, fallback, reason, trace = execute_full_esci_strict(query, max_items=max_items, index_dir=index_path, backend=retrieval_backend)
             elif route == "MISSION_REPAIR":
-                rows, source, fallback, reason, trace = execute_full_esci_mission(query, max_items=max_items, index_dir=index_path)
+                rows, source, fallback, reason, trace = execute_full_esci_mission(query, max_items=max_items, index_dir=index_path, backend=retrieval_backend)
             elif route == "BEHAVIOR_AWARE_RERANK":
-                rows, source, fallback, reason, trace = execute_full_esci_behavior(query, max_items=max_items, index_dir=index_path)
+                rows, source, fallback, reason, trace = execute_full_esci_behavior(query, max_items=max_items, index_dir=index_path, backend=retrieval_backend)
             elif route == "CRITIC_REVIEW":
                 rows, source, fallback, reason, trace = execute_full_esci_critic(
                     query=query,
@@ -1566,9 +1723,10 @@ def execute_calibrated_route(
                     index_dir=index_path,
                     query_type=query_type,
                     bias=bias,
+                    backend=retrieval_backend,
                 )
             elif route == "REJECT_REPAIR_NARROW_QUERY":
-                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path)
+                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path, backend=retrieval_backend)
                 source = "full_esci_narrow_query_baseline_preserved"
                 for row in rows:
                     row["execution_source"] = source
@@ -1576,7 +1734,7 @@ def execute_calibrated_route(
                 reason = ""
                 trace = f"full_esci_reject_repair_preserve_baseline:{len(rows)}"
             else:
-                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path)
+                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path, backend=retrieval_backend)
         elif route == "STRICT_REPAIR":
             rows, source, fallback, reason, trace = execute_strict_repair(query, max_items=max_items)
         elif route == "MISSION_REPAIR":
@@ -1603,6 +1761,7 @@ def execute_calibrated_route(
 
         adapter_trace_parts.append(trace)
         adapter_trace_parts.append(f"retrieval_mode={retrieval_mode}")
+        adapter_trace_parts.append(f"retrieval_backend={retrieval_backend}")
 
         return {
             "query": query,

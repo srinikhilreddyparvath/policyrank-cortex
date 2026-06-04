@@ -301,6 +301,7 @@ def execution_node(state: CortexGraphState) -> CortexGraphState:
             },
             max_items=safe_int(getattr(state["args"], "top_k", 12), 12),
             retrieval_mode=getattr(state["args"], "retrieval_mode", "sample"),
+            retrieval_backend=getattr(state["args"], "retrieval_backend", "lexical"),
             index_dir=getattr(state["args"], "index_dir", "data/esci_index"),
             top_k=safe_int(getattr(state["args"], "top_k", 12), 12),
         )
@@ -566,6 +567,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--index-dir", default="data/esci_index", help="Full ESCI index directory.")
     parser.add_argument("--top-k", type=int, default=12, help="Maximum slate size / retrieval top-k.")
+    parser.add_argument(
+        "--retrieval-backend",
+        choices=["lexical", "fts"],
+        default="lexical",
+        help="Full ESCI retrieval backend.",
+    )
     return parser.parse_args()
 
 

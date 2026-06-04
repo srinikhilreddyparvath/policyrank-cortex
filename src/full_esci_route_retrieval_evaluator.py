@@ -47,6 +47,10 @@ RESULT_FIELDS = [
     "fallback_reason",
     "critic_review_stage",
     "review_priority",
+    "strict_filtered_count",
+    "strict_demoted_count",
+    "strict_violation_row_count",
+    "strict_violation_rate",
     "calibrated_adapter_trace",
     "retrieved_count",
     "labeled_retrieved_count",
@@ -71,10 +75,15 @@ QUERY_EVAL_FIELDS = [
     "rank",
     "product_title",
     "score",
+    "retrieval_source",
     "sub_intent",
     "esci_label",
     "critic_review_stage",
     "review_priority",
+    "strict_constraint_type",
+    "strict_negative_terms",
+    "strict_constraint_violation",
+    "strict_constraint_penalty_applied",
 ]
 
 
@@ -227,6 +236,9 @@ def evaluate_slate(
     labels = []
     critic_review_stages = []
     review_priorities = []
+    strict_filtered_counts = []
+    strict_demoted_counts = []
+    strict_violation_count = 0
 
     for index, row in enumerate(slate_rows, start=1):
         product_id = clean_text(row.get("product_id") or row.get("item_id"))
@@ -239,6 +251,10 @@ def evaluate_slate(
             critic_review_stages.append(critic_review_stage)
         if review_priority:
             review_priorities.append(review_priority)
+        strict_violation = safe_int(row.get("strict_constraint_violation"))
+        strict_violation_count += strict_violation
+        strict_filtered_counts.append(safe_int(row.get("strict_filtered_count")))
+        strict_demoted_counts.append(safe_int(row.get("strict_demoted_count")))
         evaluated_rows.append(
             {
                 "query": query,
@@ -248,10 +264,15 @@ def evaluate_slate(
                 "rank": row.get("rank") or index,
                 "product_title": clean_text(row.get("product_title") or row.get("title")),
                 "score": row.get("score", ""),
+                "retrieval_source": clean_text(row.get("retrieval_source")),
                 "sub_intent": clean_text(row.get("sub_intent")),
                 "esci_label": label,
                 "critic_review_stage": critic_review_stage,
                 "review_priority": review_priority,
+                "strict_constraint_type": clean_text(row.get("strict_constraint_type")),
+                "strict_negative_terms": clean_text(row.get("strict_negative_terms")),
+                "strict_constraint_violation": strict_violation,
+                "strict_constraint_penalty_applied": safe_int(row.get("strict_constraint_penalty_applied")),
             }
         )
 
@@ -278,6 +299,10 @@ def evaluate_slate(
             "exact_or_substitute_rate_in_retrieved": round(exact_or_substitute / max(retrieved_count, 1), 6),
             "critic_review_stage": top_counter_value(critic_review_stages),
             "review_priority": top_counter_value(review_priorities),
+            "strict_filtered_count": max(strict_filtered_counts) if strict_filtered_counts else 0,
+            "strict_demoted_count": max(strict_demoted_counts) if strict_demoted_counts else 0,
+            "strict_violation_row_count": strict_violation_count,
+            "strict_violation_rate": round(strict_violation_count / max(retrieved_count, 1), 6),
         },
         evaluated_rows,
     )
@@ -289,6 +314,7 @@ def run_query(
     index_dir: Path,
     top_k: int,
     retrieval_mode: str,
+    retrieval_backend: str,
     label_lookup: Dict[Tuple[str, str], str],
 ) -> Tuple[Dict[str, object], List[Dict[str, object]]]:
     calibration = calibrate_query_in_sandbox(query=query, output_dir=output_dir)
@@ -306,6 +332,7 @@ def run_query(
         },
         max_items=top_k,
         retrieval_mode=retrieval_mode,
+        retrieval_backend=retrieval_backend,
         index_dir=index_dir,
         top_k=top_k,
     )
@@ -333,6 +360,10 @@ def run_query(
         "fallback_reason": clean_text(adapter_result.get("fallback_reason")),
         "critic_review_stage": eval_metrics.get("critic_review_stage", ""),
         "review_priority": eval_metrics.get("review_priority", ""),
+        "strict_filtered_count": eval_metrics.get("strict_filtered_count", 0),
+        "strict_demoted_count": eval_metrics.get("strict_demoted_count", 0),
+        "strict_violation_row_count": eval_metrics.get("strict_violation_row_count", 0),
+        "strict_violation_rate": eval_metrics.get("strict_violation_rate", 0),
         "calibrated_adapter_trace": clean_text(adapter_result.get("adapter_trace")),
         **eval_metrics,
         "error_message": "",
@@ -357,6 +388,13 @@ def aggregate_summary(rows: List[Dict[str, object]], runtime_seconds: float) -> 
         "top_execution_source": top_value(success_rows, "execution_source"),
         "fallback_count": fallback_count,
         "fallback_rate": round(fallback_count / max(len(success_rows), 1), 6),
+        "avg_strict_filtered_count": avg(success_rows, "strict_filtered_count"),
+        "strict_violation_row_count": sum(safe_int(row.get("strict_violation_row_count")) for row in success_rows),
+        "strict_violation_rate": round(
+            sum(safe_int(row.get("strict_violation_row_count")) for row in success_rows)
+            / max(sum(safe_int(row.get("retrieved_count")) for row in success_rows), 1),
+            6,
+        ),
         "runtime_seconds": round(runtime_seconds, 4),
     }
 
@@ -394,6 +432,13 @@ def grouped_summary(rows: List[Dict[str, object]], group_fields: List[str]) -> L
             "avg_label_coverage_rate": avg(group, "label_coverage_rate"),
             "avg_exact_rate_in_retrieved": avg(group, "exact_rate_in_retrieved"),
             "avg_exact_or_substitute_rate_in_retrieved": avg(group, "exact_or_substitute_rate_in_retrieved"),
+            "avg_strict_filtered_count": avg(group, "strict_filtered_count"),
+            "strict_violation_row_count": sum(safe_int(row.get("strict_violation_row_count")) for row in group),
+            "strict_violation_rate": round(
+                sum(safe_int(row.get("strict_violation_row_count")) for row in group)
+                / max(sum(safe_int(row.get("retrieved_count")) for row in group), 1),
+                6,
+            ),
         }
         for field, value in zip(group_fields, key):
             route_summary[field] = value
@@ -547,6 +592,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
     print(f"sample_size: {args.sample_size}")
     print(f"selected_query_count: {len(queries)}")
     print(f"retrieval_mode: {args.retrieval_mode}")
+    print(f"retrieval_backend: {args.retrieval_backend}")
     print(f"index_dir: {index_dir}")
     print(f"top_k: {args.top_k}")
 
@@ -562,6 +608,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
                 index_dir=index_dir,
                 top_k=args.top_k,
                 retrieval_mode=args.retrieval_mode,
+                retrieval_backend=args.retrieval_backend,
                 label_lookup=label_lookup,
             )
             result_rows.append(row)
@@ -632,6 +679,12 @@ def parse_args() -> argparse.Namespace:
         help="Route execution retrieval mode.",
     )
     parser.add_argument("--top-k", type=int, default=12, help="Slate size / retrieval top-k.")
+    parser.add_argument(
+        "--retrieval-backend",
+        choices=["lexical", "fts"],
+        default="lexical",
+        help="Full ESCI retrieval backend.",
+    )
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Output directory.")
     return parser.parse_args()
 

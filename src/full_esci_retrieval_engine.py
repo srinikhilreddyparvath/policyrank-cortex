@@ -12,6 +12,7 @@ import csv
 import json
 import math
 import re
+import sqlite3
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -20,7 +21,8 @@ from typing import Dict, Iterable, List, Tuple
 
 DEFAULT_INDEX_DIR = Path("data/esci_index")
 DEFAULT_OUTPUT_DIR = Path("outputs/full_esci_retrieval")
-_ENGINE_CACHE: Dict[str, "FullEsciRetrievalEngine"] = {}
+_ENGINE_CACHE: Dict[str, object] = {}
+SQLITE_FTS_NAME = "esci_products_fts.sqlite"
 
 STOPWORDS = {
     "a",
@@ -93,6 +95,14 @@ def tokenize(text: object) -> List[str]:
         token
         for token in re.findall(r"[a-z0-9]+", normalized_text(text))
         if token and token not in STOPWORDS
+    ]
+
+
+def fts_tokens(text: object) -> List[str]:
+    return [
+        token
+        for token in re.findall(r"[a-zA-Z0-9]+", normalized_text(text))
+        if token and token.lower() not in STOPWORDS
     ]
 
 
@@ -322,6 +332,7 @@ class FullEsciRetrievalEngine:
                     "product_title": clean_text(product.get("product_title")),
                     "product_brand": clean_text(product.get("product_brand")),
                     "product_color": clean_text(product.get("product_color")),
+                    "product_text": clean_text(product.get("search_text")),
                     "score": row.get("score"),
                     "matched_tokens": "|".join(row.get("matched_tokens", [])),  # type: ignore[arg-type]
                     "query_token_coverage": row.get("coverage"),
@@ -336,18 +347,139 @@ class FullEsciRetrievalEngine:
         return rows, evaluation
 
 
-def get_engine(index_dir: Path = DEFAULT_INDEX_DIR) -> FullEsciRetrievalEngine:
-    key = str(index_dir.resolve())
+class FullEsciFtsRetrievalEngine(FullEsciRetrievalEngine):
+    def __init__(self, index_dir: Path, allow_fallback: bool = False) -> None:
+        super().__init__(index_dir)
+        self.allow_fallback = allow_fallback
+        self.sqlite_path = index_dir / SQLITE_FTS_NAME
+        self.conn: sqlite3.Connection | None = None
+        self.lexical_fallback: FullEsciRetrievalEngine | None = None
+
+    def validate_fts_index(self) -> None:
+        if not self.sqlite_path.exists():
+            raise FileNotFoundError(
+                f"Missing FTS index: {self.sqlite_path}. "
+                "Run python -m src.full_esci_fts_index_builder --rebuild first"
+            )
+
+    def load(self) -> None:
+        self.validate_index()
+        self.validate_fts_index()
+        self.conn = sqlite3.connect(self.sqlite_path)
+        self.conn.row_factory = sqlite3.Row
+        self.queries = read_csv(self.required_paths()["queries"])
+        for row in read_csv(self.required_paths()["query_product_labels"]):
+            query = normalized_text(row.get("query"))
+            product_id = clean_text(row.get("product_id"))
+            label = normalize_label(row.get("esci_label"))
+            if query and product_id:
+                self.labels_by_query_product[(query, product_id)] = label
+                self.labels_by_query[query][product_id] = label
+        try:
+            self.index_summary = json.loads(self.required_paths()["index_summary"].read_text(encoding="utf-8"))
+        except Exception:
+            self.index_summary = {}
+
+    def safe_match_query(self, query: str) -> str:
+        tokens = fts_tokens(query)
+        if not tokens:
+            return ""
+        return " OR ".join(f'"{token}"' for token in tokens[:12])
+
+    def total_products(self) -> int:
+        if not self.conn:
+            return 0
+        return int(self.conn.execute("SELECT COUNT(*) FROM products").fetchone()[0])
+
+    def retrieve(self, query: str, top_k: int) -> Tuple[List[Dict[str, object]], Dict[str, object]]:
+        start = time.perf_counter()
+        if not self.conn:
+            raise RuntimeError("FTS engine is not loaded.")
+
+        match_query = self.safe_match_query(query)
+        if not match_query:
+            rows: List[Dict[str, object]] = []
+            evaluation = evaluate_results(query=query, results=rows, labels_for_query={})
+            evaluation["retrieval_time_seconds"] = round(time.perf_counter() - start, 6)
+            return rows, evaluation
+
+        labels_for_query = self.labels_by_query.get(normalized_text(query), {})
+        try:
+            sql = """
+                SELECT product_id, product_title, product_brand, product_color, product_text,
+                       bm25(products_fts) AS bm25_score
+                FROM products_fts
+                WHERE products_fts MATCH ?
+                ORDER BY bm25_score
+                LIMIT ?
+            """
+            raw_rows = list(self.conn.execute(sql, (match_query, top_k)))
+        except sqlite3.Error:
+            if self.allow_fallback:
+                if self.lexical_fallback is None:
+                    self.lexical_fallback = FullEsciRetrievalEngine(self.index_dir)
+                    self.lexical_fallback.load()
+                return self.lexical_fallback.retrieve(query, top_k=top_k)
+            raise
+
+        query_tokens = set(tokenize(query))
+        results = []
+        for rank, row in enumerate(raw_rows, start=1):
+            title = clean_text(row["product_title"])
+            brand = clean_text(row["product_brand"])
+            color = clean_text(row["product_color"])
+            product_text = clean_text(row["product_text"])
+            product_id = clean_text(row["product_id"])
+            matched = sorted(query_tokens.intersection(set(tokenize(" ".join([title, brand, color, product_text])))))
+            coverage = round(len(matched) / max(len(query_tokens), 1), 6)
+            results.append(
+                {
+                    "query": query,
+                    "rank": rank,
+                    "product_id": product_id,
+                    "product_title": title,
+                    "product_brand": brand,
+                    "product_color": color,
+                    "product_text": product_text,
+                    "score": round(-safe_float(row["bm25_score"]), 6),
+                    "matched_tokens": "|".join(matched),
+                    "query_token_coverage": coverage,
+                    "retrieval_source": "full_esci_fts",
+                    "esci_label": labels_for_query.get(product_id, ""),
+                }
+            )
+
+        evaluation = evaluate_results(query=query, results=results, labels_for_query=labels_for_query)
+        evaluation["retrieval_time_seconds"] = round(time.perf_counter() - start, 6)
+        return results, evaluation
+
+
+def get_engine(
+    index_dir: Path = DEFAULT_INDEX_DIR,
+    backend: str = "lexical",
+    allow_fallback: bool = False,
+) -> FullEsciRetrievalEngine:
+    backend = normalized_text(backend) or "lexical"
+    key = f"{backend}:{allow_fallback}:{index_dir.resolve()}"
     engine = _ENGINE_CACHE.get(key)
     if engine is None:
-        engine = FullEsciRetrievalEngine(index_dir)
+        if backend == "fts":
+            engine = FullEsciFtsRetrievalEngine(index_dir, allow_fallback=allow_fallback)
+        else:
+            engine = FullEsciRetrievalEngine(index_dir)
         engine.load()
         _ENGINE_CACHE[key] = engine
-    return engine
+    return engine  # type: ignore[return-value]
 
 
-def retrieve_products(query: str, top_k: int = 12, index_dir: Path = DEFAULT_INDEX_DIR) -> List[Dict[str, object]]:
-    engine = get_engine(index_dir)
+def retrieve_products(
+    query: str,
+    top_k: int = 12,
+    index_dir: Path = DEFAULT_INDEX_DIR,
+    backend: str = "lexical",
+    allow_fallback: bool = False,
+) -> List[Dict[str, object]]:
+    engine = get_engine(index_dir, backend=backend, allow_fallback=allow_fallback)
     rows, _evaluation = engine.retrieve(query, top_k=top_k)
     return rows
 
@@ -466,7 +598,9 @@ def print_single(
     print(f"query: {query}")
     print(f"top_k: {top_k}")
     print(f"index_dir: {index_dir}")
-    print(f"total_products_loaded: {len(engine.products)}")
+    total_products = engine.total_products() if hasattr(engine, "total_products") else len(engine.products)
+    print(f"total_products_loaded: {total_products}")
+    print(f"retrieval_backend: {clean_text(getattr(engine, '__class__', type(engine)).__name__)}")
     print(f"retrieval_time_seconds: {evaluation.get('retrieval_time_seconds')}")
     print("\nEvaluation")
     print("-" * 100)
@@ -497,8 +631,11 @@ def print_single(
 
 
 def run_single(args: argparse.Namespace) -> None:
-    engine = FullEsciRetrievalEngine(Path(args.index_dir))
-    engine.load()
+    engine = get_engine(
+        Path(args.index_dir),
+        backend=args.backend,
+        allow_fallback=args.allow_fallback,
+    )
     results, evaluation = engine.retrieve(args.query, top_k=args.top_k)
     print_single(
         query=args.query,
@@ -511,8 +648,11 @@ def run_single(args: argparse.Namespace) -> None:
 
 
 def run_batch(args: argparse.Namespace) -> None:
-    engine = FullEsciRetrievalEngine(Path(args.index_dir))
-    engine.load()
+    engine = get_engine(
+        Path(args.index_dir),
+        backend=args.backend,
+        allow_fallback=args.allow_fallback,
+    )
     if args.query_mode != "indexed_queries":
         raise ValueError("--query-mode currently supports indexed_queries")
 
@@ -524,7 +664,9 @@ def run_batch(args: argparse.Namespace) -> None:
     print(f"selected_query_count: {len(queries)}")
     print(f"top_k: {args.top_k}")
     print(f"index_dir: {args.index_dir}")
-    print(f"total_products_loaded: {len(engine.products)}")
+    print(f"backend: {args.backend}")
+    total_products = engine.total_products() if hasattr(engine, "total_products") else len(engine.products)
+    print(f"total_products_loaded: {total_products}")
 
     all_results: List[Dict[str, object]] = []
     evaluations: List[Dict[str, object]] = []
@@ -571,6 +713,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--index-dir", default=str(DEFAULT_INDEX_DIR), help="ESCI index directory.")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Batch output directory.")
+    parser.add_argument("--backend", choices=["lexical", "fts"], default="lexical", help="Retrieval backend.")
+    parser.add_argument(
+        "--allow-fallback",
+        action="store_true",
+        help="Allow FTS backend to fall back to lexical retrieval on FTS query errors.",
+    )
     return parser.parse_args()
 
 
