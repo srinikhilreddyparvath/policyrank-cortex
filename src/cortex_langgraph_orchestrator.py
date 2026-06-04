@@ -25,6 +25,7 @@ except Exception:
     LANGGRAPH_AVAILABLE = False
 
 from src.calibrated_route_execution_adapter import execute_calibrated_route
+from src.governance_calibration_dry_run import apply_calibration
 from src.ollama_query_understanding_advisor import analyze_query as analyze_llm_advisor
 from src.query_normalization_agent import normalize_query
 from src.query_understanding_agent import console_text, load_all_queries, select_queries, understand_query
@@ -39,6 +40,15 @@ BIAS_TO_ROUTE = {
     "strict_guardrails": "STRICT_REPAIR",
     "reject_aggressive_repair": "REJECT_REPAIR_NARROW_QUERY",
     "send_to_critic": "CRITIC_REVIEW",
+}
+
+ROUTE_TO_DECISION = {
+    "BASELINE_ONLY": "PRESERVE_BASELINE",
+    "MISSION_REPAIR": "RUN_MISSION_REPAIR",
+    "BEHAVIOR_AWARE_RERANK": "RUN_MISSION_REPAIR_AND_BEHAVIOR_AWARE",
+    "STRICT_REPAIR": "RUN_STRICT_REPAIR",
+    "REJECT_REPAIR_NARROW_QUERY": "REJECT_REPAIR_NARROW_QUERY",
+    "CRITIC_REVIEW": "RUN_CRITIC_REVIEW",
 }
 
 RESULT_FIELDS = [
@@ -233,45 +243,40 @@ def governance_node(state: CortexGraphState) -> CortexGraphState:
         current_route = "BASELINE_ONLY"
         current_decision = "USE_BASELINE_ONLY"
         bias = clean_text(state.get("rule_recommended_governance_bias"))
+        query_type = clean_text(state.get("rule_query_type"))
+        rule_recommended_route = clean_text(state.get("rule_recommended_route"))
         confidence = float(state.get("rule_confidence_score", 0.0))  # type: ignore[typeddict-item]
         risk = float(state.get("rule_risk_score", 1.0))  # type: ignore[typeddict-item]
-        calibrated_route = current_route
-        action = "keep_current_route"
+        calibration = apply_calibration(
+            query=query,
+            query_type=query_type,
+            bias=bias,
+            confidence=confidence,
+            risk=risk,
+            current_route=current_route,
+            current_decision=current_decision,
+        )
+        calibrated_route = clean_text(calibration.get("calibrated_governance_route")) or "BASELINE_ONLY"
+        calibrated_decision = clean_text(calibration.get("calibrated_governance_decision")) or ROUTE_TO_DECISION.get(
+            calibrated_route,
+            current_decision,
+        )
+        action = clean_text(calibration.get("calibration_action")) or "keep_current_route"
+        override_used = False
 
-        if bias == "allow_behavior_aware" and confidence >= 0.70 and risk <= 0.35:
-            calibrated_route = "BEHAVIOR_AWARE_RERANK"
-            action = "upgrade_to_behavior_aware"
-        elif bias == "allow_mission_repair" and confidence >= 0.65 and risk <= 0.40:
-            calibrated_route = "MISSION_REPAIR"
-            action = "upgrade_to_mission_repair"
-        elif bias == "strict_guardrails":
-            calibrated_route = "STRICT_REPAIR"
-            action = "upgrade_to_strict_guardrails"
-        elif bias == "reject_aggressive_repair":
-            calibrated_route = "REJECT_REPAIR_NARROW_QUERY"
-            action = "confirm_reject_repair"
-        elif bias == "preserve_baseline":
-            calibrated_route = "BASELINE_ONLY"
-            action = "confirm_preserve_baseline"
-        elif bias == "send_to_critic" and risk >= 0.50:
-            calibrated_route = "CRITIC_REVIEW"
-            action = "send_to_critic"
-
-        decision_by_route = {
-            "BASELINE_ONLY": "PRESERVE_BASELINE",
-            "BEHAVIOR_AWARE_RERANK": "RUN_MISSION_REPAIR_AND_BEHAVIOR_AWARE",
-            "MISSION_REPAIR": "RUN_MISSION_REPAIR",
-            "STRICT_REPAIR": "RUN_STRICT_REPAIR",
-            "REJECT_REPAIR_NARROW_QUERY": "REJECT_REPAIR_NARROW_QUERY",
-            "CRITIC_REVIEW": "SEND_TO_CRITIC_REVIEW",
-        }
+        if calibrated_route == "BASELINE_ONLY" and rule_recommended_route and rule_recommended_route != "BASELINE_ONLY":
+            calibrated_route = rule_recommended_route
+            calibrated_decision = ROUTE_TO_DECISION.get(rule_recommended_route, calibrated_decision)
+            action = "langgraph_rule_alignment_override"
+            override_used = True
 
         state["governance_route"] = current_route
         state["governance_decision"] = current_decision
-        state["calibrated_route"] = calibrated_route or clean_text(state.get("rule_recommended_route"))
-        state["calibrated_decision"] = decision_by_route.get(calibrated_route, current_decision)
+        state["calibrated_route"] = calibrated_route
+        state["calibrated_decision"] = calibrated_decision
         state["calibration_action"] = action
-        append_trace(state, f"governance_node:{state['governance_route']}=>{state['calibrated_route']}")
+        trace_suffix = " via rule_alignment_override" if override_used else ""
+        append_trace(state, f"governance_node:{state['governance_route']}=>{state['calibrated_route']}{trace_suffix}")
     except Exception as exc:
         state["governance_route"] = clean_text(state.get("rule_recommended_route"))
         state["governance_decision"] = "FALLBACK_TO_RULE_ROUTE"
@@ -292,6 +297,7 @@ def execution_node(state: CortexGraphState) -> CortexGraphState:
             query_understanding={
                 "query_type": clean_text(state.get("rule_query_type")),
                 "recommended_governance_bias": clean_text(state.get("rule_recommended_governance_bias")),
+                "recommended_route": clean_text(state.get("rule_recommended_route")),
             },
             max_items=12,
         )
