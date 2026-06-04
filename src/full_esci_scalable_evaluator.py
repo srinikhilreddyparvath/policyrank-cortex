@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import csv
 import math
+import re
 import sys
 import time
 from collections import Counter, defaultdict
@@ -57,6 +58,7 @@ EVAL_FIELDS = [
     "query",
     "query_index",
     "chunk_id",
+    "bucket_name",
     "success",
     "runtime_seconds",
     "final_slate_size",
@@ -67,6 +69,105 @@ EVAL_FIELDS = [
     "cold_start_proxy_items",
     "error_message",
 ]
+
+BUCKET_ORDER = [
+    "narrow_product",
+    "numeric_model",
+    "mission_keyword",
+    "setup_or_kit",
+    "gift_or_party",
+    "compatibility_for",
+    "negation_constraint",
+    "long_tail",
+    "noisy_symbol",
+    "general_retail",
+]
+
+BRAND_LIKE_TERMS = {
+    "adidas",
+    "amazon",
+    "apple",
+    "barbie",
+    "bissell",
+    "canon",
+    "carhartt",
+    "dewalt",
+    "dyson",
+    "hp",
+    "lego",
+    "lg",
+    "microsoft",
+    "nike",
+    "ninja",
+    "otterbox",
+    "puma",
+    "samsung",
+    "sony",
+    "under",
+    "xbox",
+}
+
+MISSION_KEYWORDS = {
+    "essentials",
+    "starter",
+    "supplies",
+    "packing",
+    "vacation",
+    "camping",
+    "trip",
+    "travel",
+    "dorm",
+    "college",
+    "moving",
+    "registry",
+}
+
+EVENT_KEYWORDS = {
+    "party",
+    "birthday",
+    "wedding",
+    "shower",
+    "graduation",
+    "tailgate",
+    "bbq",
+    "barbecue",
+    "christmas",
+    "halloween",
+    "thanksgiving",
+}
+
+SETUP_KEYWORDS = {
+    "setup",
+    "kit",
+    "bundle",
+    "set",
+    "starter kit",
+}
+
+GIFT_KEYWORDS = {
+    "gift",
+    "gifts",
+    "present",
+    "stocking",
+    "favors",
+}
+
+NARROW_PRODUCT_TERMS = {
+    "case",
+    "charger",
+    "shirt",
+    "shoes",
+    "sneakers",
+    "cleats",
+    "tv",
+    "laptop",
+    "phone",
+    "keyboard",
+    "mouse",
+    "bottle",
+    "bag",
+    "cover",
+}
 
 
 def clean_text(value: object) -> str:
@@ -81,6 +182,108 @@ def console_text(value: object) -> str:
     text = clean_text(value)
     encoding = sys.stdout.encoding or "utf-8"
     return text.encode(encoding, errors="replace").decode(encoding, errors="replace")
+
+
+def tokenize_query(query: str) -> List[str]:
+    return re.findall(r"[a-z0-9]+", query.lower())
+
+
+def has_any_phrase(text: str, phrases: set[str], tokens: set[str]) -> bool:
+    text_lower = text.lower()
+    for phrase in phrases:
+        phrase_lower = phrase.lower()
+        if " " in phrase_lower:
+            if phrase_lower in text_lower:
+                return True
+        elif phrase_lower in tokens:
+            return True
+    return False
+
+
+def extract_query_features(query: str) -> Dict[str, object]:
+    query_clean = clean_text(query)
+    query_lower = query_clean.lower()
+    tokens = tokenize_query(query_clean)
+    token_set = set(tokens)
+
+    has_brand = any(token in BRAND_LIKE_TERMS for token in tokens)
+    has_mission = has_any_phrase(query_lower, MISSION_KEYWORDS, token_set)
+    has_event = has_any_phrase(query_lower, EVENT_KEYWORDS, token_set)
+    has_setup = has_any_phrase(query_lower, SETUP_KEYWORDS, token_set)
+    has_gift = has_any_phrase(query_lower, GIFT_KEYWORDS, token_set)
+    has_for = "for" in tokens
+    has_without_or_not = any(token in {"without", "not", "no", "non"} for token in tokens)
+    has_numeric_or_model = any(
+        any(ch.isdigit() for ch in token)
+        or bool(re.search(r"[a-z]+\d+|\d+[a-z]+", token))
+        for token in tokens
+    )
+    starts_with_symbol = bool(query_clean) and not query_clean[0].isalnum()
+
+    return {
+        "token_count": len(tokens),
+        "char_count": len(query_clean),
+        "has_brand_like_token": has_brand,
+        "has_mission_keyword": has_mission,
+        "has_event_keyword": has_event,
+        "has_setup_keyword": has_setup,
+        "has_gift_keyword": has_gift,
+        "has_for_keyword": has_for,
+        "has_without_or_not": has_without_or_not,
+        "has_numeric_or_model_token": has_numeric_or_model,
+        "starts_with_symbol": starts_with_symbol,
+    }
+
+
+def classify_query_bucket(query: str) -> str:
+    features = extract_query_features(query)
+    tokens = tokenize_query(query)
+    token_count = int(features["token_count"])
+
+    if bool(features["starts_with_symbol"]):
+        return "noisy_symbol"
+
+    if bool(features["has_without_or_not"]):
+        return "negation_constraint"
+
+    if bool(features["has_gift_keyword"]) or bool(features["has_event_keyword"]):
+        return "gift_or_party"
+
+    if bool(features["has_setup_keyword"]):
+        return "setup_or_kit"
+
+    if bool(features["has_mission_keyword"]):
+        return "mission_keyword"
+
+    if bool(features["has_for_keyword"]):
+        return "compatibility_for"
+
+    if bool(features["has_numeric_or_model_token"]):
+        return "numeric_model"
+
+    if bool(features["has_brand_like_token"]) or (
+        token_count <= 3 and any(token in NARROW_PRODUCT_TERMS for token in tokens)
+    ):
+        return "narrow_product"
+
+    if token_count >= 5 or int(features["char_count"]) >= 40:
+        return "long_tail"
+
+    return "general_retail"
+
+
+def build_bucket_map(queries: List[str]) -> Dict[str, List[Tuple[int, str]]]:
+    buckets: Dict[str, List[Tuple[int, str]]] = {bucket: [] for bucket in BUCKET_ORDER}
+
+    for index, query in enumerate(queries):
+        bucket = classify_query_bucket(query)
+        buckets.setdefault(bucket, []).append((index, query))
+
+    return buckets
+
+
+def bucket_distribution_from_records(records: List[Dict[str, object]]) -> Counter:
+    return Counter(clean_text(record.get("bucket_name")) or "unknown" for record in records)
 
 
 def safe_int(value: object, default: int = 0) -> int:
@@ -245,6 +448,90 @@ def select_query_window(
     return all_queries[start_index : start_index + max_queries]
 
 
+def build_ordered_query_records(
+    queries: List[str],
+    global_start_index: int = 0,
+) -> List[Dict[str, object]]:
+    return [
+        {
+            "query": query,
+            "query_index": global_start_index + index,
+            "bucket_name": classify_query_bucket(query),
+        }
+        for index, query in enumerate(queries)
+    ]
+
+
+def build_stratified_query_records(
+    all_queries: List[str],
+    start_index: int,
+    max_queries: int,
+) -> List[Dict[str, object]]:
+    buckets = build_bucket_map(all_queries)
+    bucket_offsets = {
+        bucket: rows[start_index:]
+        for bucket, rows in buckets.items()
+    }
+
+    selected: List[Dict[str, object]] = []
+    seen = set()
+
+    while len(selected) < max_queries:
+        added_in_pass = 0
+
+        for bucket in BUCKET_ORDER:
+            rows = bucket_offsets.get(bucket, [])
+            if not rows:
+                continue
+
+            query_index, query = rows.pop(0)
+            key = query.lower()
+            if key in seen:
+                continue
+
+            seen.add(key)
+            selected.append(
+                {
+                    "query": query,
+                    "query_index": query_index,
+                    "bucket_name": bucket,
+                }
+            )
+            added_in_pass += 1
+
+            if len(selected) >= max_queries:
+                break
+
+        if added_in_pass == 0:
+            break
+
+    return selected
+
+
+def select_query_records(
+    all_queries: List[str],
+    query_mode: str,
+    start_index: int,
+    max_queries: int,
+) -> List[Dict[str, object]]:
+    if query_mode == "stratified_esci":
+        return build_stratified_query_records(
+            all_queries=all_queries,
+            start_index=start_index,
+            max_queries=max_queries,
+        )
+
+    selected = select_query_window(
+        all_queries=all_queries,
+        start_index=start_index,
+        max_queries=max_queries,
+    )
+    return build_ordered_query_records(
+        queries=selected,
+        global_start_index=start_index,
+    )
+
+
 def chunk_path(output_dir: Path, chunk_id: int) -> Path:
     return output_dir / "chunks" / f"chunk_{chunk_id:06d}.csv"
 
@@ -281,6 +568,7 @@ def clear_previous_run_outputs(output_dir: Path) -> None:
         "full_esci_eval_by_query.csv",
         "full_esci_eval_summary.csv",
         "full_esci_eval_by_route.csv",
+        "full_esci_eval_by_bucket.csv",
         "full_esci_eval_failure_modes.csv",
     ]:
         path = output_dir / filename
@@ -332,7 +620,13 @@ def run_governed_query_imported(query: str, output_dir: Path) -> Dict[str, objec
     return summary
 
 
-def evaluate_query(query: str, query_index: int, chunk_id: int, output_dir: Path) -> Dict[str, object]:
+def evaluate_query(
+    query: str,
+    query_index: int,
+    chunk_id: int,
+    bucket_name: str,
+    output_dir: Path,
+) -> Dict[str, object]:
     start = time.perf_counter()
 
     try:
@@ -346,6 +640,7 @@ def evaluate_query(query: str, query_index: int, chunk_id: int, output_dir: Path
             "query": query,
             "query_index": query_index,
             "chunk_id": chunk_id,
+            "bucket_name": bucket_name,
             "success": 1,
             "runtime_seconds": runtime,
             "final_slate_size": safe_int(summary.get("final_slate_size")),
@@ -365,6 +660,7 @@ def evaluate_query(query: str, query_index: int, chunk_id: int, output_dir: Path
             "query": query,
             "query_index": query_index,
             "chunk_id": chunk_id,
+            "bucket_name": bucket_name,
             "success": 0,
             "runtime_seconds": runtime,
             "final_slate_size": 0,
@@ -378,26 +674,28 @@ def evaluate_query(query: str, query_index: int, chunk_id: int, output_dir: Path
 
 
 def evaluate_chunk(
-    queries: List[str],
+    query_records: List[Dict[str, object]],
     chunk_id: int,
     start: int,
     end: int,
     output_dir: Path,
-    global_start_index: int,
 ) -> List[Dict[str, object]]:
     rows = []
-    total = len(queries)
+    total = len(query_records)
     print(f"Chunk {chunk_id:06d}: evaluating query indexes {start}..{end - 1}")
 
-    for query_index in range(start, end):
-        query = queries[query_index]
-        global_query_index = global_start_index + query_index
-        display_index = query_index + 1
+    for selected_index in range(start, end):
+        record = query_records[selected_index]
+        query = clean_text(record.get("query"))
+        global_query_index = safe_int(record.get("query_index"))
+        bucket_name = clean_text(record.get("bucket_name")) or classify_query_bucket(query)
+        display_index = selected_index + 1
         print(f"  [{display_index}/{total}] {console_text(query)}")
         row = evaluate_query(
             query=query,
             query_index=global_query_index,
             chunk_id=chunk_id,
+            bucket_name=bucket_name,
             output_dir=output_dir,
         )
         rows.append(row)
@@ -432,6 +730,7 @@ def mean(values: List[float]) -> float:
 def build_summary(
     rows: List[Dict[str, str]],
     source: str,
+    query_mode: str,
     max_queries: int,
     chunk_size: int,
     start_index: int,
@@ -445,13 +744,17 @@ def build_summary(
 
     route_counts = Counter(clean_text(row.get("governance_route")) or "unknown" for row in success_rows)
     source_counts = Counter(clean_text(row.get("final_execution_source")) or "unknown" for row in success_rows)
+    bucket_counts = Counter(clean_text(row.get("bucket_name")) or "unknown" for row in rows)
 
     return {
         "source": source,
+        "query_mode": query_mode,
         "start_index": start_index,
         "requested_max_queries": max_queries,
         "selected_query_count": selected_query_count,
         "total_available_unique_queries": total_available_unique_queries,
+        "bucket_count": len(bucket_counts),
+        "dominant_bucket": bucket_counts.most_common(1)[0][0] if bucket_counts else "",
         "chunk_size": chunk_size,
         "total_query_rows": total,
         "successful_queries": len(success_rows),
@@ -490,6 +793,41 @@ def build_by_route(rows: List[Dict[str, str]]) -> List[Dict[str, object]]:
                 "baseline_preservation_rate": round(mean([safe_float(row.get("baseline_preserved")) for row in group]), 6),
                 "avg_unique_sub_intents": round(mean([safe_float(row.get("unique_sub_intents")) for row in group]), 6),
                 "total_cold_start_proxy_items": int(sum(safe_float(row.get("cold_start_proxy_items")) for row in group)),
+            }
+        )
+
+    return output
+
+
+def build_by_bucket(rows: List[Dict[str, str]]) -> List[Dict[str, object]]:
+    groups: Dict[str, List[Dict[str, str]]] = defaultdict(list)
+    for row in rows:
+        bucket = clean_text(row.get("bucket_name")) or "unknown"
+        groups[bucket].append(row)
+
+    output = []
+    total_rows = sum(len(group) for group in groups.values())
+
+    for bucket in BUCKET_ORDER + sorted(set(groups) - set(BUCKET_ORDER)):
+        group = groups.get(bucket, [])
+        if not group:
+            continue
+
+        success_rows = [row for row in group if safe_int(row.get("success")) == 1]
+        route_counts = Counter(clean_text(row.get("governance_route")) or "unknown" for row in success_rows)
+
+        output.append(
+            {
+                "bucket_name": bucket,
+                "query_count": len(group),
+                "query_share": round(len(group) / max(total_rows, 1), 6),
+                "successful_queries": len(success_rows),
+                "failed_queries": len(group) - len(success_rows),
+                "success_rate": round(len(success_rows) / max(len(group), 1), 6),
+                "top_governance_route": route_counts.most_common(1)[0][0] if route_counts else "",
+                "avg_runtime_seconds": round(mean([safe_float(row.get("runtime_seconds")) for row in group]), 6),
+                "avg_final_slate_size": round(mean([safe_float(row.get("final_slate_size")) for row in success_rows]), 6),
+                "baseline_preservation_rate": round(mean([safe_float(row.get("baseline_preserved")) for row in success_rows]), 6),
             }
         )
 
@@ -548,6 +886,7 @@ def build_failure_modes(rows: List[Dict[str, str]]) -> List[Dict[str, object]]:
 def aggregate_outputs(
     output_dir: Path,
     source: str,
+    query_mode: str,
     max_queries: int,
     chunk_size: int,
     start_index: int,
@@ -558,11 +897,13 @@ def aggregate_outputs(
     by_query_path = output_dir / "full_esci_eval_by_query.csv"
     summary_path = output_dir / "full_esci_eval_summary.csv"
     by_route_path = output_dir / "full_esci_eval_by_route.csv"
+    by_bucket_path = output_dir / "full_esci_eval_by_bucket.csv"
     failure_modes_path = output_dir / "full_esci_eval_failure_modes.csv"
 
     summary = build_summary(
         rows,
         source=source,
+        query_mode=query_mode,
         max_queries=max_queries,
         chunk_size=chunk_size,
         start_index=start_index,
@@ -570,6 +911,7 @@ def aggregate_outputs(
         total_available_unique_queries=total_available_unique_queries,
     )
     by_route = build_by_route(rows)
+    by_bucket = build_by_bucket(rows)
     failure_modes = build_failure_modes(rows)
 
     write_csv_rows(by_query_path, rows, EVAL_FIELDS)
@@ -589,6 +931,22 @@ def aggregate_outputs(
         ],
     )
     write_csv_rows(
+        by_bucket_path,
+        by_bucket,
+        [
+            "bucket_name",
+            "query_count",
+            "query_share",
+            "successful_queries",
+            "failed_queries",
+            "success_rate",
+            "top_governance_route",
+            "avg_runtime_seconds",
+            "avg_final_slate_size",
+            "baseline_preservation_rate",
+        ],
+    )
+    write_csv_rows(
         failure_modes_path,
         failure_modes,
         ["failure_mode", "query_count", "query_share", "example_queries", "sample_error"],
@@ -599,6 +957,7 @@ def aggregate_outputs(
     print(f"- {by_query_path}")
     print(f"- {summary_path}")
     print(f"- {by_route_path}")
+    print(f"- {by_bucket_path}")
     print(f"- {failure_modes_path}")
 
 
@@ -617,12 +976,13 @@ def run_full_esci_eval(
 
     all_queries, source = load_all_queries(query_mode=query_mode)
     total_available = len(all_queries)
-    queries = select_query_window(
+    query_records = select_query_records(
         all_queries=all_queries,
+        query_mode=query_mode,
         start_index=start_index,
         max_queries=max_queries,
     )
-    selected_count = len(queries)
+    selected_count = len(query_records)
 
     if total_available == 0:
         raise RuntimeError("No queries were loaded for evaluation.")
@@ -644,6 +1004,7 @@ def run_full_esci_eval(
         aggregate_outputs(
             output_dir=output_dir,
             source=source,
+            query_mode=query_mode,
             max_queries=max_queries,
             chunk_size=chunk_size,
             start_index=start_index,
@@ -652,10 +1013,33 @@ def run_full_esci_eval(
         )
         return
 
+    bucket_distribution = bucket_distribution_from_records(query_records)
+    print("\nBucket distribution before run")
+    print("-" * 100)
+    for bucket in BUCKET_ORDER + sorted(set(bucket_distribution) - set(BUCKET_ORDER)):
+        count = bucket_distribution.get(bucket, 0)
+        if count:
+            print(f"{bucket}: {count}")
+
+    print("\nFirst queries by bucket")
+    print("-" * 100)
+    examples_by_bucket: Dict[str, List[str]] = defaultdict(list)
+    for record in query_records:
+        bucket = clean_text(record.get("bucket_name")) or "unknown"
+        if len(examples_by_bucket[bucket]) < 3:
+            examples_by_bucket[bucket].append(clean_text(record.get("query")))
+
+    for bucket in BUCKET_ORDER + sorted(set(examples_by_bucket) - set(BUCKET_ORDER)):
+        examples = examples_by_bucket.get(bucket, [])
+        if examples:
+            print(f"{bucket}:")
+            for example in examples:
+                print(f"  - {console_text(example)}")
+
     print("\nFirst selected queries")
     print("-" * 100)
-    for preview_index, query in enumerate(queries[:5], start=1):
-        print(f"{preview_index}. {console_text(query)}")
+    for preview_index, record in enumerate(query_records[:5], start=1):
+        print(f"{preview_index}. {console_text(record.get('query'))}")
 
     for chunk_id, start, end in chunk_ranges(total=selected_count, chunk_size=chunk_size, start_index=0):
         path = chunk_path(output_dir, chunk_id)
@@ -665,12 +1049,11 @@ def run_full_esci_eval(
             continue
 
         rows = evaluate_chunk(
-            queries=queries,
+            query_records=query_records,
             chunk_id=chunk_id,
             start=start,
             end=end,
             output_dir=output_dir,
-            global_start_index=start_index,
         )
         write_csv_rows(path, rows, EVAL_FIELDS)
         print(f"Chunk {chunk_id:06d}: wrote {len(rows)} rows to {path}")
@@ -678,6 +1061,7 @@ def run_full_esci_eval(
     aggregate_outputs(
         output_dir=output_dir,
         source=source,
+        query_mode=query_mode,
         max_queries=max_queries,
         chunk_size=chunk_size,
         start_index=start_index,
@@ -693,7 +1077,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--start-index", type=int, default=0, help="Zero-based query index to start from.")
     parser.add_argument(
         "--query-mode",
-        choices=["esci", "sample", "smoke"],
+        choices=["esci", "sample", "smoke", "stratified_esci"],
         default="esci",
         help="Query source mode.",
     )
