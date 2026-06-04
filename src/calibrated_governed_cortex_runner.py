@@ -15,8 +15,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import src.governed_cortex_runner as gcr
+from src.calibrated_route_execution_adapter import execute_calibrated_route
 from src.governance_calibration_dry_run import (
-    DEFAULT_OUTPUT_DIR as CALIBRATION_OUTPUT_DIR,
     calibrate_query,
 )
 from src.governance_alignment_analyzer import (
@@ -52,6 +52,7 @@ RESULT_FIELDS = [
     "route_changed_flag",
     "current_final_execution_source",
     "calibrated_final_execution_source",
+    "calibrated_execution_source",
     "current_final_slate_size",
     "calibrated_final_slate_size",
     "current_unique_sub_intents",
@@ -60,6 +61,8 @@ RESULT_FIELDS = [
     "calibrated_cold_start_proxy_items",
     "calibrated_success",
     "calibrated_fallback_used",
+    "calibrated_fallback_reason",
+    "calibrated_adapter_trace",
     "error_message",
     "plain_english_comparison",
 ]
@@ -299,15 +302,29 @@ def execute_query(query: str, output_dir: Path) -> Dict[str, object]:
             query_type=query_type,
             bias=bias,
         )
-        calibrated_rows, calibrated_source, calibrated_fallback = select_experimental_slate(
+        adapter_result = execute_calibrated_route(
             query=query,
-            route=calibrated_route,
-            decision=calibrated_decision,
-            query_type=query_type,
-            bias=bias,
+            calibrated_route=calibrated_route,
+            query_understanding={
+                "query_type": query_type,
+                "recommended_governance_bias": bias,
+                "confidence_score": calibration.get("query_understanding_confidence"),
+                "risk_score": calibration.get("query_understanding_risk"),
+            },
+            max_items=12,
         )
         current_metrics = slate_metrics(current_rows, current_source)
-        calibrated_metrics = slate_metrics(calibrated_rows, calibrated_source)
+        calibrated_rows = adapter_result.get("final_slate", [])
+        calibrated_source = clean_text(adapter_result.get("execution_source"))
+        calibrated_metrics = {
+            "final_execution_source": calibrated_source,
+            "final_slate_size": safe_int(adapter_result.get("final_slate_size")),
+            "unique_sub_intents": safe_int(adapter_result.get("unique_sub_intents")),
+            "cold_start_proxy_items": sum(
+                1 for row in calibrated_rows
+                if gcr.lower_text(row.get("cold_start_proxy")) == "true"
+            ),
+        }
 
         success = bool(calibrated_rows)
         comparison = (
@@ -329,6 +346,7 @@ def execute_query(query: str, output_dir: Path) -> Dict[str, object]:
             "route_changed_flag": safe_int(calibration.get("route_changed_flag")),
             "current_final_execution_source": current_metrics["final_execution_source"],
             "calibrated_final_execution_source": calibrated_metrics["final_execution_source"],
+            "calibrated_execution_source": calibrated_source,
             "current_final_slate_size": current_metrics["final_slate_size"],
             "calibrated_final_slate_size": calibrated_metrics["final_slate_size"],
             "current_unique_sub_intents": current_metrics["unique_sub_intents"],
@@ -336,7 +354,9 @@ def execute_query(query: str, output_dir: Path) -> Dict[str, object]:
             "current_cold_start_proxy_items": current_metrics["cold_start_proxy_items"],
             "calibrated_cold_start_proxy_items": calibrated_metrics["cold_start_proxy_items"],
             "calibrated_success": int(success),
-            "calibrated_fallback_used": int(calibrated_fallback),
+            "calibrated_fallback_used": int(bool(adapter_result.get("fallback_used"))),
+            "calibrated_fallback_reason": clean_text(adapter_result.get("fallback_reason")),
+            "calibrated_adapter_trace": clean_text(adapter_result.get("adapter_trace")),
             "error_message": "",
             "plain_english_comparison": comparison,
         }
@@ -353,6 +373,7 @@ def execute_query(query: str, output_dir: Path) -> Dict[str, object]:
             "route_changed_flag": 0,
             "current_final_execution_source": "",
             "calibrated_final_execution_source": "",
+            "calibrated_execution_source": "",
             "current_final_slate_size": 0,
             "calibrated_final_slate_size": 0,
             "current_unique_sub_intents": 0,
@@ -361,6 +382,8 @@ def execute_query(query: str, output_dir: Path) -> Dict[str, object]:
             "calibrated_cold_start_proxy_items": 0,
             "calibrated_success": 0,
             "calibrated_fallback_used": 1,
+            "calibrated_fallback_reason": "Calibrated execution failed.",
+            "calibrated_adapter_trace": "",
             "error_message": str(exc)[:1000],
             "plain_english_comparison": f"Calibrated execution failed for '{query}': {exc}",
         }
@@ -377,7 +400,8 @@ def summarize(rows: List[Dict[str, object]]) -> Dict[str, object]:
     current_route_counts = Counter(clean_text(row.get("current_governance_route")) for row in success_rows)
     calibrated_route_counts = Counter(clean_text(row.get("calibrated_governance_route")) for row in success_rows)
     current_source_counts = Counter(clean_text(row.get("current_final_execution_source")) for row in success_rows)
-    calibrated_source_counts = Counter(clean_text(row.get("calibrated_final_execution_source")) for row in success_rows)
+    calibrated_source_counts = Counter(clean_text(row.get("calibrated_execution_source")) for row in success_rows)
+    adapter_fallback_count = sum(safe_int(row.get("calibrated_fallback_used")) for row in rows)
 
     return {
         "total_queries": total,
@@ -393,7 +417,9 @@ def summarize(rows: List[Dict[str, object]]) -> Dict[str, object]:
         "calibrated_top_route": calibrated_route_counts.most_common(1)[0][0] if calibrated_route_counts else "",
         "current_top_execution_source": current_source_counts.most_common(1)[0][0] if current_source_counts else "",
         "calibrated_top_execution_source": calibrated_source_counts.most_common(1)[0][0] if calibrated_source_counts else "",
-        "fallback_count": sum(safe_int(row.get("calibrated_fallback_used")) for row in rows),
+        "fallback_count": adapter_fallback_count,
+        "calibrated_adapter_fallback_count": adapter_fallback_count,
+        "calibrated_adapter_fallback_rate": round(adapter_fallback_count / max(total, 1), 6),
     }
 
 
@@ -415,6 +441,10 @@ def group_by_route(rows: List[Dict[str, object]]) -> List[Dict[str, object]]:
                 "avg_calibrated_final_slate_size": avg(group, "calibrated_final_slate_size"),
                 "avg_calibrated_unique_sub_intents": avg(group, "calibrated_unique_sub_intents"),
                 "fallback_count": sum(safe_int(row.get("calibrated_fallback_used")) for row in group),
+                "adapter_fallback_rate": round(
+                    sum(safe_int(row.get("calibrated_fallback_used")) for row in group) / max(len(group), 1),
+                    6,
+                ),
             }
         )
     return output
@@ -451,6 +481,7 @@ def failures(rows: List[Dict[str, object]]) -> List[Dict[str, object]]:
             "calibrated_governance_route": row.get("calibrated_governance_route"),
             "calibrated_final_execution_source": row.get("calibrated_final_execution_source"),
             "calibrated_fallback_used": row.get("calibrated_fallback_used"),
+            "calibrated_fallback_reason": row.get("calibrated_fallback_reason"),
             "error_message": row.get("error_message"),
         }
         for row in rows
@@ -477,6 +508,7 @@ def write_outputs(rows: List[Dict[str, object]], output_dir: Path) -> Dict[str, 
             "avg_calibrated_final_slate_size",
             "avg_calibrated_unique_sub_intents",
             "fallback_count",
+            "adapter_fallback_rate",
         ],
     )
     write_csv(
@@ -493,6 +525,7 @@ def write_outputs(rows: List[Dict[str, object]], output_dir: Path) -> Dict[str, 
             "calibrated_governance_route",
             "calibrated_final_execution_source",
             "calibrated_fallback_used",
+            "calibrated_fallback_reason",
             "error_message",
         ],
     )
@@ -550,7 +583,7 @@ def run_batch(sample_size: int, query_mode: str, start_index: int, output_dir: P
             print(
                 f"[{index}/{len(selected)}] {console_text(query)} -> "
                 f"{row['current_governance_route']} => {row['calibrated_governance_route']} "
-                f"({row['current_final_execution_source']} => {row['calibrated_final_execution_source']})"
+                f"({row['current_final_execution_source']} => {row['calibrated_execution_source']})"
             )
 
     summary = write_outputs(rows, output_dir=output_dir)

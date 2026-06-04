@@ -28,3 +28,4 @@ outputs/query_understanding/
 outputs/governance_alignment/
 outputs/governance_calibration/
 outputs/calibrated_governed_cortex/
+outputs/calibrated_route_execution_adapter/
