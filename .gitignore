@@ -29,3 +29,4 @@ outputs/governance_alignment/
 outputs/governance_calibration/
 outputs/calibrated_governed_cortex/
 outputs/calibrated_route_execution_adapter/
+outputs/route_specific_slate_quality/
