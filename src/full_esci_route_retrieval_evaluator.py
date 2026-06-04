@@ -49,6 +49,10 @@ RESULT_FIELDS = [
     "review_priority",
     "strict_filtered_count",
     "strict_demoted_count",
+    "strict_clean_count",
+    "strict_removed_count",
+    "strict_hard_violation_count",
+    "strict_soft_violation_count",
     "strict_violation_row_count",
     "strict_violation_rate",
     "calibrated_adapter_trace",
@@ -84,6 +88,7 @@ QUERY_EVAL_FIELDS = [
     "strict_negative_terms",
     "strict_constraint_violation",
     "strict_constraint_penalty_applied",
+    "strict_violation_severity",
 ]
 
 
@@ -238,7 +243,13 @@ def evaluate_slate(
     review_priorities = []
     strict_filtered_counts = []
     strict_demoted_counts = []
+    strict_clean_counts = []
+    strict_removed_counts = []
+    strict_hard_counts = []
+    strict_soft_counts = []
     strict_violation_count = 0
+    strict_hard_row_count = 0
+    strict_soft_row_count = 0
 
     for index, row in enumerate(slate_rows, start=1):
         product_id = clean_text(row.get("product_id") or row.get("item_id"))
@@ -253,8 +264,17 @@ def evaluate_slate(
             review_priorities.append(review_priority)
         strict_violation = safe_int(row.get("strict_constraint_violation"))
         strict_violation_count += strict_violation
+        severity = clean_text(row.get("strict_violation_severity")) or "none"
+        if severity == "hard":
+            strict_hard_row_count += 1
+        elif severity == "soft":
+            strict_soft_row_count += 1
         strict_filtered_counts.append(safe_int(row.get("strict_filtered_count")))
         strict_demoted_counts.append(safe_int(row.get("strict_demoted_count")))
+        strict_clean_counts.append(safe_int(row.get("strict_clean_count")))
+        strict_removed_counts.append(safe_int(row.get("strict_removed_count")))
+        strict_hard_counts.append(safe_int(row.get("strict_hard_violation_count")))
+        strict_soft_counts.append(safe_int(row.get("strict_soft_violation_count")))
         evaluated_rows.append(
             {
                 "query": query,
@@ -273,6 +293,7 @@ def evaluate_slate(
                 "strict_negative_terms": clean_text(row.get("strict_negative_terms")),
                 "strict_constraint_violation": strict_violation,
                 "strict_constraint_penalty_applied": safe_int(row.get("strict_constraint_penalty_applied")),
+                "strict_violation_severity": severity,
             }
         )
 
@@ -301,8 +322,14 @@ def evaluate_slate(
             "review_priority": top_counter_value(review_priorities),
             "strict_filtered_count": max(strict_filtered_counts) if strict_filtered_counts else 0,
             "strict_demoted_count": max(strict_demoted_counts) if strict_demoted_counts else 0,
+            "strict_clean_count": max(strict_clean_counts) if strict_clean_counts else 0,
+            "strict_removed_count": max(strict_removed_counts) if strict_removed_counts else 0,
+            "strict_hard_violation_count": max(strict_hard_counts) if strict_hard_counts else strict_hard_row_count,
+            "strict_soft_violation_count": max(strict_soft_counts) if strict_soft_counts else strict_soft_row_count,
             "strict_violation_row_count": strict_violation_count,
             "strict_violation_rate": round(strict_violation_count / max(retrieved_count, 1), 6),
+            "strict_hard_violation_row_count": strict_hard_row_count,
+            "strict_soft_violation_row_count": strict_soft_row_count,
         },
         evaluated_rows,
     )
@@ -315,6 +342,9 @@ def run_query(
     top_k: int,
     retrieval_mode: str,
     retrieval_backend: str,
+    strict_filter_mode: str,
+    strict_min_clean_results: int,
+    strict_candidate_multiplier: int,
     label_lookup: Dict[Tuple[str, str], str],
 ) -> Tuple[Dict[str, object], List[Dict[str, object]]]:
     calibration = calibrate_query_in_sandbox(query=query, output_dir=output_dir)
@@ -333,6 +363,9 @@ def run_query(
         max_items=top_k,
         retrieval_mode=retrieval_mode,
         retrieval_backend=retrieval_backend,
+        strict_filter_mode=strict_filter_mode,
+        strict_min_clean_results=strict_min_clean_results,
+        strict_candidate_multiplier=strict_candidate_multiplier,
         index_dir=index_dir,
         top_k=top_k,
     )
@@ -362,8 +395,14 @@ def run_query(
         "review_priority": eval_metrics.get("review_priority", ""),
         "strict_filtered_count": eval_metrics.get("strict_filtered_count", 0),
         "strict_demoted_count": eval_metrics.get("strict_demoted_count", 0),
+        "strict_clean_count": eval_metrics.get("strict_clean_count", 0),
+        "strict_removed_count": eval_metrics.get("strict_removed_count", 0),
+        "strict_hard_violation_count": eval_metrics.get("strict_hard_violation_count", 0),
+        "strict_soft_violation_count": eval_metrics.get("strict_soft_violation_count", 0),
         "strict_violation_row_count": eval_metrics.get("strict_violation_row_count", 0),
         "strict_violation_rate": eval_metrics.get("strict_violation_rate", 0),
+        "strict_hard_violation_row_count": eval_metrics.get("strict_hard_violation_row_count", 0),
+        "strict_soft_violation_row_count": eval_metrics.get("strict_soft_violation_row_count", 0),
         "calibrated_adapter_trace": clean_text(adapter_result.get("adapter_trace")),
         **eval_metrics,
         "error_message": "",
@@ -389,8 +428,28 @@ def aggregate_summary(rows: List[Dict[str, object]], runtime_seconds: float) -> 
         "fallback_count": fallback_count,
         "fallback_rate": round(fallback_count / max(len(success_rows), 1), 6),
         "avg_strict_filtered_count": avg(success_rows, "strict_filtered_count"),
+        "avg_strict_clean_count": avg(success_rows, "strict_clean_count"),
+        "avg_strict_removed_count": avg(success_rows, "strict_removed_count"),
+        "avg_strict_demoted_count": avg(success_rows, "strict_demoted_count"),
+        "avg_strict_hard_violation_count": avg(success_rows, "strict_hard_violation_count"),
+        "avg_strict_soft_violation_count": avg(success_rows, "strict_soft_violation_count"),
         "strict_violation_row_count": sum(safe_int(row.get("strict_violation_row_count")) for row in success_rows),
         "strict_violation_rate": round(
+            sum(safe_int(row.get("strict_violation_row_count")) for row in success_rows)
+            / max(sum(safe_int(row.get("retrieved_count")) for row in success_rows), 1),
+            6,
+        ),
+        "strict_hard_violation_rate": round(
+            sum(safe_int(row.get("strict_hard_violation_row_count")) for row in success_rows)
+            / max(sum(safe_int(row.get("retrieved_count")) for row in success_rows), 1),
+            6,
+        ),
+        "strict_soft_violation_rate": round(
+            sum(safe_int(row.get("strict_soft_violation_row_count")) for row in success_rows)
+            / max(sum(safe_int(row.get("retrieved_count")) for row in success_rows), 1),
+            6,
+        ),
+        "strict_any_violation_rate": round(
             sum(safe_int(row.get("strict_violation_row_count")) for row in success_rows)
             / max(sum(safe_int(row.get("retrieved_count")) for row in success_rows), 1),
             6,
@@ -433,8 +492,28 @@ def grouped_summary(rows: List[Dict[str, object]], group_fields: List[str]) -> L
             "avg_exact_rate_in_retrieved": avg(group, "exact_rate_in_retrieved"),
             "avg_exact_or_substitute_rate_in_retrieved": avg(group, "exact_or_substitute_rate_in_retrieved"),
             "avg_strict_filtered_count": avg(group, "strict_filtered_count"),
+            "avg_strict_clean_count": avg(group, "strict_clean_count"),
+            "avg_strict_removed_count": avg(group, "strict_removed_count"),
+            "avg_strict_demoted_count": avg(group, "strict_demoted_count"),
+            "avg_strict_hard_violation_count": avg(group, "strict_hard_violation_count"),
+            "avg_strict_soft_violation_count": avg(group, "strict_soft_violation_count"),
             "strict_violation_row_count": sum(safe_int(row.get("strict_violation_row_count")) for row in group),
             "strict_violation_rate": round(
+                sum(safe_int(row.get("strict_violation_row_count")) for row in group)
+                / max(sum(safe_int(row.get("retrieved_count")) for row in group), 1),
+                6,
+            ),
+            "strict_hard_violation_rate": round(
+                sum(safe_int(row.get("strict_hard_violation_row_count")) for row in group)
+                / max(sum(safe_int(row.get("retrieved_count")) for row in group), 1),
+                6,
+            ),
+            "strict_soft_violation_rate": round(
+                sum(safe_int(row.get("strict_soft_violation_row_count")) for row in group)
+                / max(sum(safe_int(row.get("retrieved_count")) for row in group), 1),
+                6,
+            ),
+            "strict_any_violation_rate": round(
                 sum(safe_int(row.get("strict_violation_row_count")) for row in group)
                 / max(sum(safe_int(row.get("retrieved_count")) for row in group), 1),
                 6,
@@ -593,6 +672,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
     print(f"selected_query_count: {len(queries)}")
     print(f"retrieval_mode: {args.retrieval_mode}")
     print(f"retrieval_backend: {args.retrieval_backend}")
+    print(f"strict_filter_mode: {args.strict_filter_mode}")
     print(f"index_dir: {index_dir}")
     print(f"top_k: {args.top_k}")
 
@@ -609,6 +689,9 @@ def run_evaluation(args: argparse.Namespace) -> None:
                 top_k=args.top_k,
                 retrieval_mode=args.retrieval_mode,
                 retrieval_backend=args.retrieval_backend,
+                strict_filter_mode=args.strict_filter_mode,
+                strict_min_clean_results=args.strict_min_clean_results,
+                strict_candidate_multiplier=args.strict_candidate_multiplier,
                 label_lookup=label_lookup,
             )
             result_rows.append(row)
@@ -685,6 +768,9 @@ def parse_args() -> argparse.Namespace:
         default="lexical",
         help="Full ESCI retrieval backend.",
     )
+    parser.add_argument("--strict-filter-mode", choices=["remove", "demote", "hybrid"], default="hybrid")
+    parser.add_argument("--strict-min-clean-results", type=int, default=8)
+    parser.add_argument("--strict-candidate-multiplier", type=int, default=8)
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Output directory.")
     return parser.parse_args()
 

@@ -302,6 +302,9 @@ def execution_node(state: CortexGraphState) -> CortexGraphState:
             max_items=safe_int(getattr(state["args"], "top_k", 12), 12),
             retrieval_mode=getattr(state["args"], "retrieval_mode", "sample"),
             retrieval_backend=getattr(state["args"], "retrieval_backend", "lexical"),
+            strict_filter_mode=getattr(state["args"], "strict_filter_mode", "hybrid"),
+            strict_min_clean_results=safe_int(getattr(state["args"], "strict_min_clean_results", 8), 8),
+            strict_candidate_multiplier=safe_int(getattr(state["args"], "strict_candidate_multiplier", 8), 8),
             index_dir=getattr(state["args"], "index_dir", "data/esci_index"),
             top_k=safe_int(getattr(state["args"], "top_k", 12), 12),
         )
@@ -573,6 +576,9 @@ def parse_args() -> argparse.Namespace:
         default="lexical",
         help="Full ESCI retrieval backend.",
     )
+    parser.add_argument("--strict-filter-mode", choices=["remove", "demote", "hybrid"], default="hybrid")
+    parser.add_argument("--strict-min-clean-results", type=int, default=8)
+    parser.add_argument("--strict-candidate-multiplier", type=int, default=8)
     return parser.parse_args()
 
 

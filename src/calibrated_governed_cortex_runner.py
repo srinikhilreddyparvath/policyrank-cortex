@@ -290,6 +290,9 @@ def execute_query(
     output_dir: Path,
     retrieval_mode: str = "sample",
     retrieval_backend: str = "lexical",
+    strict_filter_mode: str = "hybrid",
+    strict_min_clean_results: int = 8,
+    strict_candidate_multiplier: int = 8,
     index_dir: Path | str = "data/esci_index",
     top_k: int = 12,
 ) -> Dict[str, object]:
@@ -321,6 +324,9 @@ def execute_query(
             max_items=top_k,
             retrieval_mode=retrieval_mode,
             retrieval_backend=retrieval_backend,
+            strict_filter_mode=strict_filter_mode,
+            strict_min_clean_results=strict_min_clean_results,
+            strict_candidate_multiplier=strict_candidate_multiplier,
             index_dir=index_dir,
             top_k=top_k,
         )
@@ -550,7 +556,17 @@ def print_summary(summary: Dict[str, object]) -> None:
         print(f"{key}: {value}")
 
 
-def run_single_query(query: str, output_dir: Path, retrieval_mode: str, retrieval_backend: str, index_dir: Path, top_k: int) -> None:
+def run_single_query(
+    query: str,
+    output_dir: Path,
+    retrieval_mode: str,
+    retrieval_backend: str,
+    strict_filter_mode: str,
+    strict_min_clean_results: int,
+    strict_candidate_multiplier: int,
+    index_dir: Path,
+    top_k: int,
+) -> None:
     print("\nMVP 23C Calibrated Governed CORTEX Runner")
     print("-" * 100)
     print(f"query: {console_text(query)}")
@@ -560,6 +576,9 @@ def run_single_query(query: str, output_dir: Path, retrieval_mode: str, retrieva
         output_dir=output_dir,
         retrieval_mode=retrieval_mode,
         retrieval_backend=retrieval_backend,
+        strict_filter_mode=strict_filter_mode,
+        strict_min_clean_results=strict_min_clean_results,
+        strict_candidate_multiplier=strict_candidate_multiplier,
         index_dir=index_dir,
         top_k=top_k,
     )
@@ -580,6 +599,9 @@ def run_batch(
     output_dir: Path,
     retrieval_mode: str,
     retrieval_backend: str,
+    strict_filter_mode: str,
+    strict_min_clean_results: int,
+    strict_candidate_multiplier: int,
     index_dir: Path,
     top_k: int,
 ) -> None:
@@ -602,6 +624,9 @@ def run_batch(
     print(f"output_dir: {output_dir}")
     print(f"retrieval_mode: {retrieval_mode}")
     print(f"retrieval_backend: {retrieval_backend}")
+    print(f"strict_filter_mode: {strict_filter_mode}")
+    print(f"strict_min_clean_results: {strict_min_clean_results}")
+    print(f"strict_candidate_multiplier: {strict_candidate_multiplier}")
     print(f"index_dir: {index_dir}")
     print(f"top_k: {top_k}")
 
@@ -613,6 +638,9 @@ def run_batch(
             output_dir=output_dir,
             retrieval_mode=retrieval_mode,
             retrieval_backend=retrieval_backend,
+            strict_filter_mode=strict_filter_mode,
+            strict_min_clean_results=strict_min_clean_results,
+            strict_candidate_multiplier=strict_candidate_multiplier,
             index_dir=index_dir,
             top_k=top_k,
         )
@@ -658,6 +686,9 @@ def parse_args() -> argparse.Namespace:
         default="lexical",
         help="Full ESCI retrieval backend.",
     )
+    parser.add_argument("--strict-filter-mode", choices=["remove", "demote", "hybrid"], default="hybrid")
+    parser.add_argument("--strict-min-clean-results", type=int, default=8)
+    parser.add_argument("--strict-candidate-multiplier", type=int, default=8)
     return parser.parse_args()
 
 
@@ -671,6 +702,9 @@ def main() -> None:
             output_dir=output_dir,
             retrieval_mode=args.retrieval_mode,
             retrieval_backend=args.retrieval_backend,
+            strict_filter_mode=args.strict_filter_mode,
+            strict_min_clean_results=args.strict_min_clean_results,
+            strict_candidate_multiplier=args.strict_candidate_multiplier,
             index_dir=Path(args.index_dir),
             top_k=args.top_k,
         )
@@ -690,6 +724,9 @@ def main() -> None:
         output_dir=output_dir,
         retrieval_mode=args.retrieval_mode,
         retrieval_backend=args.retrieval_backend,
+        strict_filter_mode=args.strict_filter_mode,
+        strict_min_clean_results=args.strict_min_clean_results,
+        strict_candidate_multiplier=args.strict_candidate_multiplier,
         index_dir=Path(args.index_dir),
         top_k=args.top_k,
     )
