@@ -43,7 +43,7 @@ st.set_page_config(
     page_title="PolicyRank-RL: CORTEX Engine",
     page_icon="🧠",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 ensure_storage_exists()
@@ -83,42 +83,120 @@ EXECUTION_LABELS = {
 
 
 # =============================================================================
-# Polished CORTEX UI styling
+# Theme-safe CORTEX UI styling
 # =============================================================================
 
 st.markdown(
     """
     <style>
+        :root {
+            --app-bg:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.10), transparent 26%),
+                radial-gradient(circle at top right, rgba(16, 185, 129, 0.08), transparent 28%),
+                linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+            --card-bg: rgba(255, 255, 255, 0.94);
+            --card-bg-strong: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --text-soft: #64748b;
+            --border-soft: #e2e8f0;
+            --border-accent: #bfdbfe;
+            --accent: #2563eb;
+            --accent-2: #0891b2;
+            --accent-soft: #eff6ff;
+            --green-soft: #ecfdf5;
+            --yellow-soft: #fffbeb;
+            --purple-soft: #f5f3ff;
+            --shadow-soft: 0 10px 28px rgba(15, 23, 42, 0.08);
+            --input-bg: #ffffff;
+            --input-text: #0f172a;
+            --input-border: #cbd5e1;
+            --chip-bg: #ffffff;
+            --chip-text: #1e293b;
+            --alert-blue-bg: #eff6ff;
+            --alert-blue-text: #1e3a8a;
+            --alert-green-bg: #ecfdf5;
+            --alert-green-text: #065f46;
+            --alert-yellow-bg: #fffbeb;
+            --alert-yellow-text: #92400e;
+            --alert-purple-bg: #f5f3ff;
+            --alert-purple-text: #4c1d95;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --app-bg:
+                    radial-gradient(circle at 16% 0%, rgba(6, 182, 212, 0.16), transparent 27%),
+                    radial-gradient(circle at 90% 7%, rgba(124, 58, 237, 0.15), transparent 29%),
+                    linear-gradient(145deg, #030712 0%, #071326 45%, #020617 100%);
+                --card-bg: rgba(10, 22, 39, 0.94);
+                --card-bg-strong: rgba(9, 22, 39, 0.98);
+                --text-main: #f8fafc;
+                --text-muted: #a6b8cf;
+                --text-soft: #8ca5c0;
+                --border-soft: #1b314a;
+                --border-accent: rgba(34, 211, 238, 0.22);
+                --accent: #22d3ee;
+                --accent-2: #38bdf8;
+                --accent-soft: rgba(9, 23, 42, 0.92);
+                --green-soft: rgba(9, 23, 42, 0.92);
+                --yellow-soft: rgba(9, 23, 42, 0.92);
+                --purple-soft: rgba(9, 23, 42, 0.92);
+                --shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.28);
+                --input-bg: #0f172a;
+                --input-text: #f8fafc;
+                --input-border: #334155;
+                --chip-bg: rgba(10, 29, 49, 0.80);
+                --chip-text: #b8d8ea;
+                --alert-blue-bg: rgba(9, 23, 42, 0.92);
+                --alert-blue-text: #d5e3f4;
+                --alert-green-bg: rgba(9, 23, 42, 0.92);
+                --alert-green-text: #d5e3f4;
+                --alert-yellow-bg: rgba(9, 23, 42, 0.92);
+                --alert-yellow-text: #f8e7bd;
+                --alert-purple-bg: rgba(9, 23, 42, 0.92);
+                --alert-purple-text: #e9ddff;
+            }
+        }
+
         .stApp {
-            background:
-                radial-gradient(circle at top left, rgba(59, 130, 246, 0.12), transparent 26%),
-                radial-gradient(circle at top right, rgba(16, 185, 129, 0.10), transparent 28%),
-                linear-gradient(180deg, #f7fbff 0%, #f8fafc 45%, #ffffff 100%);
-            color: #0f172a;
+            background: var(--app-bg);
+            color: var(--text-main);
         }
 
         section[data-testid="stSidebar"] {
-            background: #ffffff;
-            border-right: 1px solid #e2e8f0;
+            display: none !important;
         }
 
         [data-testid="stSidebarNav"] {
-            display: none;
+            display: none !important;
+        }
+
+        [data-testid="collapsedControl"] {
+            display: none !important;
+        }
+
+        .block-container {
+            padding-top: 2rem;
+            max-width: 1450px;
         }
 
         .main-title-card {
-            background: linear-gradient(135deg, #ffffff 0%, #eef6ff 48%, #ecfdf5 100%);
-            border: 1px solid #dbeafe;
+            background: var(--card-bg);
+            border: 1px solid var(--border-accent);
             border-radius: 26px;
             padding: 30px 34px;
             margin-bottom: 18px;
-            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+            box-shadow: var(--shadow-soft);
         }
 
-        .main-eyebrow {
-            font-size: 0.82rem;
+        .main-eyebrow,
+        .decision-label,
+        .section-kicker,
+        .product-rank {
+            font-size: 0.78rem;
             font-weight: 850;
-            color: #2563eb;
+            color: var(--accent);
             text-transform: uppercase;
             letter-spacing: 0.12em;
             margin-bottom: 8px;
@@ -127,7 +205,7 @@ st.markdown(
         .main-title {
             font-size: 2.55rem;
             font-weight: 900;
-            color: #0f172a;
+            color: var(--text-main);
             letter-spacing: -0.055em;
             line-height: 1.08;
             margin-bottom: 8px;
@@ -135,89 +213,100 @@ st.markdown(
 
         .main-subtitle {
             font-size: 1.02rem;
-            color: #475569;
+            color: var(--text-muted);
             line-height: 1.65;
             max-width: 1120px;
         }
 
-        .badge-row {
+        .badge-row,
+        .chip-row {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
             margin-top: 16px;
         }
 
-        .badge {
+        .chip-row {
+            justify-content: center;
+            margin: 4px auto 26px;
+        }
+
+        .badge,
+        .query-chip {
             font-size: 0.78rem;
             font-weight: 800;
             padding: 8px 12px;
             border-radius: 999px;
-            color: #1e293b;
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
+            color: var(--chip-text);
+            background: var(--chip-bg);
+            border: 1px solid var(--border-soft);
             box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
         }
 
-        .soft-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
+        .query-chip {
+            font-size: 0.83rem;
+        }
+
+        .soft-card,
+        .simple-card,
+        .metric-card,
+        div[data-testid="stMetric"] {
+            background: var(--card-bg);
+            border: 1px solid var(--border-soft);
             border-radius: 20px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .soft-card {
             padding: 18px 20px;
             margin-bottom: 16px;
-            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.055);
         }
 
-        .demo-hero {
+        .demo-hero,
+        .search-hero {
             text-align: center;
-            max-width: 880px;
-            margin: 22px auto 22px auto;
+            max-width: 900px;
+            margin: 20px auto 18px auto;
         }
 
-        .demo-hero-title {
-            color: #0f172a;
-            font-size: 2.35rem;
-            line-height: 1.1;
+        .demo-hero-title,
+        .search-hero-title {
+            color: var(--text-main);
+            font-size: clamp(2.2rem, 4vw, 3.3rem);
+            line-height: 1.05;
             font-weight: 900;
-            letter-spacing: -0.055em;
-            margin-bottom: 10px;
+            letter-spacing: -0.06em;
+            margin: 8px 0 12px;
         }
 
-        .demo-hero-subtitle {
-            color: #475569;
+        .demo-hero-subtitle,
+        .search-hero-subtitle {
+            color: var(--text-muted);
             line-height: 1.65;
-            font-size: 1.01rem;
+            font-size: 1.02rem;
         }
 
         .search-card {
             max-width: 820px;
             margin: 0 auto 22px auto;
             padding: 22px 26px 12px 26px;
-            background: #ffffff;
-            border: 1px solid #dbeafe;
+            background: var(--card-bg);
+            border: 1px solid var(--border-accent);
             border-radius: 24px;
-            box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
+            box-shadow: var(--shadow-soft);
         }
 
         .decision-card {
-            background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
-            border: 1px solid #bfdbfe;
+            background: var(--card-bg);
+            border: 1px solid var(--border-accent);
             border-radius: 24px;
             padding: 25px 28px;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.065);
+            box-shadow: var(--shadow-soft);
             margin: 18px 0;
         }
 
-        .decision-label {
-            color: #2563eb;
-            font-size: 0.76rem;
-            font-weight: 850;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 7px;
-        }
-
         .decision-title {
-            color: #0f172a;
+            color: var(--text-main);
             font-size: 1.9rem;
             line-height: 1.15;
             font-weight: 900;
@@ -226,182 +315,152 @@ st.markdown(
         }
 
         .simple-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 20px;
             padding: 19px 20px;
             min-height: 178px;
-            box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
         }
 
         .simple-card-title {
-            color: #0f172a;
+            color: var(--text-main);
             font-weight: 850;
             font-size: 1rem;
             margin-bottom: 9px;
         }
 
         .simple-card-body {
-            color: #475569;
+            color: var(--text-muted);
             line-height: 1.62;
             font-size: 0.94rem;
         }
 
         .metric-card {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 18px;
             min-height: 108px;
             padding: 14px 16px;
             margin-bottom: 16px;
-            box-shadow: 0 7px 18px rgba(15, 23, 42, 0.05);
         }
 
-        .metric-card-label {
-            color: #64748b;
+        .metric-card-label,
+        div[data-testid="stMetricLabel"] {
+            color: var(--text-soft);
             font-size: 0.72rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.08em;
         }
 
-        .metric-card-value {
-            color: #0f172a;
+        .metric-card-value,
+        div[data-testid="stMetricValue"] {
+            color: var(--text-main);
             font-size: 1.45rem;
             font-weight: 900;
             margin: 7px 0 4px;
         }
 
         .metric-card-help {
-            color: #64748b;
+            color: var(--text-soft);
             font-size: 0.82rem;
         }
 
         .product-card {
-            background: #ffffff;
-            border: 1px solid #dbeafe;
-            border-left: 5px solid #2563eb;
+            background: var(--card-bg);
+            border: 1px solid var(--border-accent);
+            border-left: 5px solid var(--accent);
             border-radius: 17px;
             padding: 14px 17px;
             margin: 10px 0;
-            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.045);
-        }
-
-        .product-rank {
-            color: #2563eb;
-            font-size: 0.73rem;
-            font-weight: 850;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
+            box-shadow: var(--shadow-soft);
         }
 
         .product-title {
-            color: #0f172a;
+            color: var(--text-main);
             font-weight: 850;
             font-size: 1.02rem;
             margin: 5px 0 7px;
         }
 
         .product-meta {
-            color: #475569;
+            color: var(--text-muted);
             font-size: 0.88rem;
             line-height: 1.55;
         }
 
-        .info-card-blue {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
+        .info-card-blue,
+        .info-card-green,
+        .info-card-yellow,
+        .info-card-purple {
             border-radius: 18px;
             padding: 16px 18px;
-            color: #1e3a8a;
             margin-bottom: 12px;
             line-height: 1.62;
+        }
+
+        .info-card-blue {
+            background: var(--alert-blue-bg);
+            border: 1px solid var(--border-accent);
+            color: var(--alert-blue-text);
         }
 
         .info-card-green {
-            background: #ecfdf5;
-            border: 1px solid #bbf7d0;
-            border-radius: 18px;
-            padding: 16px 18px;
-            color: #065f46;
-            margin-bottom: 12px;
-            line-height: 1.62;
+            background: var(--alert-green-bg);
+            border: 1px solid rgba(16, 185, 129, 0.34);
+            color: var(--alert-green-text);
         }
 
         .info-card-yellow {
-            background: #fffbeb;
-            border: 1px solid #fde68a;
-            border-radius: 18px;
-            padding: 16px 18px;
-            color: #92400e;
-            margin-bottom: 12px;
-            line-height: 1.62;
+            background: var(--alert-yellow-bg);
+            border: 1px solid rgba(245, 158, 11, 0.36);
+            color: var(--alert-yellow-text);
         }
 
         .info-card-purple {
-            background: #f5f3ff;
-            border: 1px solid #ddd6fe;
-            border-radius: 18px;
-            padding: 16px 18px;
-            color: #4c1d95;
-            margin-bottom: 12px;
-            line-height: 1.62;
+            background: var(--alert-purple-bg);
+            border: 1px solid rgba(139, 92, 246, 0.36);
+            color: var(--alert-purple-text);
         }
 
         .agent-box {
-            background: #ffffff;
-            border: 1px solid #dbeafe;
+            background: var(--card-bg);
+            border: 1px solid var(--border-accent);
             border-radius: 16px;
             padding: 14px;
             text-align: center;
             font-weight: 800;
-            color: #1e3a8a;
+            color: var(--text-main);
             min-height: 72px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.06);
+            box-shadow: var(--shadow-soft);
         }
 
         .agent-arrow {
             text-align: center;
-            color: #2563eb;
+            color: var(--accent);
             font-size: 1.45rem;
             font-weight: 900;
             padding-top: 18px;
         }
 
-        div[data-testid="stMetric"] {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 16px;
-            padding: 14px 16px;
-            box-shadow: 0 6px 16px rgba(15, 23, 42, 0.05);
-        }
-
-        div[data-testid="stMetricLabel"] {
-            color: #64748b;
-            font-weight: 700;
-        }
-
-        div[data-testid="stMetricValue"] {
-            color: #0f172a;
-            font-weight: 900;
-        }
-
         .small-muted {
-            color: #64748b;
+            color: var(--text-muted);
             font-size: 0.92rem;
             line-height: 1.6;
         }
 
-        .section-kicker {
-            color: #2563eb;
-            font-size: 0.78rem;
-            font-weight: 850;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            margin-bottom: 6px;
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-main);
+            letter-spacing: -0.025em;
+        }
+
+        div[data-testid="stMarkdownContainer"],
+        div[data-testid="stMarkdownContainer"] p,
+        div[data-testid="stMarkdownContainer"] li,
+        div[data-testid="stMarkdownContainer"] span,
+        div[data-testid="stWidgetLabel"],
+        div[data-testid="stWidgetLabel"] p,
+        label,
+        p,
+        span {
+            color: inherit;
         }
 
         .stTabs [data-baseweb="tab-list"] {
@@ -410,27 +469,91 @@ st.markdown(
         }
 
         .stTabs [data-baseweb="tab"] {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
+            background: var(--card-bg);
+            border: 1px solid var(--border-soft);
             border-radius: 999px;
             padding: 9px 18px;
-            color: #334155;
+            color: var(--text-muted);
             font-weight: 800;
         }
 
+        .stTabs [data-baseweb="tab"] * {
+            color: inherit !important;
+        }
+
         .stTabs [aria-selected="true"] {
-            background: #dbeafe;
-            border-color: #93c5fd;
-            color: #1e3a8a;
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            color: var(--text-main);
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.10);
         }
 
-        h1, h2, h3 {
-            color: #0f172a;
-            letter-spacing: -0.025em;
+        .stTextInput input,
+        div[data-testid="stTextInput"] input {
+            color: var(--input-text) !important;
+            caret-color: var(--accent);
+            background: var(--input-bg) !important;
+            border: 1px solid var(--input-border) !important;
+            border-radius: 14px !important;
+            min-height: 54px;
+            font-size: 1.03rem;
         }
 
-        .block-container {
-            padding-top: 2.3rem;
+        .stTextInput input:focus,
+        div[data-testid="stTextInput"] input:focus {
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 1px var(--accent), 0 0 20px rgba(34, 211, 238, 0.14) !important;
+        }
+
+        .stTextInput input::placeholder,
+        div[data-testid="stTextInput"] input::placeholder {
+            color: var(--text-soft) !important;
+            opacity: 1;
+        }
+
+        .stButton > button[kind="primary"],
+        .stFormSubmitButton > button[kind="primary"] {
+            background: linear-gradient(90deg, var(--accent-2), var(--accent));
+            border: 0;
+            color: #ffffff !important;
+            font-weight: 800;
+            min-height: 46px;
+            border-radius: 12px;
+            box-shadow: 0 8px 22px rgba(37, 99, 235, 0.20);
+        }
+
+        .stButton > button,
+        .stFormSubmitButton > button {
+            border-radius: 12px;
+            font-weight: 750;
+        }
+
+        div[data-baseweb="select"] > div {
+            background-color: var(--input-bg) !important;
+            border-color: var(--input-border) !important;
+            color: var(--input-text) !important;
+        }
+
+        div[data-baseweb="select"] * {
+            color: var(--input-text) !important;
+        }
+
+        div[data-testid="stNumberInput"] input {
+            color: var(--input-text) !important;
+            background-color: var(--input-bg) !important;
+            border-color: var(--input-border) !important;
+        }
+
+        div[data-testid="stExpander"] details,
+        div[data-testid="stExpander"] summary {
+            background: var(--card-bg);
+            color: var(--text-main) !important;
+            border-color: var(--border-soft);
+        }
+
+        div[data-testid="stExpander"] summary *,
+        div[data-testid="stExpander"] details > div * {
+            color: inherit;
         }
 
         div[data-testid="stDataFrame"] {
@@ -438,289 +561,36 @@ st.markdown(
             overflow: hidden;
         }
 
-        /* MVP 19.2C dark product shell */
-        .stApp {
-            background:
-                radial-gradient(circle at 16% 0%, rgba(6, 182, 212, 0.16), transparent 27%),
-                radial-gradient(circle at 90% 7%, rgba(124, 58, 237, 0.15), transparent 29%),
-                linear-gradient(145deg, #030712 0%, #071326 45%, #020617 100%);
-            color: #e5edf8;
+        div[data-testid="stDataFrame"] span,
+        div[data-testid="stDataFrame"] p {
+            color: inherit !important;
         }
 
-        section[data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #07101d 0%, #050b16 100%);
-            border-right: 1px solid #192b42;
+        div[data-testid="stAlert"] p,
+        div[data-testid="stAlert"] div {
+            color: inherit !important;
         }
 
-        section[data-testid="stSidebar"] * {
-            color: #d9e6f5;
-        }
-
-        .main-title-card, .decision-card {
-            background: linear-gradient(135deg, rgba(11, 25, 45, 0.98), rgba(12, 35, 59, 0.96));
-            border: 1px solid rgba(34, 211, 238, 0.20);
-            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.34), 0 0 40px rgba(6, 182, 212, 0.06);
-        }
-
-        .main-eyebrow, .decision-label, .section-kicker, .product-rank {
-            color: #22d3ee;
-        }
-
-        .main-title, .decision-title, .demo-hero-title, .simple-card-title,
-        .product-title, h1, h2, h3 {
-            color: #f8fafc;
-        }
-
-        .main-subtitle, .demo-hero-subtitle, .small-muted, .simple-card-body,
-        .product-meta, .metric-card-help {
-            color: #a6b8cf;
-        }
-
-        .badge {
-            color: #bae6fd;
-            background: rgba(14, 36, 60, 0.74);
-            border-color: rgba(34, 211, 238, 0.20);
-        }
-
-        .soft-card, .simple-card, .metric-card, div[data-testid="stMetric"] {
-            background: rgba(10, 22, 39, 0.94);
-            border: 1px solid #1b314a;
-            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.23);
-        }
-
-        .metric-card-label, div[data-testid="stMetricLabel"] {
-            color: #8ca5c0;
-        }
-
-        .metric-card-value, div[data-testid="stMetricValue"] {
-            color: #f1f5f9;
-        }
-
-        .product-card {
-            background: rgba(9, 22, 39, 0.96);
-            border: 1px solid #1c3850;
-            border-left: 5px solid #22d3ee;
-            box-shadow: 0 9px 23px rgba(0, 0, 0, 0.24);
-        }
-
-        .info-card-blue, .info-card-green, .info-card-yellow, .info-card-purple {
-            background: rgba(9, 23, 42, 0.92);
-            color: #d5e3f4;
-        }
-
-        .info-card-blue { border-color: rgba(34, 211, 238, 0.30); }
-        .info-card-green { border-color: rgba(16, 185, 129, 0.34); }
-        .info-card-yellow { border-color: rgba(245, 158, 11, 0.36); }
-        .info-card-purple { border-color: rgba(139, 92, 246, 0.36); }
-
-        .agent-box {
-            background: #0b182b;
-            border-color: #1e3a55;
-            color: #d8f5ff;
-        }
-
-        .agent-arrow {
-            color: #22d3ee;
-        }
-
-        .stTabs [data-baseweb="tab"] {
-            background: rgba(9, 20, 36, 0.94);
-            border-color: #1c3148;
-            color: #afc2d8;
-        }
-
-        .stTabs [aria-selected="true"] {
-            background: rgba(8, 65, 87, 0.78);
-            border-color: #22d3ee;
-            color: #ecfeff;
-            box-shadow: 0 0 18px rgba(34, 211, 238, 0.18);
-        }
-
-        .search-hero {
-            text-align: center;
-            max-width: 900px;
-            margin: 20px auto 14px;
-        }
-
-        .search-hero-title {
-            color: #f8fafc;
-            font-size: clamp(2.2rem, 4vw, 3.3rem);
-            font-weight: 900;
-            letter-spacing: -0.06em;
-            line-height: 1.05;
-            margin: 8px 0 12px;
-        }
-
-        .search-hero-subtitle {
-            color: #b0c2d7;
+        .soft-card-title {
             font-size: 1.02rem;
-            line-height: 1.65;
+            font-weight: 850;
+            color: var(--text-main);
+            margin-bottom: 8px;
         }
 
-        .chip-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 9px;
-            justify-content: center;
-            margin: 4px auto 26px;
+        .status-pill-label {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: var(--text-soft);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
         }
 
-        .query-chip {
-            color: #b8d8ea;
-            background: rgba(10, 29, 49, 0.80);
-            border: 1px solid #20405b;
-            padding: 7px 13px;
-            border-radius: 999px;
-            font-size: 0.83rem;
-        }
-
-        .stTextInput input {
-            color: #f8fafc !important;
-            background: #0a172b !important;
-            border: 1px solid #284b68 !important;
-            border-radius: 14px !important;
-            min-height: 52px;
-        }
-
-        .stTextInput input:focus {
-            border-color: #22d3ee !important;
-            box-shadow: 0 0 0 1px #22d3ee, 0 0 22px rgba(34, 211, 238, 0.18) !important;
-        }
-
-        .stButton > button[kind="primary"] {
-            background: linear-gradient(90deg, #0891b2, #2563eb);
-            border: 0;
-            color: #ffffff;
-            font-weight: 750;
-            min-height: 46px;
-            border-radius: 12px;
-            box-shadow: 0 8px 22px rgba(37, 99, 235, 0.28);
-        }
-
-        /* Streamlit widget contrast on the dark canvas. */
-        .stApp label,
-        .stApp p,
-        .stApp span,
-        .stApp div[data-testid="stMarkdownContainer"],
-        .stApp div[data-testid="stMarkdownContainer"] p,
-        .stApp div[data-testid="stWidgetLabel"],
-        .stApp div[data-testid="stWidgetLabel"] p,
-        .stApp .stRadio label,
-        .stApp .stCheckbox label,
-        .stApp .stSelectbox label,
-        .stApp .stTextInput label,
-        .stApp div[data-testid="stRadio"] label,
-        .stApp div[data-testid="stRadio"] label p,
-        .stApp div[data-testid="stCheckbox"] label,
-        .stApp div[data-testid="stCheckbox"] label p,
-        .stApp div[data-testid="stSelectbox"] label,
-        .stApp div[data-testid="stTextInput"] label,
-        .stApp div[data-testid="stNumberInput"] label,
-        .stApp div[data-testid="stSlider"] label {
-            color: #cbd5e1 !important;
-        }
-
-        .stApp h1, .stApp h2, .stApp h3, .stApp h4,
-        .stApp h5, .stApp h6,
-        .stApp div[data-testid="stMarkdownContainer"] strong {
-            color: #f8fafc;
-        }
-
-        .stApp div[data-testid="stRadio"] label p,
-        .stApp .stRadio label p,
-        .stApp div[data-testid="stCheckbox"] label p,
-        .stApp .stCheckbox label p {
-            color: #e5edf8 !important;
-        }
-
-        .stApp div[data-testid="stTextInput"] input,
-        .stApp .stTextInput input {
-            color: #f8fafc !important;
-            caret-color: #38bdf8;
-            background-color: #0f172a !important;
-            border-color: #334155 !important;
-        }
-
-        .stApp div[data-testid="stTextInput"] input::placeholder,
-        .stApp .stTextInput input::placeholder {
-            color: #94a3b8 !important;
-            opacity: 1;
-        }
-
-        .stApp div[data-testid="stNumberInput"] input {
-            color: #f8fafc !important;
-            caret-color: #38bdf8;
-            background-color: #0f172a !important;
-            border-color: #334155 !important;
-        }
-
-        .stApp div[data-testid="stNumberInput"] button {
-            color: #f8fafc !important;
-            background-color: #13233b !important;
-            border-color: #334155 !important;
-        }
-
-        .stApp div[data-baseweb="select"],
-        .stApp div[data-baseweb="select"] > div,
-        .stApp div[data-baseweb="select"] * {
-            color: #f8fafc !important;
-        }
-
-        .stApp div[data-baseweb="select"] > div {
-            background-color: #0f172a !important;
-            border-color: #334155 !important;
-        }
-
-        .stApp div[data-baseweb="popover"],
-        .stApp div[data-baseweb="menu"],
-        .stApp ul[role="listbox"] {
-            background-color: #111827 !important;
-            color: #f8fafc !important;
-        }
-
-        .stApp li[role="option"],
-        .stApp li[role="option"] * {
-            color: #f8fafc !important;
-        }
-
-        .stApp li[role="option"]:hover,
-        .stApp li[role="option"][aria-selected="true"] {
-            background-color: #1e3a5f !important;
-        }
-
-        .stApp div[data-testid="stExpander"] details,
-        .stApp div[data-testid="stExpander"] summary {
-            background: rgba(10, 22, 39, 0.76);
-            color: #e5edf8 !important;
-        }
-
-        .stApp div[data-testid="stExpander"] summary *,
-        .stApp div[data-testid="stExpander"] details > div * {
-            color: #e5edf8;
-        }
-
-        .stApp .stTabs [data-baseweb="tab"] *,
-        .stApp .stTabs [data-baseweb="tab"] p {
-            color: inherit !important;
-        }
-
-        .stApp div[data-testid="stSpinner"] *,
-        .stApp div[data-testid="stStatusWidget"] *,
-        .stApp div[data-testid="stAlert"] p {
-            color: #e5edf8 !important;
-        }
-
-        section[data-testid="stSidebar"] label,
-        section[data-testid="stSidebar"] p,
-        section[data-testid="stSidebar"] span,
-        section[data-testid="stSidebar"] div[data-testid="stWidgetLabel"] {
-            color: #cbd5e1 !important;
-        }
-
-        /* Keep embedded grid cells free to use Streamlit's high-contrast dataframe theme. */
-        .stApp div[data-testid="stDataFrame"] span,
-        .stApp div[data-testid="stDataFrame"] p {
-            color: inherit !important;
+        .status-pill-value {
+            font-size: 1.35rem;
+            font-weight: 900;
+            color: var(--text-main);
+            margin-top: 8px;
         }
     </style>
     """,
@@ -877,7 +747,7 @@ def render_capability_card(title, subtitle, accent="#2563eb"):
     st.markdown(
         f"""
         <div class="soft-card" style="border-left: 7px solid {accent}; min-height: 145px;">
-            <div style="font-size: 1.02rem; font-weight: 850; color: #0f172a; margin-bottom: 8px;">
+            <div class="soft-card-title">
                 {title}
             </div>
             <div class="small-muted">
@@ -893,10 +763,10 @@ def render_status_pill(label, value, accent="#2563eb"):
     st.markdown(
         f"""
         <div class="soft-card" style="border-left: 7px solid {accent};">
-            <div style="font-size: 0.78rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em;">
+            <div class="status-pill-label">
                 {label}
             </div>
-            <div style="font-size: 1.35rem; font-weight: 900; color: #0f172a; margin-top: 8px;">
+            <div class="status-pill-value">
                 {value}
             </div>
         </div>
@@ -924,11 +794,11 @@ def render_product_home():
     s1, s2, s3, s4 = st.columns(4)
 
     with s1:
-        render_status_pill("Current Stage", "MVP 16.2", "#2563eb")
+        render_status_pill("Current Stage", "MVP 20.1", "#2563eb")
     with s2:
         render_status_pill("Core Mode", "Agentic Ranking", "#7c3aed")
     with s3:
-        render_status_pill("Latest Layer", "Behavior-Aware", "#059669")
+        render_status_pill("Latest Layer", "Search UX Cleanup", "#059669")
     with s4:
         render_status_pill("Repo Flow", "Build → Test → Commit", "#d97706")
 
@@ -977,8 +847,12 @@ def render_product_home():
             ["MVP 15.8", "Repair Quality Guardrails", "Rejects weak repaired candidates."],
             ["MVP 15.9", "Strict Compound Repair Rules", "Prevents over-repair for narrow queries and validates compound intent repairs."],
             ["MVP 16", "Behavior-Aware CORTEX", "Adds behavior confidence, mission stage, exploration, cold-start rescue, and policy reasons."],
-            ["MVP 16.1", "Behavior-Aware Streamlit Page", "Makes the behavior-aware layer interactive."],
-            ["MVP 16.2", "UI Renovation", "Turns the app into a cleaner, demo-ready CORTEX product dashboard."],
+            ["MVP 17", "CORTEX Governance Agent", "Chooses preserve, repair, strict guardrails, or behavior-aware execution."],
+            ["MVP 18", "Governed CORTEX Runner", "Runs the governed route end-to-end."],
+            ["MVP 19", "Scalable Governed Evaluation", "Evaluates governed routing over larger query samples."],
+            ["MVP 19.3", "Cost vs Value Governance Analyzer", "Estimates cost and scenario value of governed routes."],
+            ["MVP 20", "Final Documentation Polish", "README, project status, demo report, and progression artifact."],
+            ["MVP 20.1", "Search UX Cleanup", "Enter-to-search, no sidebar, theme-safe UI, and cleaner demo mode."],
         ],
         columns=["Stage", "Capability", "What It Adds"],
     )
@@ -994,11 +868,11 @@ def render_product_home():
             """
             <div class="info-card-green">
                 <b>Best demo path:</b><br><br>
-                1. Start with this Product Home tab.<br>
-                2. Open the Behavior-Aware CORTEX page from the sidebar.<br>
-                3. Run <b>beach vacation packing list</b>.<br>
-                4. Show cold-start rescue and policy reason codes.<br>
-                5. Return to Live Search Console for the broader CORTEX pipeline.
+                1. Start with Live Search Console.<br>
+                2. Type a query and press Enter.<br>
+                3. Show the Simple Mode answer first.<br>
+                4. Switch to Technical Mode only if the audience wants internals.<br>
+                5. Use Cost vs Value to explain production tradeoffs.
             </div>
             """,
             unsafe_allow_html=True,
@@ -1246,6 +1120,16 @@ def render_cortex_demo():
         unsafe_allow_html=True,
     )
 
+    mode_col = st.columns([1.4, 1, 1.4])[1]
+    with mode_col:
+        cortex_demo_mode = st.radio(
+            "Experience mode",
+            ["Simple Mode", "Technical Mode"],
+            horizontal=True,
+            index=0,
+            key="cortex_demo_mode",
+        )
+
     query_col = st.columns([1, 2.2, 1])[1]
     with query_col:
         with st.container(border=True):
@@ -1253,20 +1137,20 @@ def render_cortex_demo():
                 '<div class="section-kicker" style="text-align:center;">Try CORTEX</div>',
                 unsafe_allow_html=True,
             )
-            query = st.text_input(
-                "Shopping query",
-                placeholder="Example: beach vacation packing list",
-                key="cortex_demo_query",
-                label_visibility="collapsed",
-            ).strip()
-            button_col = st.columns([1, 1.05, 1])[1]
-            with button_col:
-                run_clicked = st.button(
-                    "Run CORTEX",
-                    type="primary",
-                    use_container_width=True,
-                    key="run_cortex_demo",
-                )
+            with st.form("cortex_demo_form", clear_on_submit=False):
+                query = st.text_input(
+                    "Shopping query",
+                    placeholder="Example: beach vacation packing list",
+                    key="cortex_demo_query",
+                    label_visibility="collapsed",
+                ).strip()
+                button_col = st.columns([1, 1.05, 1])[1]
+                with button_col:
+                    run_clicked = st.form_submit_button(
+                        "Run CORTEX",
+                        type="primary",
+                        use_container_width=True,
+                    )
 
     if run_clicked:
         if not query:
@@ -1287,7 +1171,7 @@ def render_cortex_demo():
     active_query = query or st.session_state.get("cortex_demo_last_query", "")
     if not active_query:
         st.markdown(
-            '<div class="info-card-blue">Enter any query and run CORTEX to see a clean governed decision.</div>',
+            '<div class="info-card-blue">Enter any query and press Enter to see a clean governed decision.</div>',
             unsafe_allow_html=True,
         )
         return
@@ -1306,10 +1190,10 @@ def render_cortex_demo():
 
     summary_row = get_latest_row(summary_df)
     if not summary_row:
-        st.info("No governed result exists for this query yet. Select Run CORTEX to generate it.")
+        st.info("No governed result exists for this query yet. Press Enter or select Run CORTEX to generate it.")
         return
 
-    if st.session_state.get("cortex_demo_mode", "Simple Mode") == "Simple Mode":
+    if cortex_demo_mode == "Simple Mode":
         route = friendly_route(summary_row.get("governance_route", "unknown"))
         execution = friendly_execution(summary_row.get("final_execution_source", "unknown"))
         st.markdown(
@@ -1408,15 +1292,13 @@ def _cost_value_currency(value):
 
 def _style_cost_value_chart(fig):
     fig.update_layout(
-        template="plotly_dark",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font={"color": "#e5edf8"},
         legend_title_text="",
         margin={"l": 18, "r": 18, "t": 56, "b": 18},
     )
-    fig.update_xaxes(gridcolor="rgba(148,163,184,0.12)")
-    fig.update_yaxes(gridcolor="rgba(148,163,184,0.12)")
+    fig.update_xaxes(gridcolor="rgba(148,163,184,0.16)")
+    fig.update_yaxes(gridcolor="rgba(148,163,184,0.16)")
     return fig
 
 
@@ -2099,10 +1981,11 @@ def render_router_dry_run_panel(
 
         fig.update_traces(texttemplate="%{text:.3f}", textposition="outside")
         fig.update_layout(
-            template="plotly_white",
             height=340,
             showlegend=False,
             margin=dict(l=20, r=20, t=60, b=40),
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
         )
 
         st.plotly_chart(fig, use_container_width=True)
@@ -2177,10 +2060,11 @@ def reward_comparison_chart(summary_df):
 
     fig.update_traces(texttemplate="%{text:.4f}", textposition="outside")
     fig.update_layout(
-        template="plotly_white",
         height=420,
         showlegend=False,
         margin=dict(l=20, r=20, t=70, b=40),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
     )
 
     return fig
@@ -2227,9 +2111,10 @@ def router_policy_distribution_chart(summary_df):
     )
 
     fig.update_layout(
-        template="plotly_white",
         height=420,
         margin=dict(l=20, r=20, t=70, b=40),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
     )
 
     return fig
@@ -2280,10 +2165,11 @@ def route_reward_chart(by_route_df):
     )
 
     fig.update_layout(
-        template="plotly_white",
         height=450,
         margin=dict(l=20, r=20, t=70, b=40),
         xaxis_title="Governance Route",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
     )
 
     return fig
@@ -2326,7 +2212,6 @@ def router_3d_chart(by_policy_df):
 
     fig.update_layout(
         title="Router Policy Landscape",
-        template="plotly_white",
         height=480,
         scene=dict(
             xaxis_title="Router Reward@5",
@@ -2334,6 +2219,7 @@ def router_3d_chart(by_policy_df):
             zaxis_title="Query Count",
         ),
         margin=dict(l=0, r=0, t=60, b=0),
+        paper_bgcolor="rgba(0,0,0,0)",
     )
 
     return fig
@@ -2350,8 +2236,8 @@ def render_search_hero():
             <div class="section-kicker">Live Search Console</div>
             <div class="search-hero-title">Search with governed intelligence.</div>
             <div class="search-hero-subtitle">
-                CORTEX retrieves products, understands shopping intent, and shapes a useful
-                final slate with guardrails and explainable ranking decisions.
+                Type a shopping query and press Enter. Simple Mode gives a clean product-style
+                result. Technical Mode opens the retrieval, contract, policy, and router internals.
             </div>
         </div>
         """,
@@ -2481,20 +2367,21 @@ def render_search_console(products):
 
     search_col = st.columns([1, 2.35, 1])[1]
     with search_col:
-        query_input = st.text_input(
-            "Shopping query",
-            placeholder="Try any shopping query...",
-            key="live_search_query",
-            label_visibility="collapsed",
-        ).strip()
-        run_col = st.columns([1, 1.08, 1])[1]
-        with run_col:
-            run_clicked = st.button(
-                "Run CORTEX",
-                type="primary",
-                use_container_width=True,
-                key="run_live_search",
-            )
+        with st.form("live_search_form", clear_on_submit=False):
+            query_input = st.text_input(
+                "Shopping query",
+                placeholder="Try any shopping query and press Enter...",
+                key="live_search_query",
+                label_visibility="collapsed",
+            ).strip()
+
+            run_col = st.columns([1, 1.08, 1])[1]
+            with run_col:
+                run_clicked = st.form_submit_button(
+                    "Run CORTEX",
+                    type="primary",
+                    use_container_width=True,
+                )
 
     st.markdown(
         """
@@ -2520,8 +2407,8 @@ def render_search_console(products):
         st.markdown(
             """
             <div class="info-card-blue">
-                Enter any shopping query and select <b>Run CORTEX</b>. Simple Mode uses the
-                recommended governed ranking path automatically.
+                Enter any shopping query and press <b>Enter</b>. Simple Mode uses the recommended
+                governed ranking path automatically.
             </div>
             """,
             unsafe_allow_html=True,
@@ -3155,7 +3042,10 @@ def render_router_dashboard():
                 color_discrete_sequence=px.colors.qualitative.Set2,
             )
 
-            fig.update_layout(template="plotly_white")
+            fig.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+            )
             st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No live router dry-run decisions saved yet.")
@@ -3212,8 +3102,9 @@ def render_learning_dashboard():
             )
 
             chart.update_layout(
-                template="plotly_white",
                 showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
             )
 
             st.plotly_chart(chart, use_container_width=True)
@@ -3235,7 +3126,10 @@ def render_learning_dashboard():
             color_discrete_sequence=px.colors.qualitative.Set2,
         )
 
-        q_chart.update_layout(template="plotly_white")
+        q_chart.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+        )
 
         st.plotly_chart(q_chart, use_container_width=True)
     else:
@@ -3274,7 +3168,10 @@ def render_learning_dashboard():
                 markers=True,
             )
 
-            exp_chart.update_layout(template="plotly_white")
+            exp_chart.update_layout(
+                paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)",
+            )
 
             st.plotly_chart(exp_chart, use_container_width=True)
     else:
@@ -3343,7 +3240,12 @@ def render_architecture_page():
             ["MVP 15.9", "Strict Compound Repair Rules", "Prevents over-repair on narrow product queries."],
             ["MVP 16", "Behavior-Aware CORTEX", "Adds behavior confidence, mission stage, cold-start rescue, and policy reasons."],
             ["MVP 16.1", "Behavior-Aware Streamlit Page", "Makes MVP 16 interactive."],
-            ["MVP 16.2", "Streamlit UI Renovation", "Makes the dashboard product-ready and demo-friendly."],
+            ["MVP 17", "CORTEX Governance Agent", "Chooses which agent route should execute."],
+            ["MVP 18", "Governed CORTEX Runner", "Runs governance and final slate creation end-to-end."],
+            ["MVP 19", "Scalable Governed Evaluation", "Evaluates governed decisions at scale."],
+            ["MVP 19.3", "Cost vs Value Analyzer", "Adds scenario-based economics."],
+            ["MVP 20", "Documentation Polish", "Final README, project status, and demo report."],
+            ["MVP 20.1", "Search UX Cleanup", "Enter-to-search, no sidebar, theme-safe UI, and cleaner simple/technical modes."],
         ],
         columns=["MVP", "Component", "Purpose"],
     )
@@ -3354,10 +3256,10 @@ def render_architecture_page():
 
     roadmap = pd.DataFrame(
         [
-            ["MVP 19.2C", "Dark Live Search UX", "Present clean decisions while retaining technical traceability."],
-            ["MVP 19.3", "Cost vs Value Governance Analyzer", "Measure intervention value against governed execution cost."],
-            ["MVP 19.4", "Cost vs Value Dashboard", "Show production-scale cost, scenario value, and break-even economics."],
-            ["MVP 20", "Final README + Demo Report Polish", "Finish the product narrative and demo evidence."],
+            ["MVP 20.1", "Search UX Cleanup", "Make the app feel like a product rather than a dashboard."],
+            ["MVP 20.2", "Agent Architecture Audit", "Clarify agents, analyzers, guardrails, and dashboards."],
+            ["MVP 21", "Full ESCI Scalable Evaluation", "Run benchmark-scale evaluation beyond sample queries."],
+            ["MVP 22", "Ablation Evaluator", "Measure which agents add lift and which add cost."],
         ],
         columns=["Stage", "Planned Capability", "Why It Matters"],
     )
@@ -3370,37 +3272,6 @@ def render_architecture_page():
 # =============================================================================
 
 products = load_products()
-
-with st.sidebar:
-    st.markdown("## CORTEX Engine")
-
-    st.markdown(
-        """
-        <div class="small-muted">
-            <b>Current MVP: 20</b>
-            <br><br>
-            Simple Mode for demos, Technical Mode for internals.
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    st.divider()
-
-    st.markdown("### Project State")
-    st.write("MVP 20 complete")
-    st.write("Governed CORTEX runner complete")
-    st.write("Scalable evaluation complete")
-    st.write("Cost vs Value dashboard complete")
-    st.write("Final README + Demo Report polish complete")
-
-    st.divider()
-
-    st.markdown("### Useful Command")
-    st.code(
-        ".\\.venv\\Scripts\\streamlit.exe run app.py",
-        language="powershell",
-    )
 
 render_header()
 
