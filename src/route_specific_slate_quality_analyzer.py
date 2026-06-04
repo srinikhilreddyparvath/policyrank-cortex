@@ -395,6 +395,8 @@ def recommended_next_mvp(issues: List[Dict[str, object]]) -> str:
         return "MVP 23G should further harden strict repair materialization and sub-intent tagging."
     if any(clean_text(row.get("calibrated_governance_route")) == "MISSION_REPAIR" for row in issues[:10]):
         return "MVP 23G should improve mission slate builder integration for calibrated repair routes."
+    if any(clean_text(row.get("calibrated_governance_route")) == "BEHAVIOR_AWARE_RERANK" for row in issues[:10]):
+        return "MVP 23H should improve behavior-aware materialization for setup routes."
     return "No major route execution change is needed; continue monitoring calibrated route quality."
 
 

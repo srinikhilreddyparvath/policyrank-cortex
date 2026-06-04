@@ -830,7 +830,321 @@ def execute_behavior_aware(query: str, max_items: int) -> Tuple[List[Dict[str, o
     )
 
 
+MISSION_TEMPLATES = {
+    "new_mom_gift_basket": {
+        "triggers": ["gift basket for new mom", "new mom gift", "mom gift basket", "postpartum gift"],
+        "sub_intents": ["self_care", "baby_care", "snacks", "keepsake", "packaging", "comfort"],
+        "keywords": {
+            "self_care": ["lotion", "bath", "spa", "candle", "tea", "pamper"],
+            "baby_care": ["baby", "newborn", "diaper", "blanket", "pacifier", "onesie"],
+            "snacks": ["snack", "chocolate", "cookies", "tea", "coffee", "granola"],
+            "keepsake": ["keepsake", "memory", "frame", "journal", "photo", "baby book"],
+            "packaging": ["basket", "box", "gift bag", "ribbon", "wrap", "tissue"],
+            "comfort": ["blanket", "pillow", "robe", "slippers", "cozy", "socks"],
+        },
+    },
+    "baby_shower_decorations": {
+        "triggers": ["baby shower", "shower decorations", "baby shower decorations"],
+        "sub_intents": ["balloons", "banners", "tableware", "centerpieces", "games", "favors"],
+        "keywords": {
+            "balloons": ["balloon", "balloons", "garland", "arch"],
+            "banners": ["banner", "sign", "backdrop", "welcome"],
+            "tableware": ["plates", "cups", "napkins", "tableware", "forks"],
+            "centerpieces": ["centerpiece", "table decor", "vase", "confetti"],
+            "games": ["game", "cards", "guess", "raffle", "activity"],
+            "favors": ["favor", "favors", "thank you", "gift bags"],
+        },
+    },
+    "birthday_party_supplies": {
+        "triggers": ["birthday party", "party supplies"],
+        "sub_intents": ["decorations", "tableware", "balloons", "candles", "favors", "games"],
+        "keywords": {
+            "decorations": ["decor", "decoration", "streamer", "banner"],
+            "tableware": ["plates", "cups", "napkins", "tableware"],
+            "balloons": ["balloon", "balloons"],
+            "candles": ["candle", "candles", "cake topper"],
+            "favors": ["favor", "favors", "gift bags"],
+            "games": ["game", "activity", "pinata"],
+        },
+    },
+    "wedding_gift_basket": {
+        "triggers": ["wedding gift basket", "wedding gift"],
+        "sub_intents": ["keepsake", "home_goods", "snacks", "celebration", "packaging", "card"],
+        "keywords": {
+            "keepsake": ["keepsake", "frame", "memory", "album"],
+            "home_goods": ["kitchen", "towel", "mug", "dish", "candle"],
+            "snacks": ["snack", "chocolate", "coffee", "tea"],
+            "celebration": ["champagne", "toast", "flute", "celebration"],
+            "packaging": ["basket", "box", "ribbon", "wrap"],
+            "card": ["card", "congratulations", "wedding card"],
+        },
+    },
+    "kitchen_setup": {
+        "triggers": ["new apartment kitchen setup", "kitchen setup"],
+        "sub_intents": ["cookware", "dinnerware", "utensils", "food_storage", "cleaning", "organization", "small_appliances"],
+        "keywords": {
+            "cookware": ["cookware", "pan", "pot", "skillet"],
+            "dinnerware": ["dinnerware", "plate", "bowl", "dish"],
+            "utensils": ["utensil", "spatula", "spoon", "knife", "flatware"],
+            "food_storage": ["food storage", "container", "storage", "leftover"],
+            "cleaning": ["dish", "towel", "sponge", "trash", "clean"],
+            "organization": ["organizer", "rack", "drawer", "shelf"],
+            "small_appliances": ["toaster", "blender", "coffee", "kettle", "mixer"],
+        },
+    },
+    "office_desk_setup": {
+        "triggers": ["office desk setup", "desk setup", "home office"],
+        "sub_intents": ["desk_organization", "lighting", "ergonomics", "cable_management", "writing_tools", "tech_accessories"],
+        "keywords": {
+            "desk_organization": ["organizer", "desk", "tray", "holder"],
+            "lighting": ["lamp", "light", "lighting"],
+            "ergonomics": ["chair", "wrist", "stand", "ergonomic", "footrest"],
+            "cable_management": ["cable", "cord", "wire", "clip"],
+            "writing_tools": ["pen", "pencil", "notebook", "marker"],
+            "tech_accessories": ["mouse", "keyboard", "hub", "monitor", "charger"],
+        },
+    },
+    "dorm_room_essentials": {
+        "triggers": ["dorm room essentials", "dorm essentials", "college dorm"],
+        "sub_intents": ["bedding", "storage", "laundry", "desk", "bath", "lighting"],
+        "keywords": {
+            "bedding": ["sheet", "comforter", "pillow", "bedding"],
+            "storage": ["storage", "bin", "organizer", "drawer"],
+            "laundry": ["laundry", "hamper", "detergent"],
+            "desk": ["desk", "lamp", "notebook", "organizer"],
+            "bath": ["towel", "shower", "caddy"],
+            "lighting": ["lamp", "light", "string lights"],
+        },
+    },
+    "beach_vacation_packing": {
+        "triggers": ["beach vacation packing list", "packing list", "beach vacation"],
+        "sub_intents": ["sun_protection", "towels", "swimwear", "hydration", "storage", "footwear"],
+        "keywords": {
+            "sun_protection": ["sunscreen", "spf", "hat", "sunglasses"],
+            "towels": ["towel", "beach towel"],
+            "swimwear": ["swimsuit", "swim", "trunks"],
+            "hydration": ["water", "bottle", "hydration"],
+            "storage": ["bag", "tote", "cooler"],
+            "footwear": ["sandals", "flip", "slides"],
+        },
+    },
+    "generic_mission": {
+        "triggers": ["starter kit", "essentials", "setup", "decorations", "gift basket", "packing list"],
+        "sub_intents": ["core_item", "accessories", "storage", "care", "comfort", "extras"],
+        "keywords": {
+            "core_item": ["kit", "set", "bundle", "main"],
+            "accessories": ["accessory", "accessories", "add on"],
+            "storage": ["storage", "bag", "box", "organizer"],
+            "care": ["care", "clean", "wash"],
+            "comfort": ["comfort", "soft", "cozy"],
+            "extras": ["extra", "supplies", "refill"],
+        },
+    },
+}
+
+
+def extract_mission_sub_intents(query: str) -> Dict[str, object]:
+    lowered = lower_text(query)
+    for template_name, template in MISSION_TEMPLATES.items():
+        if any(trigger in lowered for trigger in template["triggers"]):
+            return {
+                "mission_template": template_name,
+                "sub_intents": list(template["sub_intents"]),
+                "keywords": dict(template["keywords"]),
+            }
+
+    if any(term in lowered for term in ["gift", "basket", "party", "shower", "decorations"]):
+        template = MISSION_TEMPLATES["generic_mission"]
+        return {
+            "mission_template": "generic_mission",
+            "sub_intents": list(template["sub_intents"]),
+            "keywords": dict(template["keywords"]),
+        }
+
+    return {
+        "mission_template": "unknown_mission",
+        "sub_intents": [],
+        "keywords": {},
+    }
+
+
+def score_mission_candidate(row: Dict[str, object], sub_intent: str, keywords: Sequence[str], query: str) -> float:
+    title = title_from_row(row)
+    text = " ".join(clean_text(value) for value in row.values())
+    text_l = lower_text(text)
+    score = 0.0
+
+    for keyword in keywords:
+        if token_present(keyword, text_l):
+            score += 2.0
+
+    for token in tokenize(sub_intent.replace("_", " ")):
+        if token_present(token, text_l):
+            score += 1.25
+
+    for token in tokenize(query):
+        if len(token) > 2 and token_present(token, text_l):
+            score += 0.2
+
+    if compact_token(sub_intent) and compact_token(sub_intent) in compact_token(title):
+        score += 2.0
+
+    return score
+
+
+def synthetic_mission_title(template_name: str, sub_intent: str, ordinal: int) -> str:
+    readable = sub_intent.replace("_", " ")
+    prefixes = {
+        "new_mom_gift_basket": "New mom",
+        "baby_shower_decorations": "Baby shower",
+        "birthday_party_supplies": "Birthday party",
+        "wedding_gift_basket": "Wedding gift basket",
+        "kitchen_setup": "Kitchen setup",
+        "office_desk_setup": "Office desk",
+        "dorm_room_essentials": "Dorm room",
+        "beach_vacation_packing": "Beach packing",
+        "generic_mission": "Mission",
+    }
+    prefix = prefixes.get(template_name, "Mission")
+    variants = ["set", "kit", "bundle", "essentials", "pack", "starter item"]
+    return f"{prefix} {readable} {variants[(ordinal - 1) % len(variants)]}"
+
+
+def materialize_mission_repair_slate(query: str, max_items: int = 12) -> Dict[str, object]:
+    mission = extract_mission_sub_intents(query)
+    sub_intents = [clean_text(value) for value in mission.get("sub_intents", []) if clean_text(value)]
+    if not sub_intents:
+        return {
+            "rows": [],
+            "mission": mission,
+            "mission_materialized_count": 0,
+            "unique_sub_intents": 0,
+        }
+
+    candidate_rows, source_path = load_candidate_products(limit=5000)
+    keywords_by_intent: Dict[str, Sequence[str]] = mission.get("keywords", {})  # type: ignore[assignment]
+    selected: List[Dict[str, object]] = []
+    used_ids = set()
+
+    target_unique = min(len(sub_intents), max(5, min(max_items, len(sub_intents))))
+    per_intent_candidates: Dict[str, List[Dict[str, object]]] = {}
+
+    for sub_intent in sub_intents:
+        scored: List[Tuple[float, Dict[str, object]]] = []
+        keywords = keywords_by_intent.get(sub_intent, [])
+        for index, candidate in enumerate(candidate_rows):
+            row = object_to_dict(candidate)
+            score = score_mission_candidate(row, sub_intent, keywords, query)
+            if score <= 0:
+                continue
+            row["item_id"] = row_id_from_row(row, index)
+            row["title"] = title_from_row(row)
+            row["product_title"] = title_from_row(row)
+            scored.append((score, row))
+        scored.sort(key=lambda item: (-item[0], clean_text(item[1].get("title"))))
+        per_intent_candidates[sub_intent] = [row for _score, row in scored[:4]]
+
+    # First pass: force breadth across sub-intents.
+    for sub_intent in sub_intents:
+        if len(selected) >= max_items:
+            break
+        row = None
+        for candidate in per_intent_candidates.get(sub_intent, []):
+            item_id = clean_text(candidate.get("item_id"))
+            if item_id and item_id not in used_ids:
+                row = dict(candidate)
+                used_ids.add(item_id)
+                break
+
+        if row is None:
+            row = {
+                "item_id": f"mission_synthetic_{mission['mission_template']}_{sub_intent}_1",
+                "title": synthetic_mission_title(str(mission["mission_template"]), sub_intent, 1),
+                "product_title": synthetic_mission_title(str(mission["mission_template"]), sub_intent, 1),
+                "mission_repair_flag": "synthetic_materialized",
+            }
+
+        row["query"] = query
+        row["calibrated_route"] = "MISSION_REPAIR"
+        row["execution_source"] = "mission_repair_materialized"
+        row["sub_intent"] = sub_intent
+        row["mission_repair_flag"] = clean_text(row.get("mission_repair_flag")) or "retrieved_materialized"
+        row["mission_template"] = mission["mission_template"]
+        row["mission_coverage_score"] = round(min(len(set(sub_intents[: len(selected) + 1])) / max(len(sub_intents), 1), 1.0), 4)
+        selected.append(row)
+
+    # Second pass: fill remaining slots while rotating sub-intents.
+    fill_round = 2
+    while len(selected) < max_items:
+        added = 0
+        for sub_intent in sub_intents:
+            if len(selected) >= max_items:
+                break
+            row = None
+            for candidate in per_intent_candidates.get(sub_intent, []):
+                item_id = clean_text(candidate.get("item_id"))
+                if item_id and item_id not in used_ids:
+                    row = dict(candidate)
+                    used_ids.add(item_id)
+                    break
+            if row is None:
+                row = {
+                    "item_id": f"mission_synthetic_{mission['mission_template']}_{sub_intent}_{fill_round}",
+                    "title": synthetic_mission_title(str(mission["mission_template"]), sub_intent, fill_round),
+                    "product_title": synthetic_mission_title(str(mission["mission_template"]), sub_intent, fill_round),
+                    "mission_repair_flag": "synthetic_materialized",
+                }
+            row["query"] = query
+            row["calibrated_route"] = "MISSION_REPAIR"
+            row["execution_source"] = "mission_repair_materialized"
+            row["sub_intent"] = sub_intent
+            row["mission_repair_flag"] = clean_text(row.get("mission_repair_flag")) or "retrieved_materialized"
+            row["mission_template"] = mission["mission_template"]
+            row["mission_coverage_score"] = round(len({clean_text(r.get("sub_intent")) for r in selected + [row]}) / max(len(sub_intents), 1), 4)
+            selected.append(row)
+            added += 1
+        fill_round += 1
+        if added == 0:
+            break
+
+    unique_intents = len({clean_text(row.get("sub_intent")) for row in selected if clean_text(row.get("sub_intent"))})
+    for row in selected:
+        row["mission_coverage_score"] = round(unique_intents / max(len(sub_intents), 1), 4)
+
+    return {
+        "rows": selected[:max_items],
+        "mission": mission,
+        "source_path": source_path,
+        "mission_materialized_count": len(selected[:max_items]),
+        "unique_sub_intents": unique_intents,
+    }
+
+
 def execute_mission_repair(query: str, max_items: int) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+    materialized = materialize_mission_repair_slate(query=query, max_items=max_items)
+    rows = normalize_slate_rows(
+        query=query,
+        rows=iterable_rows(materialized.get("rows")),
+        execution_source="mission_repair_materialized",
+        max_items=max_items,
+    )
+    if rows:
+        for row in rows:
+            row["calibrated_route"] = "MISSION_REPAIR"
+            row["execution_source"] = "mission_repair_materialized"
+            row["mission_repair_flag"] = clean_text(row.get("mission_repair_flag")) or "retrieved_materialized"
+
+        mission = materialized.get("mission", {})
+        sub_intents = mission.get("sub_intents", []) if isinstance(mission, dict) else []
+        trace = (
+            "mission_sub_intents_detected="
+            f"{','.join(str(value) for value in sub_intents)}"
+            f" | mission_template={mission.get('mission_template', '') if isinstance(mission, dict) else ''}"
+            f" | mission_materialized_count={safe_int(materialized.get('mission_materialized_count'))}"
+            f" | unique_sub_intents={safe_int(materialized.get('unique_sub_intents'))}"
+        )
+        return rows, "mission_repair_materialized", False, "", trace
+
     func = try_import_function(
         "src.mission_slate_builder",
         [
