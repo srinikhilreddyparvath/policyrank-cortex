@@ -47,3 +47,4 @@ outputs/full_esci_route_retrieval_eval_500k/
 outputs/full_esci_index_scale_comparison/
 outputs/full_esci_route_retrieval_eval_500k_strict_boost/
 outputs/full_esci_index_scale_comparison_strict_boost/
+outputs/full_esci_paper_benchmark_report/
