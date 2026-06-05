@@ -55,6 +55,11 @@ RESULT_FIELDS = [
     "strict_soft_violation_count",
     "strict_violation_row_count",
     "strict_violation_rate",
+    "scale_aware_rerank_mode",
+    "strict_boost_applied_count",
+    "reranked_candidate_count",
+    "hard_violation_penalty_count",
+    "soft_violation_penalty_count",
     "calibrated_adapter_trace",
     "retrieved_count",
     "labeled_retrieved_count",
@@ -89,6 +94,9 @@ QUERY_EVAL_FIELDS = [
     "strict_constraint_violation",
     "strict_constraint_penalty_applied",
     "strict_violation_severity",
+    "scale_aware_rerank_mode",
+    "scale_aware_original_score",
+    "scale_aware_rerank_score",
 ]
 
 
@@ -247,6 +255,11 @@ def evaluate_slate(
     strict_removed_counts = []
     strict_hard_counts = []
     strict_soft_counts = []
+    scale_aware_modes = []
+    strict_boost_counts = []
+    reranked_candidate_counts = []
+    hard_penalty_counts = []
+    soft_penalty_counts = []
     strict_violation_count = 0
     strict_hard_row_count = 0
     strict_soft_row_count = 0
@@ -275,6 +288,12 @@ def evaluate_slate(
         strict_removed_counts.append(safe_int(row.get("strict_removed_count")))
         strict_hard_counts.append(safe_int(row.get("strict_hard_violation_count")))
         strict_soft_counts.append(safe_int(row.get("strict_soft_violation_count")))
+        scale_aware_mode = clean_text(row.get("scale_aware_rerank_mode")) or "none"
+        scale_aware_modes.append(scale_aware_mode)
+        strict_boost_counts.append(safe_int(row.get("strict_boost_applied_count")))
+        reranked_candidate_counts.append(safe_int(row.get("reranked_candidate_count")))
+        hard_penalty_counts.append(safe_int(row.get("hard_violation_penalty_count")))
+        soft_penalty_counts.append(safe_int(row.get("soft_violation_penalty_count")))
         evaluated_rows.append(
             {
                 "query": query,
@@ -294,6 +313,9 @@ def evaluate_slate(
                 "strict_constraint_violation": strict_violation,
                 "strict_constraint_penalty_applied": safe_int(row.get("strict_constraint_penalty_applied")),
                 "strict_violation_severity": severity,
+                "scale_aware_rerank_mode": scale_aware_mode,
+                "scale_aware_original_score": row.get("scale_aware_original_score", ""),
+                "scale_aware_rerank_score": row.get("scale_aware_rerank_score", ""),
             }
         )
 
@@ -330,6 +352,11 @@ def evaluate_slate(
             "strict_violation_rate": round(strict_violation_count / max(retrieved_count, 1), 6),
             "strict_hard_violation_row_count": strict_hard_row_count,
             "strict_soft_violation_row_count": strict_soft_row_count,
+            "scale_aware_rerank_mode": top_counter_value(scale_aware_modes),
+            "strict_boost_applied_count": max(strict_boost_counts) if strict_boost_counts else 0,
+            "reranked_candidate_count": max(reranked_candidate_counts) if reranked_candidate_counts else 0,
+            "hard_violation_penalty_count": max(hard_penalty_counts) if hard_penalty_counts else 0,
+            "soft_violation_penalty_count": max(soft_penalty_counts) if soft_penalty_counts else 0,
         },
         evaluated_rows,
     )
@@ -345,6 +372,7 @@ def run_query(
     strict_filter_mode: str,
     strict_min_clean_results: int,
     strict_candidate_multiplier: int,
+    scale_aware_rerank_mode: str,
     label_lookup: Dict[Tuple[str, str], str],
 ) -> Tuple[Dict[str, object], List[Dict[str, object]]]:
     calibration = calibrate_query_in_sandbox(query=query, output_dir=output_dir)
@@ -366,6 +394,7 @@ def run_query(
         strict_filter_mode=strict_filter_mode,
         strict_min_clean_results=strict_min_clean_results,
         strict_candidate_multiplier=strict_candidate_multiplier,
+        scale_aware_rerank_mode=scale_aware_rerank_mode,
         index_dir=index_dir,
         top_k=top_k,
     )
@@ -403,6 +432,11 @@ def run_query(
         "strict_violation_rate": eval_metrics.get("strict_violation_rate", 0),
         "strict_hard_violation_row_count": eval_metrics.get("strict_hard_violation_row_count", 0),
         "strict_soft_violation_row_count": eval_metrics.get("strict_soft_violation_row_count", 0),
+        "scale_aware_rerank_mode": eval_metrics.get("scale_aware_rerank_mode", "none"),
+        "strict_boost_applied_count": eval_metrics.get("strict_boost_applied_count", 0),
+        "reranked_candidate_count": eval_metrics.get("reranked_candidate_count", 0),
+        "hard_violation_penalty_count": eval_metrics.get("hard_violation_penalty_count", 0),
+        "soft_violation_penalty_count": eval_metrics.get("soft_violation_penalty_count", 0),
         "calibrated_adapter_trace": clean_text(adapter_result.get("adapter_trace")),
         **eval_metrics,
         "error_message": "",
@@ -414,6 +448,11 @@ def aggregate_summary(rows: List[Dict[str, object]], runtime_seconds: float) -> 
     total = len(rows)
     success_rows = [row for row in rows if not clean_text(row.get("error_message"))]
     fallback_count = sum(safe_int(row.get("fallback_used")) for row in success_rows)
+    scale_mode = "strict_boost" if any(
+        clean_text(row.get("scale_aware_rerank_mode")) == "strict_boost"
+        or safe_int(row.get("strict_boost_applied_count"))
+        for row in success_rows
+    ) else (top_value(success_rows, "scale_aware_rerank_mode") or "none")
     return {
         "total_queries": total,
         "success_count": len(success_rows),
@@ -427,6 +466,11 @@ def aggregate_summary(rows: List[Dict[str, object]], runtime_seconds: float) -> 
         "top_execution_source": top_value(success_rows, "execution_source"),
         "fallback_count": fallback_count,
         "fallback_rate": round(fallback_count / max(len(success_rows), 1), 6),
+        "scale_aware_rerank_mode": scale_mode,
+        "strict_boost_applied_count": sum(safe_int(row.get("strict_boost_applied_count")) for row in success_rows),
+        "reranked_candidate_count": sum(safe_int(row.get("reranked_candidate_count")) for row in success_rows),
+        "hard_violation_penalty_count": sum(safe_int(row.get("hard_violation_penalty_count")) for row in success_rows),
+        "soft_violation_penalty_count": sum(safe_int(row.get("soft_violation_penalty_count")) for row in success_rows),
         "avg_strict_filtered_count": avg(success_rows, "strict_filtered_count"),
         "avg_strict_clean_count": avg(success_rows, "strict_clean_count"),
         "avg_strict_removed_count": avg(success_rows, "strict_removed_count"),
@@ -481,6 +525,11 @@ def grouped_summary(rows: List[Dict[str, object]], group_fields: List[str]) -> L
     output = []
     for key, group in sorted(groups.items(), key=lambda item: (-len(item[1]), item[0])):
         fallback_count = sum(safe_int(row.get("fallback_used")) for row in group)
+        scale_mode = "strict_boost" if any(
+            clean_text(row.get("scale_aware_rerank_mode")) == "strict_boost"
+            or safe_int(row.get("strict_boost_applied_count"))
+            for row in group
+        ) else (top_value(group, "scale_aware_rerank_mode") or "none")
         route_summary = {
             "query_count": len(group),
             "avg_final_slate_size": avg(group, "final_slate_size"),
@@ -491,6 +540,11 @@ def grouped_summary(rows: List[Dict[str, object]], group_fields: List[str]) -> L
             "avg_label_coverage_rate": avg(group, "label_coverage_rate"),
             "avg_exact_rate_in_retrieved": avg(group, "exact_rate_in_retrieved"),
             "avg_exact_or_substitute_rate_in_retrieved": avg(group, "exact_or_substitute_rate_in_retrieved"),
+            "scale_aware_rerank_mode": scale_mode,
+            "strict_boost_applied_count": sum(safe_int(row.get("strict_boost_applied_count")) for row in group),
+            "reranked_candidate_count": sum(safe_int(row.get("reranked_candidate_count")) for row in group),
+            "hard_violation_penalty_count": sum(safe_int(row.get("hard_violation_penalty_count")) for row in group),
+            "soft_violation_penalty_count": sum(safe_int(row.get("soft_violation_penalty_count")) for row in group),
             "avg_strict_filtered_count": avg(group, "strict_filtered_count"),
             "avg_strict_clean_count": avg(group, "strict_clean_count"),
             "avg_strict_removed_count": avg(group, "strict_removed_count"),
@@ -673,6 +727,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
     print(f"retrieval_mode: {args.retrieval_mode}")
     print(f"retrieval_backend: {args.retrieval_backend}")
     print(f"strict_filter_mode: {args.strict_filter_mode}")
+    print(f"scale_aware_rerank_mode: {args.scale_aware_rerank_mode}")
     print(f"index_dir: {index_dir}")
     print(f"top_k: {args.top_k}")
 
@@ -692,6 +747,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
                 strict_filter_mode=args.strict_filter_mode,
                 strict_min_clean_results=args.strict_min_clean_results,
                 strict_candidate_multiplier=args.strict_candidate_multiplier,
+                scale_aware_rerank_mode=args.scale_aware_rerank_mode,
                 label_lookup=label_lookup,
             )
             result_rows.append(row)
@@ -771,6 +827,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--strict-filter-mode", choices=["remove", "demote", "hybrid"], default="hybrid")
     parser.add_argument("--strict-min-clean-results", type=int, default=8)
     parser.add_argument("--strict-candidate-multiplier", type=int, default=8)
+    parser.add_argument("--scale-aware-rerank-mode", choices=["none", "strict_boost"], default="none")
     parser.add_argument("--output-dir", default=str(DEFAULT_OUTPUT_DIR), help="Output directory.")
     return parser.parse_args()
 

@@ -293,6 +293,7 @@ def execute_query(
     strict_filter_mode: str = "hybrid",
     strict_min_clean_results: int = 8,
     strict_candidate_multiplier: int = 8,
+    scale_aware_rerank_mode: str = "none",
     index_dir: Path | str = "data/esci_index",
     top_k: int = 12,
 ) -> Dict[str, object]:
@@ -327,6 +328,7 @@ def execute_query(
             strict_filter_mode=strict_filter_mode,
             strict_min_clean_results=strict_min_clean_results,
             strict_candidate_multiplier=strict_candidate_multiplier,
+            scale_aware_rerank_mode=scale_aware_rerank_mode,
             index_dir=index_dir,
             top_k=top_k,
         )
@@ -564,6 +566,7 @@ def run_single_query(
     strict_filter_mode: str,
     strict_min_clean_results: int,
     strict_candidate_multiplier: int,
+    scale_aware_rerank_mode: str,
     index_dir: Path,
     top_k: int,
 ) -> None:
@@ -579,6 +582,7 @@ def run_single_query(
         strict_filter_mode=strict_filter_mode,
         strict_min_clean_results=strict_min_clean_results,
         strict_candidate_multiplier=strict_candidate_multiplier,
+        scale_aware_rerank_mode=scale_aware_rerank_mode,
         index_dir=index_dir,
         top_k=top_k,
     )
@@ -602,6 +606,7 @@ def run_batch(
     strict_filter_mode: str,
     strict_min_clean_results: int,
     strict_candidate_multiplier: int,
+    scale_aware_rerank_mode: str,
     index_dir: Path,
     top_k: int,
 ) -> None:
@@ -627,6 +632,7 @@ def run_batch(
     print(f"strict_filter_mode: {strict_filter_mode}")
     print(f"strict_min_clean_results: {strict_min_clean_results}")
     print(f"strict_candidate_multiplier: {strict_candidate_multiplier}")
+    print(f"scale_aware_rerank_mode: {scale_aware_rerank_mode}")
     print(f"index_dir: {index_dir}")
     print(f"top_k: {top_k}")
 
@@ -641,6 +647,7 @@ def run_batch(
             strict_filter_mode=strict_filter_mode,
             strict_min_clean_results=strict_min_clean_results,
             strict_candidate_multiplier=strict_candidate_multiplier,
+            scale_aware_rerank_mode=scale_aware_rerank_mode,
             index_dir=index_dir,
             top_k=top_k,
         )
@@ -689,6 +696,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--strict-filter-mode", choices=["remove", "demote", "hybrid"], default="hybrid")
     parser.add_argument("--strict-min-clean-results", type=int, default=8)
     parser.add_argument("--strict-candidate-multiplier", type=int, default=8)
+    parser.add_argument("--scale-aware-rerank-mode", choices=["none", "strict_boost"], default="none")
     return parser.parse_args()
 
 
@@ -705,6 +713,7 @@ def main() -> None:
             strict_filter_mode=args.strict_filter_mode,
             strict_min_clean_results=args.strict_min_clean_results,
             strict_candidate_multiplier=args.strict_candidate_multiplier,
+            scale_aware_rerank_mode=args.scale_aware_rerank_mode,
             index_dir=Path(args.index_dir),
             top_k=args.top_k,
         )
@@ -727,6 +736,7 @@ def main() -> None:
         strict_filter_mode=args.strict_filter_mode,
         strict_min_clean_results=args.strict_min_clean_results,
         strict_candidate_multiplier=args.strict_candidate_multiplier,
+        scale_aware_rerank_mode=args.scale_aware_rerank_mode,
         index_dir=Path(args.index_dir),
         top_k=args.top_k,
     )

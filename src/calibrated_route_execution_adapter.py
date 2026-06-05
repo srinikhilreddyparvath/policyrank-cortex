@@ -321,6 +321,13 @@ def normalize_full_esci_rows(
             "strict_constraint_violation": safe_int(row.get("strict_constraint_violation")),
             "strict_constraint_penalty_applied": safe_int(row.get("strict_constraint_penalty_applied")),
             "strict_violation_severity": clean_text(row.get("strict_violation_severity")) or "none",
+            "scale_aware_rerank_mode": clean_text(row.get("scale_aware_rerank_mode")),
+            "scale_aware_original_score": row.get("scale_aware_original_score", ""),
+            "scale_aware_rerank_score": row.get("scale_aware_rerank_score", ""),
+            "strict_boost_applied_count": safe_int(row.get("strict_boost_applied_count")),
+            "reranked_candidate_count": safe_int(row.get("reranked_candidate_count")),
+            "hard_violation_penalty_count": safe_int(row.get("hard_violation_penalty_count")),
+            "soft_violation_penalty_count": safe_int(row.get("soft_violation_penalty_count")),
         }
         normalized.update(extra_fields)
         output.append(normalized)
@@ -481,16 +488,142 @@ def apply_strict_constraint_filter(
     return filtered, metadata
 
 
-def execute_full_esci_baseline(query: str, route: str, max_items: int, index_dir: Path, backend: str = "lexical") -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+def apply_scale_aware_strict_boost(
+    query: str,
+    rows: List[Dict[str, object]],
+    strict_constraint_type: str,
+    rerank_mode: str = "none",
+) -> Tuple[List[Dict[str, object]], Dict[str, object]]:
+    rerank_mode = lower_text(rerank_mode) or "none"
+    metadata = {
+        "scale_aware_rerank_mode": rerank_mode,
+        "strict_boost_applied_count": 0,
+        "reranked_candidate_count": 0,
+        "hard_violation_penalty_count": 0,
+        "soft_violation_penalty_count": 0,
+    }
+    for row in rows:
+        row["scale_aware_rerank_mode"] = rerank_mode
+        row.setdefault("scale_aware_original_score", row.get("score", ""))
+        row.setdefault("scale_aware_rerank_score", row.get("score", ""))
+
+    if rerank_mode != "strict_boost" or strict_constraint_type != "negation":
+        return rows, metadata
+
+    negative_terms = extract_negative_terms(query)
+    if not negative_terms:
+        return rows, metadata
+
+    reranked: List[Dict[str, object]] = []
+    for original_index, row in enumerate(rows):
+        row = dict(row)
+        severity = strict_violation_severity(row, negative_terms)
+        base_score = safe_float(row.get("score"))
+        clean_boost = 100.0 if severity == "none" else 0.0
+        hard_penalty = 10000.0 if severity == "hard" else 0.0
+        soft_penalty = 500.0 if severity == "soft" else 0.0
+        rerank_score = base_score + clean_boost - hard_penalty - soft_penalty
+
+        row["scale_aware_rerank_mode"] = rerank_mode
+        row["scale_aware_original_score"] = round(base_score, 6)
+        row["scale_aware_rerank_score"] = round(rerank_score, 6)
+        row["scale_aware_clean_boost"] = clean_boost
+        row["scale_aware_hard_penalty"] = hard_penalty
+        row["scale_aware_soft_penalty"] = soft_penalty
+        row["strict_violation_severity"] = severity
+        row["_scale_aware_original_index"] = original_index
+
+        if severity == "hard":
+            metadata["hard_violation_penalty_count"] += 1
+        elif severity == "soft":
+            metadata["soft_violation_penalty_count"] += 1
+        reranked.append(row)
+
+    severity_order = {"none": 0, "soft": 1, "hard": 2}
+    reranked.sort(
+        key=lambda row: (
+            -safe_float(row.get("scale_aware_rerank_score")),
+            severity_order.get(clean_text(row.get("strict_violation_severity")), 3),
+            safe_int(row.get("_scale_aware_original_index")),
+            clean_text(row.get("product_id") or row.get("item_id")),
+        )
+    )
+    for row in reranked:
+        row.pop("_scale_aware_original_index", None)
+
+    metadata["strict_boost_applied_count"] = 1
+    metadata["reranked_candidate_count"] = len(reranked)
+    return reranked, metadata
+
+
+def retrieve_with_optional_scale_aware_boost(
+    query: str,
+    max_items: int,
+    index_dir: Path,
+    backend: str,
+    scale_aware_rerank_mode: str = "none",
+    candidate_multiplier: int = 12,
+) -> Tuple[List[Dict[str, object]], Dict[str, object], int, str]:
+    constraint_type = detect_strict_constraint_type(query)
+    use_boost = lower_text(scale_aware_rerank_mode) == "strict_boost" and constraint_type == "negation"
+    candidate_k = max(max_items * max(candidate_multiplier, 1), 75) if use_boost else max_items
+    candidates = full_esci_retrieve(query, top_k=candidate_k, index_dir=index_dir, backend=backend)
+    rows, metadata = apply_scale_aware_strict_boost(
+        query=query,
+        rows=[dict(row) for row in candidates],
+        strict_constraint_type=constraint_type,
+        rerank_mode=scale_aware_rerank_mode,
+    )
+    for row in rows:
+        row["strict_boost_applied_count"] = safe_int(metadata.get("strict_boost_applied_count"))
+        row["reranked_candidate_count"] = safe_int(metadata.get("reranked_candidate_count"))
+        row["hard_violation_penalty_count"] = safe_int(metadata.get("hard_violation_penalty_count"))
+        row["soft_violation_penalty_count"] = safe_int(metadata.get("soft_violation_penalty_count"))
+    return rows[:max_items], metadata, candidate_k, constraint_type
+
+
+def scale_aware_trace(metadata: Dict[str, object], candidate_k: int, constraint_type: str) -> str:
+    mode = clean_text(metadata.get("scale_aware_rerank_mode")) or "none"
+    return (
+        f"scale_rerank={mode}:constraint={constraint_type}:candidate_k={candidate_k}:"
+        f"boosted={safe_int(metadata.get('strict_boost_applied_count'))}:"
+        f"reranked={safe_int(metadata.get('reranked_candidate_count'))}:"
+        f"hard_penalty={safe_int(metadata.get('hard_violation_penalty_count'))}:"
+        f"soft_penalty={safe_int(metadata.get('soft_violation_penalty_count'))}"
+    )
+
+
+def execute_full_esci_baseline(
+    query: str,
+    route: str,
+    max_items: int,
+    index_dir: Path,
+    backend: str = "lexical",
+    scale_aware_rerank_mode: str = "none",
+) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+    candidates, metadata, candidate_k, constraint_type = retrieve_with_optional_scale_aware_boost(
+        query=query,
+        max_items=max_items,
+        index_dir=index_dir,
+        backend=backend,
+        scale_aware_rerank_mode=scale_aware_rerank_mode,
+        candidate_multiplier=12,
+    )
     rows = normalize_full_esci_rows(
         query=query,
-        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
+        rows=candidates,
         execution_source="full_esci_baseline_retrieval",
         calibrated_route=route,
         max_items=max_items,
         route_reason="Full ESCI lexical baseline retrieval.",
     )
-    return rows, "full_esci_baseline_retrieval", False, "", f"full_esci_baseline_retrieval:{len(rows)}"
+    return (
+        rows,
+        "full_esci_baseline_retrieval",
+        False,
+        "",
+        f"full_esci_baseline_retrieval:{len(rows)}:{scale_aware_trace(metadata, candidate_k, constraint_type)}",
+    )
 
 
 def execute_full_esci_strict(
@@ -501,13 +634,21 @@ def execute_full_esci_strict(
     strict_filter_mode: str = "hybrid",
     strict_min_clean_results: int = 8,
     strict_candidate_multiplier: int = 8,
+    scale_aware_rerank_mode: str = "none",
 ) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
     constraint_type = detect_strict_constraint_type(query)
-    candidate_k = max(max_items * max(strict_candidate_multiplier, 1), 75)
+    effective_multiplier = max(strict_candidate_multiplier, 12) if scale_aware_rerank_mode == "strict_boost" else strict_candidate_multiplier
+    candidate_k = max(max_items * max(effective_multiplier, 1), 75)
     candidates = full_esci_retrieve(query, top_k=candidate_k, index_dir=index_dir, backend=backend)
-    filtered_candidates, strict_metadata = apply_strict_constraint_filter(
+    reranked_candidates, rerank_metadata = apply_scale_aware_strict_boost(
         query=query,
         rows=[dict(row) for row in candidates],
+        strict_constraint_type=constraint_type,
+        rerank_mode=scale_aware_rerank_mode,
+    )
+    filtered_candidates, strict_metadata = apply_strict_constraint_filter(
+        query=query,
+        rows=reranked_candidates,
         strict_constraint_type=constraint_type,
         target_count=max_items,
         filter_mode=strict_filter_mode,
@@ -529,6 +670,11 @@ def execute_full_esci_strict(
     soft_count = safe_int(strict_metadata.get("strict_soft_violation_count"))
     removed_count = safe_int(strict_metadata.get("strict_removed_count"))
     negative_terms = clean_text(strict_metadata.get("strict_negative_terms"))
+    scale_mode = clean_text(rerank_metadata.get("scale_aware_rerank_mode")) or "none"
+    strict_boost_applied_count = safe_int(rerank_metadata.get("strict_boost_applied_count"))
+    reranked_candidate_count = safe_int(rerank_metadata.get("reranked_candidate_count"))
+    hard_penalty_count = safe_int(rerank_metadata.get("hard_violation_penalty_count"))
+    soft_penalty_count = safe_int(rerank_metadata.get("soft_violation_penalty_count"))
     for row in rows:
         row["strict_constraint_applied"] = 1
         row["strict_repair_flag"] = "full_esci_strict_metadata"
@@ -542,6 +688,11 @@ def execute_full_esci_strict(
         row["strict_soft_violation_count"] = soft_count
         row["strict_removed_count"] = removed_count
         row["strict_demoted_count"] = demoted_count
+        row["scale_aware_rerank_mode"] = scale_mode
+        row["strict_boost_applied_count"] = strict_boost_applied_count
+        row["reranked_candidate_count"] = reranked_candidate_count
+        row["hard_violation_penalty_count"] = hard_penalty_count
+        row["soft_violation_penalty_count"] = soft_penalty_count
         row.setdefault("strict_constraint_violation", 0)
         row.setdefault("strict_constraint_penalty_applied", 0)
         row.setdefault("strict_violation_severity", "none")
@@ -579,6 +730,11 @@ def execute_full_esci_strict(
             row["strict_soft_violation_count"] = soft_count
             row["strict_removed_count"] = removed_count
             row["strict_demoted_count"] = len(fallback_rows)
+            row["scale_aware_rerank_mode"] = scale_mode
+            row["strict_boost_applied_count"] = strict_boost_applied_count
+            row["reranked_candidate_count"] = reranked_candidate_count
+            row["hard_violation_penalty_count"] = hard_penalty_count
+            row["soft_violation_penalty_count"] = soft_penalty_count
             row["strict_constraint_violation"] = 1
             row["strict_constraint_penalty_applied"] = 1
             row["strict_violation_severity"] = "hard"
@@ -590,11 +746,19 @@ def execute_full_esci_strict(
         False,
         "",
         f"full_esci_strict_repair:{constraint_type}:mode={strict_filter_mode}:candidate_k={candidate_k}:"
+        f"scale_rerank={scale_mode}:boosted={strict_boost_applied_count}:reranked={reranked_candidate_count}:"
+        f"hard_penalty={hard_penalty_count}:soft_penalty={soft_penalty_count}:"
         f"clean={clean_count}:hard_removed={removed_count}:soft_demoted={demoted_count}:rows={len(rows)}",
     )
 
 
-def execute_full_esci_mission(query: str, max_items: int, index_dir: Path, backend: str = "lexical") -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+def execute_full_esci_mission(
+    query: str,
+    max_items: int,
+    index_dir: Path,
+    backend: str = "lexical",
+    scale_aware_rerank_mode: str = "none",
+) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
     mission = extract_mission_sub_intents(query)
     sub_intents = [clean_text(value) for value in mission.get("sub_intents", []) if clean_text(value)]
     selected: List[Dict[str, object]] = []
@@ -605,14 +769,22 @@ def execute_full_esci_mission(query: str, max_items: int, index_dir: Path, backe
         candidates_by_intent: Dict[str, List[Dict[str, object]]] = {}
         for sub_intent in sub_intents:
             retrieval_query = f"{query} {sub_intent.replace('_', ' ')}"
+            candidates, metadata, candidate_k, constraint_type = retrieve_with_optional_scale_aware_boost(
+                query=retrieval_query,
+                max_items=per_intent_k,
+                index_dir=index_dir,
+                backend=backend,
+                scale_aware_rerank_mode=scale_aware_rerank_mode,
+                candidate_multiplier=12,
+            )
             rows = normalize_full_esci_rows(
                 query=query,
-                rows=full_esci_retrieve(retrieval_query, top_k=per_intent_k, index_dir=index_dir, backend=backend),
+                rows=candidates,
                 execution_source="full_esci_mission_repair",
                 calibrated_route="MISSION_REPAIR",
                 max_items=per_intent_k,
                 sub_intent=sub_intent,
-                route_reason="Full ESCI lexical retrieval per mission sub-intent.",
+                route_reason=f"Full ESCI lexical retrieval per mission sub-intent. {scale_aware_trace(metadata, candidate_k, constraint_type)}",
             )
             candidates_by_intent[sub_intent] = rows
 
@@ -633,13 +805,21 @@ def execute_full_esci_mission(query: str, max_items: int, index_dir: Path, backe
                 break
 
         if len(selected) < max_items:
+            candidates, metadata, candidate_k, constraint_type = retrieve_with_optional_scale_aware_boost(
+                query=query,
+                max_items=max_items,
+                index_dir=index_dir,
+                backend=backend,
+                scale_aware_rerank_mode=scale_aware_rerank_mode,
+                candidate_multiplier=12,
+            )
             direct_rows = normalize_full_esci_rows(
                 query=query,
-                rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
+                rows=candidates,
                 execution_source="full_esci_mission_repair",
                 calibrated_route="MISSION_REPAIR",
                 max_items=max_items,
-                route_reason="Full ESCI lexical retrieval direct fill after mission sub-intent retrieval.",
+                route_reason=f"Full ESCI lexical retrieval direct fill after mission sub-intent retrieval. {scale_aware_trace(metadata, candidate_k, constraint_type)}",
             )
             for row in direct_rows:
                 product_id = clean_text(row.get("product_id") or row.get("item_id"))
@@ -649,30 +829,52 @@ def execute_full_esci_mission(query: str, max_items: int, index_dir: Path, backe
                 selected.append(row)
                 if len(selected) >= max_items:
                     break
-        trace = f"full_esci_mission_repair:intents={','.join(sub_intents)}:{len(selected)}"
+        trace = f"full_esci_mission_repair:intents={','.join(sub_intents)}:{len(selected)}:scale_rerank={scale_aware_rerank_mode}"
         return selected[:max_items], "full_esci_mission_repair", False, "", trace
 
+    candidates, metadata, candidate_k, constraint_type = retrieve_with_optional_scale_aware_boost(
+        query=query,
+        max_items=max_items,
+        index_dir=index_dir,
+        backend=backend,
+        scale_aware_rerank_mode=scale_aware_rerank_mode,
+        candidate_multiplier=12,
+    )
     rows = normalize_full_esci_rows(
         query=query,
-        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
+        rows=candidates,
         execution_source="full_esci_mission_repair",
         calibrated_route="MISSION_REPAIR",
         max_items=max_items,
-        route_reason="No mission sub-intents detected; used direct full ESCI lexical retrieval.",
+        route_reason=f"No mission sub-intents detected; used direct full ESCI lexical retrieval. {scale_aware_trace(metadata, candidate_k, constraint_type)}",
     )
     return (
         rows,
         "full_esci_mission_repair",
         True,
         "Mission sub-intents unavailable; used direct full ESCI lexical retrieval.",
-        f"full_esci_mission_direct_fallback:{len(rows)}",
+        f"full_esci_mission_direct_fallback:{len(rows)}:{scale_aware_trace(metadata, candidate_k, constraint_type)}",
     )
 
 
-def execute_full_esci_behavior(query: str, max_items: int, index_dir: Path, backend: str = "lexical") -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+def execute_full_esci_behavior(
+    query: str,
+    max_items: int,
+    index_dir: Path,
+    backend: str = "lexical",
+    scale_aware_rerank_mode: str = "none",
+) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
+    candidates, metadata, candidate_k, constraint_type = retrieve_with_optional_scale_aware_boost(
+        query=query,
+        max_items=max_items,
+        index_dir=index_dir,
+        backend=backend,
+        scale_aware_rerank_mode=scale_aware_rerank_mode,
+        candidate_multiplier=12,
+    )
     rows = normalize_full_esci_rows(
         query=query,
-        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
+        rows=candidates,
         execution_source="full_esci_behavior_aware_fallback",
         calibrated_route="BEHAVIOR_AWARE_RERANK",
         max_items=max_items,
@@ -683,7 +885,7 @@ def execute_full_esci_behavior(query: str, max_items: int, index_dir: Path, back
         "full_esci_behavior_aware_fallback",
         True,
         "behavior-aware full ESCI reranker not implemented; used full ESCI lexical retrieval.",
-        f"full_esci_behavior_aware_fallback:{len(rows)}",
+        f"full_esci_behavior_aware_fallback:{len(rows)}:{scale_aware_trace(metadata, candidate_k, constraint_type)}",
     )
 
 
@@ -712,11 +914,20 @@ def execute_full_esci_critic(
     query_type: str = "",
     bias: str = "",
     backend: str = "lexical",
+    scale_aware_rerank_mode: str = "none",
 ) -> Tuple[List[Dict[str, object]], str, bool, str, str]:
     reason = critic_review_reason(query_type=query_type, bias=bias)
+    candidates, metadata, candidate_k, constraint_type = retrieve_with_optional_scale_aware_boost(
+        query=query,
+        max_items=max_items,
+        index_dir=index_dir,
+        backend=backend,
+        scale_aware_rerank_mode=scale_aware_rerank_mode,
+        candidate_multiplier=12,
+    )
     rows = normalize_full_esci_rows(
         query=query,
-        rows=full_esci_retrieve(query, top_k=max_items, index_dir=index_dir, backend=backend),
+        rows=candidates,
         execution_source="full_esci_critic_review",
         calibrated_route="CRITIC_REVIEW",
         max_items=max_items,
@@ -729,7 +940,13 @@ def execute_full_esci_critic(
             "review_priority": critic_review_priority(query_type),
         },
     )
-    return rows, "full_esci_critic_review", False, "", f"full_esci_critic_review:pending_critic:{len(rows)}"
+    return (
+        rows,
+        "full_esci_critic_review",
+        False,
+        "",
+        f"full_esci_critic_review:pending_critic:{len(rows)}:{scale_aware_trace(metadata, candidate_k, constraint_type)}",
+    )
 
 
 def extract_numeric_model_tokens(query: str) -> List[str]:
@@ -1771,6 +1988,7 @@ def execute_calibrated_route(
     strict_filter_mode: str = "hybrid",
     strict_min_clean_results: int = 8,
     strict_candidate_multiplier: int = 8,
+    scale_aware_rerank_mode: str = "none",
     index_dir: Path | str = DEFAULT_ESCI_INDEX_DIR,
     top_k: Optional[int] = None,
 ) -> Dict[str, object]:
@@ -1779,6 +1997,9 @@ def execute_calibrated_route(
     retrieval_mode = lower_text(retrieval_mode) or "sample"
     retrieval_backend = lower_text(retrieval_backend) or "lexical"
     strict_filter_mode = lower_text(strict_filter_mode) or "hybrid"
+    scale_aware_rerank_mode = lower_text(scale_aware_rerank_mode) or "none"
+    if scale_aware_rerank_mode not in {"none", "strict_boost"}:
+        scale_aware_rerank_mode = "none"
     strict_min_clean_results = max(safe_int(strict_min_clean_results, 8), 1)
     strict_candidate_multiplier = max(safe_int(strict_candidate_multiplier, 8), 1)
     index_path = Path(index_dir)
@@ -1803,11 +2024,24 @@ def execute_calibrated_route(
                     strict_filter_mode=strict_filter_mode,
                     strict_min_clean_results=strict_min_clean_results,
                     strict_candidate_multiplier=strict_candidate_multiplier,
+                    scale_aware_rerank_mode=scale_aware_rerank_mode,
                 )
             elif route == "MISSION_REPAIR":
-                rows, source, fallback, reason, trace = execute_full_esci_mission(query, max_items=max_items, index_dir=index_path, backend=retrieval_backend)
+                rows, source, fallback, reason, trace = execute_full_esci_mission(
+                    query,
+                    max_items=max_items,
+                    index_dir=index_path,
+                    backend=retrieval_backend,
+                    scale_aware_rerank_mode=scale_aware_rerank_mode,
+                )
             elif route == "BEHAVIOR_AWARE_RERANK":
-                rows, source, fallback, reason, trace = execute_full_esci_behavior(query, max_items=max_items, index_dir=index_path, backend=retrieval_backend)
+                rows, source, fallback, reason, trace = execute_full_esci_behavior(
+                    query,
+                    max_items=max_items,
+                    index_dir=index_path,
+                    backend=retrieval_backend,
+                    scale_aware_rerank_mode=scale_aware_rerank_mode,
+                )
             elif route == "CRITIC_REVIEW":
                 rows, source, fallback, reason, trace = execute_full_esci_critic(
                     query=query,
@@ -1816,9 +2050,17 @@ def execute_calibrated_route(
                     query_type=query_type,
                     bias=bias,
                     backend=retrieval_backend,
+                    scale_aware_rerank_mode=scale_aware_rerank_mode,
                 )
             elif route == "REJECT_REPAIR_NARROW_QUERY":
-                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path, backend=retrieval_backend)
+                rows, source, fallback, reason, trace = execute_full_esci_baseline(
+                    query,
+                    route=route,
+                    max_items=max_items,
+                    index_dir=index_path,
+                    backend=retrieval_backend,
+                    scale_aware_rerank_mode=scale_aware_rerank_mode,
+                )
                 source = "full_esci_narrow_query_baseline_preserved"
                 for row in rows:
                     row["execution_source"] = source
@@ -1826,7 +2068,14 @@ def execute_calibrated_route(
                 reason = ""
                 trace = f"full_esci_reject_repair_preserve_baseline:{len(rows)}"
             else:
-                rows, source, fallback, reason, trace = execute_full_esci_baseline(query, route=route, max_items=max_items, index_dir=index_path, backend=retrieval_backend)
+                rows, source, fallback, reason, trace = execute_full_esci_baseline(
+                    query,
+                    route=route,
+                    max_items=max_items,
+                    index_dir=index_path,
+                    backend=retrieval_backend,
+                    scale_aware_rerank_mode=scale_aware_rerank_mode,
+                )
         elif route == "STRICT_REPAIR":
             rows, source, fallback, reason, trace = execute_strict_repair(query, max_items=max_items)
         elif route == "MISSION_REPAIR":
@@ -1854,6 +2103,7 @@ def execute_calibrated_route(
         adapter_trace_parts.append(trace)
         adapter_trace_parts.append(f"retrieval_mode={retrieval_mode}")
         adapter_trace_parts.append(f"retrieval_backend={retrieval_backend}")
+        adapter_trace_parts.append(f"scale_aware_rerank_mode={scale_aware_rerank_mode}")
 
         return {
             "query": query,
