@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CF-ESCI Annotation</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header><h1>CF-ESCI Human Annotation</h1><p id="phase">Select an independent annotation mode. Complete calibration before final annotation.</p></header>
+<main>
+  <section id="chooser" class="panel"><h2>Start or resume</h2><label>Mode<select id="mode">
+    <option value="">Choose…</option><option value="CALIBRATION">CALIBRATION</option><option value="ANNOTATOR_A_QUERY">ANNOTATOR_A_QUERY</option><option value="ANNOTATOR_B_QUERY">ANNOTATOR_B_QUERY</option><option value="ANNOTATOR_A_DIRECTION">ANNOTATOR_A_DIRECTION</option><option value="ANNOTATOR_B_DIRECTION">ANNOTATOR_B_DIRECTION</option>
+  </select></label><div id="calibration-options" hidden><label>Annotator<select id="cal-annotator"><option>A</option><option>B</option></select></label><label>Task<select id="cal-task"><option value="QUERY">Query pairs</option><option value="DIRECTION">Candidate direction</option></select></label></div><button id="load">Load</button></section>
+  <section id="workspace" hidden>
+    <div class="toolbar"><button id="previous">← Previous</button><strong id="progress"></strong><span id="completed"></span><label>Jump<select id="jump"></select></label><button id="save">Save</button><button id="next">Next →</button></div>
+    <div id="status" class="status"></div><article id="card"></article>
+  </section>
+</main><script src="app.js"></script>
+</body></html>
