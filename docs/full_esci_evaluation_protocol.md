@@ -1,5 +1,11 @@
 # Full ESCI evaluation protocol
 
+## Research checkpoint after MVP 29.6
+
+MVP 29.6 found no evidence that SearchContractV1 improves route-utility prediction over generic query/ranking features in the current official ESCI setting. This negative ablation is retained without reinterpretation. Routing is now secondary analysis rather than the primary CORTEX paper contribution unless future independent evidence changes that conclusion.
+
+The later CF-ESCI feasibility study narrows the candidate primary question: do modern product rankers respond correctly and locally to a minimal change in exactly one explicit shopping requirement, and can contract enforcement improve that sensitivity while preserving standard relevance? ContractESCI's typed requirements and compliance evidence remain the foundation. ContractESCI and CF-ESCI augment, but do not replace, official ESCI relevance evaluation.
+
 ## Primary protocol: official Task-1 candidate-set reranking
 
 The paper-comparable primary benchmark follows the upstream Amazon ESCI Task-1 definition:
