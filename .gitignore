@@ -55,6 +55,7 @@ outputs/full_esci_route_retrieval_eval_1m_strict_boost/
 outputs/full_esci_index_scale_comparison_1m/
 outputs/full_esci_paper_benchmark_report_1m/
 outputs/paper_ready_cortex_package/
+outputs/paper_eval/
 outputs/cortex_search_api_runtime/
 frontend/.next/
 frontend/node_modules/
